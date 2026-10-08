@@ -2,10 +2,11 @@ from typing import Annotated
 
 from annotations import ProjectPath
 from enums import SuspendPolicy
-from models import SetBreakpointResponse
+from frontend_models import SetBreakpointResponse
 
 
 def set_breakpoint(
+    projectPath: ProjectPath,
     breakpointId: Annotated[
         str | None,
         "Canonical breakpoint ID returned by `set_breakpoint` or `list_breakpoints`. "
@@ -71,7 +72,6 @@ def set_breakpoint(
         "do not pass breakpointId, filePath, line, condition, logging, suspend, temporary, or enabled parameters. "
         "Default: null.",
     ] = None,
-    projectPath: ProjectPath = None,
 ) -> SetBreakpointResponse:
     """Creates or updates a breakpoint or a logpoint (a non-suspending "Evaluate and log" breakpoint).
 Use this tool to set line breakpoints, set logpoints via `logExpression`, update existing breakpoints by ID, and control tracepoint/logging behavior.

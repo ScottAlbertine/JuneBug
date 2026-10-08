@@ -1,10 +1,11 @@
 from typing import Annotated
 
 from annotations import ProjectPath, SessionID
-from models import StackResponse
+from frontend_models import StackResponse
 
 
 def get_stack(
+    projectPath: ProjectPath,
     sessionId: SessionID = None,
     threadId: Annotated[
         str | None,
@@ -14,7 +15,6 @@ def get_stack(
     ] = None,
     limit: Annotated[int, "Max frames to return. Default: 200."] = 200,
     offset: Annotated[int, "Page offset. Default: 0."] = 0,
-    projectPath: ProjectPath = None,
 ) -> StackResponse:
     """Returns the call stack for a thread in the debug session.
 Use this tool to see the sequence of method calls that led to the current execution point.

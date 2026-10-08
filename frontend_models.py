@@ -80,9 +80,8 @@ class DebugSession(BaseModel):
     runConfigurationName: Annotated[
         str | None, Field(default=None, description="Associated run configuration name when available."),
     ] = None
-    # TODO: this next one might be optional
     breakpointsMuted: Annotated[
-        bool, Field(description="Whether breakpoints are globally muted for this debugger session."),
+        bool, Field(default=False, description="Whether breakpoints are globally muted for this debugger session."),
     ]
     currentPosition: Annotated[
         SourcePosition | None,
@@ -133,11 +132,10 @@ class ControlSessionResponse(BaseModel):
             description="Snapshot of current frame values when the session is paused, using the same text format as `get_frame_values` with `depth=0`.",
         ),
     ] = None
-    # TODO: this next one might not be optional
     breakpointsMuted: Annotated[
-        bool | None,
-        Field(default=None, description="Whether breakpoints are globally muted for this debugger session."),
-    ] = None
+        bool,
+        Field(default=False, description="Whether breakpoints are globally muted for this debugger session."),
+    ]
     message: Annotated[
         str | None,
         Field(
@@ -198,11 +196,10 @@ class BreakpointsResponse(BaseModel):
     breakpoints: Annotated[list[Breakpoint], Field(description="List of currently configured breakpoints.")]
     totalCount: Annotated[int, Field(description="Total count.")]
     enabledCount: Annotated[int, Field(description="Enabled count.")]
-    # TODO: this next one might not be optional
     breakpointsMuted: Annotated[
-        bool | None,
-        Field(default=None, description="Whether breakpoints are globally muted for the resolved debugger session."),
-    ] = None
+        bool,
+        Field(default=False, description="Whether breakpoints are globally muted for the resolved debugger session."),
+    ]
 
 
 class RemoveBreakpointResponse(BaseModel):
@@ -265,9 +262,9 @@ class SetBreakpointResponse(BaseModel):
         ),
     ] = None
     breakpointsMuted: Annotated[
-        bool | None,
-        Field(default=None, description="Whether breakpoints are globally muted for the resolved debugger session."),
-    ] = None
+        bool,
+        Field(default=False, description="Whether breakpoints are globally muted for the resolved debugger session."),
+    ]
     message: Annotated[
         str | None, Field(default=None, description="Additional note when requested and actual positions differ."),
     ] = None
@@ -298,9 +295,9 @@ class StartDebuggerSessionResponse(BaseModel):
     ] = None
     # TODO: not sure if this is optional or not
     breakpointsMuted: Annotated[
-        bool | None,
-        Field(default=None, description="Whether breakpoints are globally muted for this debugger session."),
-    ] = None
+        bool,
+        Field(default=False, description="Whether breakpoints are globally muted for this debugger session."),
+    ]
     exitCode: Annotated[
         int | None,
         Field(

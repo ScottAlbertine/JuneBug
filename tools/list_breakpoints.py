@@ -1,10 +1,11 @@
 from typing import Annotated
 
 from annotations import ProjectPath
-from models import BreakpointsResponse
+from frontend_models import BreakpointsResponse
 
 
 def list_breakpoints(
+    projectPath: ProjectPath,
     filePath: Annotated[
         str | None,
         "Optional file path to filter breakpoints. Path to the file. "
@@ -23,7 +24,6 @@ def list_breakpoints(
         "Default: null. "
         "Optional; when omitted, `breakpointsMuted` is returned only if exactly one active session exists.",
     ] = None,
-    projectPath: ProjectPath = None,
 ) -> BreakpointsResponse:
     """Lists all breakpoints in the project or in a specific file.
 Use this tool to see all currently set breakpoints and their properties.

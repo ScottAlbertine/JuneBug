@@ -4,6 +4,7 @@ from annotations import FrameIndex, ProjectPath, SessionID
 
 
 def get_frame_values(
+    projectPath: ProjectPath,
     sessionId: SessionID = None,
     frameIndex: FrameIndex = None,
     depth: Annotated[
@@ -12,7 +13,6 @@ def get_frame_values(
         "(0 = no children (only frame variables), 1 = variables with first level children, 2 = two levels of children, etc.). "
         "Default: 0.",
     ] = 0,
-    projectPath: ProjectPath = None,
 ) -> None:
     """Returns the values visible in the specified stack frame as a tree structure.
 Use this tool to inspect local variables, parameters, and fields or other values available at a specific point in the call stack.

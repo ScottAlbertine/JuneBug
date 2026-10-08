@@ -1,10 +1,11 @@
 from typing import Annotated
 
 from annotations import FrameIndex, ProjectPath, SessionID
-from models import SetVariableResponse
+from frontend_models import SetVariableResponse
 
 
 def set_variable(
+    projectPath: ProjectPath,
     path: Annotated[
         list[str],
         "Path to target value, same format as `get_value_by_path`. "
@@ -20,7 +21,6 @@ def set_variable(
     ],
     sessionId: SessionID = None,
     frameIndex: FrameIndex = None,
-    projectPath: ProjectPath = None,
 ) -> SetVariableResponse:
     """Mutates a variable value by path in the selected stack frame.
 Use this tool to change state during debugging.

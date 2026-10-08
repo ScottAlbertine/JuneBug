@@ -2,10 +2,11 @@ from typing import Annotated
 
 from annotations import ProjectPath
 from enums import BreakpointOwner
-from models import RemoveBreakpointResponse
+from frontend_models import RemoveBreakpointResponse
 
 
 def remove_breakpoint(
+    projectPath: ProjectPath,
     breakpointId: Annotated[
         str | None, "Canonical breakpoint ID returned by `set_breakpoint` or `list_breakpoints`."] = None,
     filePath: Annotated[
@@ -17,7 +18,6 @@ def remove_breakpoint(
     ] = None,
     line: Annotated[int | None, "Optional input: line number (1-based) of the breakpoint to remove."] = None,
     owner: Annotated[BreakpointOwner, "Breakpoint owner filter. Default: agent."] = BreakpointOwner.AGENT,
-    projectPath: ProjectPath = None,
 ) -> RemoveBreakpointResponse:
     """Removes breakpoints filtered by owner and optional selectors.
 Use this tool to remove previously set breakpoints.

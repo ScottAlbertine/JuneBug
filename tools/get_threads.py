@@ -1,14 +1,14 @@
 from typing import Annotated
 
 from annotations import ProjectPath, SessionID
-from models import ThreadsResponse
+from frontend_models import ThreadsResponse
 
 
 def get_threads(
+    projectPath: ProjectPath,
     sessionId: SessionID = None,
     limit: Annotated[int, "Page size. Default: 50, max: 200."] = 50,
     offset: Annotated[int, "Page offset. Default: 0."] = 0,
-    projectPath: ProjectPath = None,
 ) -> ThreadsResponse:
     """Returns the list of threads in the debug session.
 Use this tool to see all threads and their current status.

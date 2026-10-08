@@ -1,10 +1,28 @@
 from typing import Annotated
 
+from pydantic import BeforeValidator, Field
+from pydantic_core import PydanticCustomError
+
+from constants import NO_PROJECT_PATH_ERROR
+
+
+def validate_project_path(project_path: str | None) -> str:
+    """Raise a nice custom error on an unspecified project path."""
+    if not project_path:
+        raise PydanticCustomError("missing", NO_PROJECT_PATH_ERROR)
+    return project_path
+
+
 ProjectPath = Annotated[
-    str | None,
-    "The project path. Pass this value ALWAYS if you are aware of it. It reduces numbers of ambiguous calls. \n "
-    "In the case you know only the current working directory you can use it as the project path.\n "
-    "If you're not aware about the project path you can ask user about it.",
+    str,
+    Field(
+        description="""
+            The project path. Pass this value ALWAYS if you are aware of it. It reduces numbers of ambiguous calls.
+            In the case you know only the current working directory you can use it as the project path.
+            If you're not aware about the project path you can ask user about it.
+        """,
+    ),
+    BeforeValidator(validate_project_path),
 ]
 
 SessionID = Annotated[

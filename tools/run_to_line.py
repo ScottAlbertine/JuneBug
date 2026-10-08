@@ -1,10 +1,11 @@
 from typing import Annotated
 
 from annotations import ProjectPath, SessionID
-from models import RunToLineResponse
+from frontend_models import RunToLineResponse
 
 
 def run_to_line(
+    projectPath: ProjectPath,
     filePath: Annotated[
         str,
         "Target source file path. Path to the file. "
@@ -15,7 +16,6 @@ def run_to_line(
     line: Annotated[int, "Target line number (1-based)."],
     sessionId: SessionID = None,
     timeout: Annotated[int, "Timeout in milliseconds waiting for paused/stopped result. Default: 30000."] = 30000,
-    projectPath: ProjectPath = None,
 ) -> RunToLineResponse:
     """Resumes execution to a target line.
 Use this tool to run until a specific source position without manually stepping.

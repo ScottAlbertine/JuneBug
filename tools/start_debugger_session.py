@@ -1,10 +1,11 @@
 from typing import Annotated
 
 from annotations import ProjectPath
-from models import StartDebuggerSessionResponse
+from frontend_models import StartDebuggerSessionResponse
 
 
 def start_debugger_session(
+    projectPath: ProjectPath,
     configurationName: Annotated[str | None, "Name of the existing run configuration to debug."] = None,
     filePath: Annotated[
         str | None,
@@ -37,7 +38,6 @@ def start_debugger_session(
         "Pass this only when the selected run configuration reports `supportsDynamicLaunchOverrides=true` in `get_run_configurations`. "
         "Missing/null keeps existing env unchanged; when provided, values are merged over existing env.",
     ] = None,
-    projectPath: ProjectPath = None,
 ) -> StartDebuggerSessionResponse:
     """Start a debugger session for either an existing run configuration by name or a code location
 (`filePath` + `line`) in the current project.
@@ -75,6 +75,15 @@ Returns a flat result with debugger session metadata plus the execution snapshot
 
     if envs is None:
         envs = {}
+
+    # DBSession.create(
+    #     id="sample",
+    #     name="sample name",
+    #     state=DebuggerState.PAUSED.value,
+    #     run_configuration_name="some run config",
+    #     is_active=True,
+    # )
+
 
     print(configurationName)
     print(filePath)

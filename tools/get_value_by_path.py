@@ -4,6 +4,7 @@ from annotations import FrameIndex, ProjectPath, SessionID
 
 
 def get_value_by_path(
+    projectPath: ProjectPath,
     path: Annotated[
         list[str],
         "List of child names to navigate through, e.g. ['myObject', 'field', 'subField'] or ['items', '[0]', 'name']. "
@@ -17,7 +18,6 @@ def get_value_by_path(
         "Maximum depth for expanding children of the resolved value "
         "(0 = value only, 1 = immediate children, 2 = children + grandchildren, etc.). Default: 0.",
     ] = 0,
-    projectPath: ProjectPath = None,
 ) -> None:
     """Gets the value of a nested object by following a path of property names.
 Use this tool to drill down into complex objects and inspect their nested properties.

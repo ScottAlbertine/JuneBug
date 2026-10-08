@@ -4,6 +4,7 @@ from annotations import FrameIndex, ProjectPath, SessionID
 
 
 def evaluate_expression(
+    projectPath: ProjectPath,
     expression: Annotated[
         str,
         "Expression to evaluate in the current context. "
@@ -17,7 +18,6 @@ def evaluate_expression(
         "Maximum depth for expanding children of the evaluated result "
         "(0 = value only, 1 = immediate children, 2 = children + grandchildren, etc.). Default: 0.",
     ] = 0,
-    projectPath: ProjectPath = None,
 ) -> None:
     """Evaluates an expression in the context of the current stack frame.
 Use this tool to compute values, call methods, or inspect expressions during debugging.
