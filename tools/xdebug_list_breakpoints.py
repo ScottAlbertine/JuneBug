@@ -1,5 +1,7 @@
 from typing import Annotated, Any
 
+from annotations import ProjectPath
+
 
 def xdebug_list_breakpoints(
     filePath: Annotated[
@@ -19,12 +21,7 @@ def xdebug_list_breakpoints(
         "If multiple sessions are active and sessionId is omitted, the call fails. "
         "Default: null. Optional; when omitted, `breakpointsMuted` is returned only if exactly one active session exists."
     ] = None,
-    projectPath: Annotated[
-        str | None,
-        " The project path. Pass this value ALWAYS if you are aware of it. It reduces numbers of ambiguous calls. \n "
-        "In the case you know only the current working directory you can use it as the project path.\n "
-        "If you're not aware about the project path you can ask user about it."
-    ] = None,
+    projectPath: ProjectPath = None,
 ) -> dict[str, Any]:
     # {
     #   'properties': {

@@ -1,5 +1,7 @@
 from typing import Annotated, Any
 
+from annotations import ProjectPath
+
 
 def xdebug_get_stack(
     sessionId: Annotated[
@@ -18,12 +20,7 @@ def xdebug_get_stack(
     ] = None,
     limit: Annotated[int, "Max frames to return. Default: 200."] = 200,
     offset: Annotated[int, "Page offset. Default: 0."] = 0,
-    projectPath: Annotated[
-        str | None,
-        " The project path. Pass this value ALWAYS if you are aware of it. It reduces numbers of ambiguous calls. \n "
-        "In the case you know only the current working directory you can use it as the project path.\n "
-        "If you're not aware about the project path you can ask user about it."
-    ] = None,
+    projectPath: ProjectPath = None,
 ) -> dict[str, Any]:
     # {
     #   'properties': {

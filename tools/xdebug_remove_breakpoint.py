@@ -1,5 +1,6 @@
 from typing import Annotated, Any
 
+from annotations import ProjectPath
 from enums import BreakpointOwner
 
 
@@ -15,12 +16,7 @@ def xdebug_remove_breakpoint(
     ] = None,
     line: Annotated[int | None, "Optional input: line number (1-based) of the breakpoint to remove."] = None,
     owner: Annotated[BreakpointOwner, "Breakpoint owner filter. Default: agent."] = BreakpointOwner.AGENT,
-    projectPath: Annotated[
-        str | None,
-        " The project path. Pass this value ALWAYS if you are aware of it. It reduces numbers of ambiguous calls. \n "
-        "In the case you know only the current working directory you can use it as the project path.\n "
-        "If you're not aware about the project path you can ask user about it."
-    ] = None,
+    projectPath: ProjectPath = None,
 ) -> dict[str, Any]:
     # {
     #   'properties': {

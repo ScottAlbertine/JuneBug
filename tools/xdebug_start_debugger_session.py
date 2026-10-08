@@ -1,5 +1,7 @@
 from typing import Annotated, Any
 
+from annotations import ProjectPath
+
 
 def xdebug_start_debugger_session(
     configurationName: Annotated[str | None, "Name of the existing run configuration to debug."] = None,
@@ -34,12 +36,7 @@ def xdebug_start_debugger_session(
         "Pass this only when the selected run configuration reports `supportsDynamicLaunchOverrides=true` in `get_run_configurations`. "
         "Missing/null keeps existing env unchanged; when provided, values are merged over existing env."
     ] = None,
-    projectPath: Annotated[
-        str | None,
-        " The project path. Pass this value ALWAYS if you are aware of it. It reduces numbers of ambiguous calls. \n "
-        "In the case you know only the current working directory you can use it as the project path.\n "
-        "If you're not aware about the project path you can ask user about it."
-    ] = None,
+    projectPath: ProjectPath = None,
 ) -> dict[str, Any]:
     # {
     #   'properties': {

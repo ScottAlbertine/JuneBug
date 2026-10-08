@@ -1,14 +1,9 @@
 from typing import Annotated, Any
 
+from annotations import ProjectPath
 
-def xdebug_get_debugger_status(
-    projectPath: Annotated[
-        str | None,
-        " The project path. Pass this value ALWAYS if you are aware of it. It reduces numbers of ambiguous calls. \n "
-        "In the case you know only the current working directory you can use it as the project path.\n "
-        "If you're not aware about the project path you can ask user about it."
-    ] = None,
-) -> dict[str, Any]:
+
+def xdebug_get_debugger_status(projectPath: ProjectPath = None) -> dict[str, Any]:
     # {
     #   'properties': {
     #     'sessions': {

@@ -1,5 +1,7 @@
 from typing import Annotated
 
+from annotations import ProjectPath
+
 
 def xdebug_get_frame_values(
     sessionId: Annotated[
@@ -25,12 +27,7 @@ def xdebug_get_frame_values(
         "(0 = no children (only frame variables), 1 = variables with first level children, 2 = two levels of children, etc.). "
         "Default: 0."
     ] = 0,
-    projectPath: Annotated[
-        str | None,
-        " The project path. Pass this value ALWAYS if you are aware of it. It reduces numbers of ambiguous calls. \n "
-        "In the case you know only the current working directory you can use it as the project path.\n "
-        "If you're not aware about the project path you can ask user about it."
-    ] = None,
+    projectPath: ProjectPath = None,
 ) -> None:
     """Returns the values visible in the specified stack frame as a tree structure.
 Use this tool to inspect local variables, parameters, and fields or other values available at a specific point in the call stack.

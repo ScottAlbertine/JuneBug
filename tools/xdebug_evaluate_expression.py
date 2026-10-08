@@ -1,5 +1,7 @@
 from typing import Annotated
 
+from annotations import ProjectPath
+
 
 def xdebug_evaluate_expression(
     expression: Annotated[
@@ -29,12 +31,7 @@ def xdebug_evaluate_expression(
         "Maximum depth for expanding children of the evaluated result "
         "(0 = value only, 1 = immediate children, 2 = children + grandchildren, etc.). Default: 0."
     ] = 0,
-    projectPath: Annotated[
-        str | None,
-        " The project path. Pass this value ALWAYS if you are aware of it. It reduces numbers of ambiguous calls. \n "
-        "In the case you know only the current working directory you can use it as the project path.\n "
-        "If you're not aware about the project path you can ask user about it."
-    ] = None,
+    projectPath: ProjectPath = None,
 ) -> None:
     """Evaluates an expression in the context of the current stack frame.
 Use this tool to compute values, call methods, or inspect expressions during debugging.
