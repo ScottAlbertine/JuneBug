@@ -3,7 +3,7 @@ from typing import Annotated
 from annotations import FrameIndex, ProjectPath, SessionID
 
 
-def xdebug_get_frame_values(
+def get_frame_values(
     sessionId: SessionID = None,
     frameIndex: FrameIndex = None,
     depth: Annotated[
@@ -19,15 +19,15 @@ Use this tool to inspect local variables, parameters, and fields or other values
 
 Preconditions:
 - Session must be suspended.
-- Frame index should come from the current paused `xdebug_get_stack` result.
+- Frame index should come from the current paused `get_stack` result.
 
 Format:
 - Nodes that have children are marked with `+`.
 
 Next call:
-- Use `xdebug_get_value_by_path` to drill into nested fields.
-- Use `xdebug_evaluate_expression` for computed checks in the same frame.
-- Do not reuse a cached `frameIndex` after `RESUME`, `STEP_*`, `xdebug_run_to_line`, or any change in paused location."""
+- Use `get_value_by_path` to drill into nested fields.
+- Use `evaluate_expression` for computed checks in the same frame.
+- Do not reuse a cached `frameIndex` after `RESUME`, `STEP_*`, `run_to_line`, or any change in paused location."""
     print(sessionId)
     print(frameIndex)
     print(depth)

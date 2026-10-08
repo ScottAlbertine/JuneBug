@@ -3,12 +3,12 @@ from typing import Annotated, Any
 from annotations import ProjectPath, SessionID
 
 
-def xdebug_get_stack(
+def get_stack(
     sessionId: SessionID = None,
     threadId: Annotated[
         str | None,
         "Thread ID to get stack for. "
-        "This value should come from `xdebug_get_threads` and matches the debugger thread display name, not an opaque numeric ID. "
+        "This value should come from `get_threads` and matches the debugger thread display name, not an opaque numeric ID. "
         "If not specified, uses the current/active thread. Default: null."
     ] = None,
     limit: Annotated[int, "Max frames to return. Default: 200."] = 200,
@@ -82,7 +82,7 @@ Preconditions:
 - Session must be suspended.
 
 Behavior:
-- `threadId` should come from `xdebug_get_threads` and matches the debugger thread display name (defaults to active thread).
+- `threadId` should come from `get_threads` and matches the debugger thread display name (defaults to active thread).
 - Includes frames even when source position is missing (file/line may be null).
 
 Pagination:
@@ -92,8 +92,8 @@ Frame fields include: index, file, line, isCurrent, presentation.
 `file` is reported as provided by the debugger (no path normalization).
 
 Next call:
-- Use frame index from the current paused result in `xdebug_get_frame_values`, `xdebug_get_value_by_path`, or `xdebug_evaluate_expression`.
-- Do not reuse a cached `frameIndex` after `RESUME`, `STEP_*`, `xdebug_run_to_line`, or any change in paused location."""
+- Use frame index from the current paused result in `get_frame_values`, `get_value_by_path`, or `evaluate_expression`.
+- Do not reuse a cached `frameIndex` after `RESUME`, `STEP_*`, `run_to_line`, or any change in paused location."""
     print(sessionId)
     print(threadId)
     print(limit)

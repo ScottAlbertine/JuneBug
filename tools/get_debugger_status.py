@@ -3,7 +3,7 @@ from typing import Annotated, Any
 from annotations import ProjectPath
 
 
-def xdebug_get_debugger_status(projectPath: ProjectPath = None) -> dict[str, Any]:
+def get_debugger_status(projectPath: ProjectPath = None) -> dict[str, Any]:
     # {
     #   'properties': {
     #     'sessions': {
@@ -98,7 +98,7 @@ Preconditions:
 Returns explicit `sessions[]` and `activeSessionId`.
 
 Next call:
-- If no sessions are running, call `xdebug_start_debugger_session`.
+- If no sessions are running, call `start_debugger_session`.
 - If multiple sessions are active, use returned `id` as `sessionId` in subsequent calls."""
     print(projectPath)
 

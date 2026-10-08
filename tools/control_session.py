@@ -4,7 +4,7 @@ from annotations import ProjectPath, SessionID
 from enums import ActionEnum
 
 
-def xdebug_control_session(
+def control_session(
     action: Annotated[
         ActionEnum,
         "Action to perform: STEP_INTO, STEP_OVER, STEP_OUT, RESUME, PAUSE, STOP, WAIT_FOR_PAUSE, DRAIN_EVENTS. "
@@ -73,7 +73,7 @@ def xdebug_control_session(
     #         'string',
     #         'null'
     #       ],
-    #       'description': 'Snapshot of current frame values when the session is paused, using the same text format as `xdebug_get_frame_values` with `depth=0`.'
+    #       'description': 'Snapshot of current frame values when the session is paused, using the same text format as `get_frame_values` with `depth=0`.'
     #     },
     #     'breakpointsMuted': {
     #       'type': 'boolean',
@@ -253,18 +253,18 @@ Actions:
 
 Important notes:
 - If the program is running, use WAIT_FOR_PAUSE or PAUSE before STEP_* / RESUME.
-- Use a current `sessionId` from `xdebug_get_debugger_status` or `xdebug_start_debugger_session`. If a session stops, times out, or disappears, refresh the session list before the next session-scoped call.
+- Use a current `sessionId` from `get_debugger_status` or `start_debugger_session`. If a session stops, times out, or disappears, refresh the session list before the next session-scoped call.
 - RESUME does NOT set breakpoints. If there are no enabled breakpoints (or none will be hit next), the program may run to completion and the session may stop without pausing.
 - After RESUME, call WAIT_FOR_PAUSE to confirm the next suspension. If WAIT_FOR_PAUSE times out, consider PAUSE and re-check breakpoints.
 - `DRAIN_EVENTS` also requires an existing session; do not reuse a stale `sessionId` after the session has terminated.
 
 Next call:
-- After `RESUME`, call `xdebug_control_session(action=WAIT_FOR_PAUSE)`.
-- After a paused result, call `xdebug_get_stack` / `xdebug_get_frame_values` / `xdebug_evaluate_expression`.
+- After `RESUME`, call `control_session(action=WAIT_FOR_PAUSE)`.
+- After a paused result, call `get_stack` / `get_frame_values` / `evaluate_expression`.
 
 Status values in the result:
 - running: Program is executing
-- paused: Execution is suspended (breakpoint, step, or manual pause); paused results also include `frameValues`, a current-frame snapshot in `xdebug_get_frame_values(depth=0)` format when available
+- paused: Execution is suspended (breakpoint, step, or manual pause); paused results also include `frameValues`, a current-frame snapshot in `get_frame_values(depth=0)` format when available
 - stopped: Debug session has terminated
 - `breakpointErrorsTail` is returned for any action
 - `tracepointOutputsTail` is returned only for `DRAIN_EVENTS`

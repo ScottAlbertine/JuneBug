@@ -3,7 +3,7 @@ from typing import Annotated, Any
 from annotations import ProjectPath, SessionID
 
 
-def xdebug_run_to_line(
+def run_to_line(
     filePath: Annotated[
         str,
         "Target source file path. Path to the file. "
@@ -86,8 +86,8 @@ Outcome:
 - timeout: no pause/stop within timeout window.
 
 Next call:
-- If paused, call `xdebug_get_stack` / `xdebug_get_frame_values` / `xdebug_evaluate_expression`.
-- If the session stopped or disappeared, refresh `sessionId` via `xdebug_get_debugger_status` before issuing another session-scoped call."""
+- If paused, call `get_stack` / `get_frame_values` / `evaluate_expression`.
+- If the session stopped or disappeared, refresh `sessionId` via `get_debugger_status` before issuing another session-scoped call."""
     print(sessionId)
     print(filePath)
     print(line)

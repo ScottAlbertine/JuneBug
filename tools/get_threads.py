@@ -3,7 +3,7 @@ from typing import Annotated, Any
 from annotations import ProjectPath, SessionID
 
 
-def xdebug_get_threads(
+def get_threads(
     sessionId: SessionID = None,
     limit: Annotated[int, "Page size. Default: 50, max: 200."] = 200,
     offset: Annotated[int, "Page offset. Default: 0."] = 0,
@@ -91,7 +91,7 @@ Preconditions:
 - Session must be suspended.
 
 Next call:
-- Use `xdebug_get_stack` for the selected thread.
+- Use `get_stack` for the selected thread.
 
 Pagination:
 - `offset`/`limit` are applied after collecting all stacks.

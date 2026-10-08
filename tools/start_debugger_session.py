@@ -3,7 +3,7 @@ from typing import Annotated, Any
 from annotations import ProjectPath
 
 
-def xdebug_start_debugger_session(
+def start_debugger_session(
     configurationName: Annotated[str | None, "Name of the existing run configuration to debug."] = None,
     filePath: Annotated[
         str | None,
@@ -121,8 +121,8 @@ Behavior:
 - Pass a whitespace-only string such as `" "` to clear an existing value for this debug launch.
 
 Next call:
-- `xdebug_control_session(action=WAIT_FOR_PAUSE)` to wait for first suspension.
-- After pause, call `xdebug_get_stack` and `xdebug_get_frame_values` (or `xdebug_evaluate_expression`) for runtime evidence.
+- `control_session(action=WAIT_FOR_PAUSE)` to wait for first suspension.
+- After pause, call `get_stack` and `get_frame_values` (or `evaluate_expression`) for runtime evidence.
 
 Returns a flat result with debugger session metadata plus the execution snapshot fields from the launch:
 - `sessionId`, `name`, `status`, and optional `runConfigurationName`

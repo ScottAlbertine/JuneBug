@@ -9,7 +9,7 @@ ProjectPath = Annotated[
 
 SessionID = Annotated[
     str | None,
-    "Debug session ID. Use the current ID returned by `xdebug_get_debugger_status` or `xdebug_start_debugger_session`. "
+    "Debug session ID. Use the current ID returned by `get_debugger_status` or `start_debugger_session`. "
     "If a session has stopped, timed out, or disappeared, refresh the session list before reusing an old ID. "
     "Format: uses session name as ID by default; if multiple sessions share the same name, ID is `<sessionName>#<executionId>`. "
     "If null and exactly one active session exists, it is selected automatically. "
@@ -18,9 +18,9 @@ SessionID = Annotated[
 
 FrameIndex = Annotated[
     int | None,
-    "Stack frame index counted from the top of the stack, the same `index` `xdebug_get_stack` reports: "
+    "Stack frame index counted from the top of the stack, the same `index` `get_stack` reports: "
     "0 is the frame execution is in, 1 its caller, and so on. "
-    "Obtain this from the current paused `xdebug_get_stack` result; "
-    "do not reuse a cached frame index after `RESUME`, `STEP_*`, `xdebug_run_to_line`, or any change in paused location. "
-    "If null, uses the frame currently selected in the debugger, the one `xdebug_get_stack` marks `isCurrent`. Default: null."
+    "Obtain this from the current paused `get_stack` result; "
+    "do not reuse a cached frame index after `RESUME`, `STEP_*`, `run_to_line`, or any change in paused location. "
+    "If null, uses the frame currently selected in the debugger, the one `get_stack` marks `isCurrent`. Default: null."
 ]

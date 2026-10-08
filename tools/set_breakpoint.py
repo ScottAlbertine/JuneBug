@@ -4,17 +4,17 @@ from annotations import ProjectPath
 from enums import SuspendPolicy
 
 
-def xdebug_set_breakpoint(
+def set_breakpoint(
     breakpointId: Annotated[
         str | None,
-        "Canonical breakpoint ID returned by `xdebug_set_breakpoint` or `xdebug_list_breakpoints`. "
+        "Canonical breakpoint ID returned by `set_breakpoint` or `list_breakpoints`. "
         "If provided, the tool runs in ID mode. "
         "Omit this or pass null in location mode; do not use placeholder strings such as empty string or fake path-like values. "
         "Default: null."
     ] = None,
     sessionId: Annotated[
         str | None,
-        "Debug session ID. Use the current ID returned by `xdebug_get_debugger_status` or `xdebug_start_debugger_session`. "
+        "Debug session ID. Use the current ID returned by `get_debugger_status` or `start_debugger_session`. "
         "If a session has stopped, timed out, or disappeared, refresh the session list before reusing an old ID. "
         "Format: uses session name as ID by default; if multiple sessions share the same name, ID is `<sessionName>#<executionId>`. "
         "If null and exactly one active session exists, it is selected automatically. "
@@ -37,13 +37,13 @@ def xdebug_set_breakpoint(
     condition: Annotated[
         str | None,
         "Optional condition expression - breakpoint will only trigger when this evaluates to true. "
-        "Validation errors are reported asynchronously via xdebug_control_session(...).breakpointErrorsTail (JVM-based debuggers only). "
+        "Validation errors are reported asynchronously via control_session(...).breakpointErrorsTail (JVM-based debuggers only). "
         "Default: null."
     ] = None,
     logExpression: Annotated[
         str | None,
         "The Evaluate-and-log expression. "
-        "When set, its result is logged each time the breakpoint is hit, read via xdebug_control_session(action=DRAIN_EVENTS).tracepointOutputsTail. "
+        "When set, its result is logged each time the breakpoint is hit, read via control_session(action=DRAIN_EVENTS).tracepointOutputsTail. "
         "Combine with suspendPolicy=NONE to make a non-suspending logpoint - the preferred, most important way to capture runtime values without freezing threads. "
         "Keep it side-effect-free (no mutation, I/O, or iterator/stream advancement). logExpression=null clears it. "
         "Default: null."
@@ -51,13 +51,13 @@ def xdebug_set_breakpoint(
     isLogMessage: Annotated[
         bool,
         "Whether to log breakpoint hit position (source location) when breakpoint is reached. "
-        "In JVM-based debuggers output is available via xdebug_control_session(action=DRAIN_EVENTS).tracepointOutputsTail. "
+        "In JVM-based debuggers output is available via control_session(action=DRAIN_EVENTS).tracepointOutputsTail. "
         "Default: false."
     ] = False,
     isLogStack: Annotated[
         bool,
         "Whether to log stack trace when breakpoint is reached. "
-        "In JVM-based debuggers output is available via xdebug_control_session(action=DRAIN_EVENTS).tracepointOutputsTail. "
+        "In JVM-based debuggers output is available via control_session(action=DRAIN_EVENTS).tracepointOutputsTail. "
         "Default: false."
     ] = False,
     temporary: Annotated[bool, "Temporary breakpoint (removed after first hit). Default: false."] = False,
@@ -210,11 +210,11 @@ Use this tool to set line breakpoints, set logpoints via `logExpression`, update
 Logpoints are the preferred, low-disturbance probe, and providing a `logExpression` is the most important input:
 set `logExpression` together with `suspendPolicy=NONE` to evaluate an expression and log its result every time the line
 is reached WITHOUT stopping execution — the primary way to capture runtime values, branch/reachability evidence, counts,
-and identifiers. Read the logged output via `xdebug_control_session(action=DRAIN_EVENTS).tracepointOutputsTail`.
+and identifiers. Read the logged output via `control_session(action=DRAIN_EVENTS).tracepointOutputsTail`.
 
 Targeting modes:
 - By location: provide `filePath` + `line`, and omit `breakpointId` (or pass null). Do not use placeholder strings such as `""`, `"/"`, or `"__omit__"`.
-- By ID: provide an existing opaque canonical `breakpointId` returned by `xdebug_set_breakpoint` or `xdebug_list_breakpoints` (optional `filePath`/`line` can relocate line breakpoints).
+- By ID: provide an existing opaque canonical `breakpointId` returned by `set_breakpoint` or `list_breakpoints` (optional `filePath`/`line` can relocate line breakpoints).
 - Breakpoint mute-only: provide only `sessionId` and `breakpointsMuted`.
   Do not combine `breakpointsMuted` with breakpoint target or settings parameters.
 
@@ -225,10 +225,10 @@ Validation:
 - In breakpoint mute-only mode, a debugger session must be resolved from `sessionId` or the single active session.
 
 Event reporting:
-- Invalid `condition` expressions are reported asynchronously via `xdebug_control_session(...).breakpointErrorsTail`.
-- Tracepoint output from breakpoints with `isLogMessage` and/or `isLogStack` is drained via `xdebug_control_session(action=DRAIN_EVENTS).tracepointOutputsTail`.
+- Invalid `condition` expressions are reported asynchronously via `control_session(...).breakpointErrorsTail`.
+- Tracepoint output from breakpoints with `isLogMessage` and/or `isLogStack` is drained via `control_session(action=DRAIN_EVENTS).tracepointOutputsTail`.
 - Breakpoint-error and tracepoint-output reporting is currently supported only by JVM-based debuggers (Java, Kotlin, etc.).
-- A successful `xdebug_set_breakpoint` response does not guarantee that `condition` or tracepoint expressions are valid; check later `breakpointErrorsTail` before relying on them.
+- A successful `set_breakpoint` response does not guarantee that `condition` or tracepoint expressions are valid; check later `breakpointErrorsTail` before relying on them.
 - Successful line-breakpoint responses also include `lineText`, a truncated excerpt of the actual source line where the breakpoint now resides. Inspect it to confirm placement before resuming.
 
 Apply semantics:
@@ -246,8 +246,8 @@ Apply semantics:
 - Any successful operation marks breakpoint as `agent` ownership (`mcpBreakpointMarker`).
 
 Next call:
-- Use returned `lineText` and/or `xdebug_list_breakpoints` to verify placement.
-- Start/continue execution via `xdebug_start_debugger_session` or `xdebug_control_session(action=RESUME)`."""
+- Use returned `lineText` and/or `list_breakpoints` to verify placement.
+- Start/continue execution via `start_debugger_session` or `control_session(action=RESUME)`."""
     print(breakpointId)
     print(sessionId)
     print(filePath)

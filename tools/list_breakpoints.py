@@ -3,7 +3,7 @@ from typing import Annotated, Any
 from annotations import ProjectPath
 
 
-def xdebug_list_breakpoints(
+def list_breakpoints(
     filePath: Annotated[
         str | None,
         "Optional file path to filter breakpoints. Path to the file. "
@@ -14,7 +14,7 @@ def xdebug_list_breakpoints(
     ] = None,
     sessionId: Annotated[
         str | None,
-        "Debug session ID. Use the current ID returned by `xdebug_get_debugger_status` or `xdebug_start_debugger_session`. "
+        "Debug session ID. Use the current ID returned by `get_debugger_status` or `start_debugger_session`. "
         "If a session has stopped, timed out, or disappeared, refresh the session list before reusing an old ID. "
         "Format: uses session name as ID by default; if multiple sessions share the same name, ID is `<sessionName>#<executionId>`. "
         "If null and exactly one active session exists, it is selected automatically. "
@@ -145,8 +145,8 @@ Behavior:
 - `breakpointsMuted` reports the session-wide debugger mute flag when a session is resolved; it does not change per-breakpoint `enabled` values.
 
 Next call:
-- If no suitable breakpoint exists, call `xdebug_set_breakpoint`.
-- Then continue execution with `xdebug_control_session(action=RESUME)` and `xdebug_control_session(action=WAIT_FOR_PAUSE)`."""
+- If no suitable breakpoint exists, call `set_breakpoint`.
+- Then continue execution with `control_session(action=RESUME)` and `control_session(action=WAIT_FOR_PAUSE)`."""
     print(filePath)
     print(sessionId)
     print(projectPath)

@@ -3,7 +3,7 @@ from typing import Annotated
 from annotations import FrameIndex, ProjectPath, SessionID
 
 
-def xdebug_evaluate_expression(
+def evaluate_expression(
     expression: Annotated[
         str,
         "Expression to evaluate in the current context. "
@@ -36,8 +36,8 @@ Input rules:
 - Do not pass JSON-escaped payloads or literal escape sequences such as `\\"text\\"`.
 
 Next call:
-- If expression confirms hypothesis, continue with `xdebug_control_session(STEP_*|RESUME)`.
-- If more detail is needed, inspect related values via `xdebug_get_frame_values` / `xdebug_get_value_by_path`."""
+- If expression confirms hypothesis, continue with `control_session(STEP_*|RESUME)`.
+- If more detail is needed, inspect related values via `get_frame_values` / `get_value_by_path`."""
     print(sessionId)
     print(frameIndex)
     print(expression)

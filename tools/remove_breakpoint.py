@@ -4,9 +4,9 @@ from annotations import ProjectPath
 from enums import BreakpointOwner
 
 
-def xdebug_remove_breakpoint(
+def remove_breakpoint(
     breakpointId: Annotated[
-        str | None, "Canonical breakpoint ID returned by `xdebug_set_breakpoint` or `xdebug_list_breakpoints`."] = None,
+        str | None, "Canonical breakpoint ID returned by `set_breakpoint` or `list_breakpoints`."] = None,
     filePath: Annotated[
         str | None,
         "Optional input: Path to the file. "
@@ -67,7 +67,7 @@ Behavior:
 - To remove all breakpoints regardless of owner, call twice: once with `owner=user`, once with `owner=agent`.
 
 Next call:
-- Use `xdebug_list_breakpoints` to verify the remaining set."""
+- Use `list_breakpoints` to verify the remaining set."""
     print(breakpointId)
     print(filePath)
     print(line)

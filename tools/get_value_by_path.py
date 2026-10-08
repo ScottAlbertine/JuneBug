@@ -3,11 +3,11 @@ from typing import Annotated
 from annotations import FrameIndex, ProjectPath, SessionID
 
 
-def xdebug_get_value_by_path(
+def get_value_by_path(
     path: Annotated[
         list[str],
         "List of child names to navigate through, e.g. ['myObject', 'field', 'subField'] or ['items', '[0]', 'name']. "
-        "Use exact node names from the current paused `xdebug_get_frame_values` / `xdebug_get_value_by_path` output "
+        "Use exact node names from the current paused `get_frame_values` / `get_value_by_path` output "
         "and refresh stale path tokens after the paused location changes."
     ],
     sessionId: SessionID = None,
@@ -33,13 +33,13 @@ The result is returned as:
 Example: To get the value of obj.field.subField, use path = ["obj", "field", "subField"].
 For array/list indexers, pass the index token as a regular path element (child name), e.g.
 items[0].name -> path = ["items", "[0]", "name"].
-Use exact child names from the current paused `xdebug_get_frame_values` / previous `xdebug_get_value_by_path` output
+Use exact child names from the current paused `get_frame_values` / previous `get_value_by_path` output
 because index node names may differ by language/debugger (for example, "[0]" vs "0").
-Refresh `path` tokens after `RESUME`, `STEP_*`, `xdebug_run_to_line`, or any other change in paused location.
+Refresh `path` tokens after `RESUME`, `STEP_*`, `run_to_line`, or any other change in paused location.
 
 Next call:
-- Use another `xdebug_get_value_by_path` call to continue drilling deeper.
-- Use `xdebug_evaluate_expression` when direct name-path navigation is insufficient."""
+- Use another `get_value_by_path` call to continue drilling deeper.
+- Use `evaluate_expression` when direct name-path navigation is insufficient."""
     print(sessionId)
     print(frameIndex)
     print(path)
