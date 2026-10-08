@@ -1,96 +1,54 @@
 from typing import Annotated
+import uuid
 
 from annotations import ProjectPath
+from constants import TEMP_DIR
+from db import get_db
+from db_models import DBSession
+from enums import DebuggerState
 from frontend_models import StartDebuggerSessionResponse
 
 
 def start_debugger_session(
     projectPath: ProjectPath,
-    configurationName: Annotated[str | None, "Name of the existing run configuration to debug."] = None,
-    filePath: Annotated[
-        str | None,
-        "File path relative to the project root. Provide together with `line` to start debugging from a code location.",
-    ] = None,
-    line: Annotated[
-        int | None,
-        "1-based line number for `filePath`. "
-        "Provide together with `filePath` and do not combine with `configurationName`.",
-    ] = None,
+    filePath: Annotated[str, "File path of the Python program to debug, relative to the project root."],
     timeout: Annotated[int, "Timeout in milliseconds to wait for the debug session to start. Default: 60000."] = 60000,
-    graceWaitMs: Annotated[
-        int, "Grace wait in milliseconds after session starts to refresh state. Default: 2000.",
-    ] = 2000,
-    programArguments: Annotated[
-        str | None,
-        "Optional program arguments override for this launch only. "
-        "Pass this only when the selected run configuration reports `supportsDynamicLaunchOverrides=true` in `get_run_configurations`. "
-        "Missing/null or empty string keeps the existing value; whitespace-only string clears it.",
-    ] = None,
+    programArguments: Annotated[str | None, "Optional command-line arguments given to the program."] = None,
     workingDirectory: Annotated[
         str | None,
-        "Optional working directory override for this launch only. "
-        "Pass this only when the selected run configuration reports `supportsDynamicLaunchOverrides=true` in `get_run_configurations`. "
-        "Missing/null or empty string keeps the existing value; whitespace-only string clears it.",
+        "Optional working directory override for this program. Missing/null or empty string defaults to `projectPath`.",
     ] = None,
     envs: Annotated[
         dict[str, str] | None,
-        "Optional environment variable overrides for this launch only. "
-        "Pass this only when the selected run configuration reports `supportsDynamicLaunchOverrides=true` in `get_run_configurations`. "
+        "Optional environment variables to set during the program's execution. "
         "Missing/null keeps existing env unchanged; when provided, values are merged over existing env.",
     ] = None,
 ) -> StartDebuggerSessionResponse:
-    """Start a debugger session for either an existing run configuration by name or a code location
-(`filePath` + `line`) in the current project.
+    """Start a debugger session for a given Python program in the current project.
 Use this tool to start a debugger session.
-Use this tool with either an existing run configuration name, or with `filePath` + `line`.
-When using `filePath` + `line`, a line with a runnable method such as `main`, a test, or another executable
-entry point will almost always work. If you are unsure which line to use, `get_run_configurations`
-can help discover runnable locations in the file.
 The session will be started and you can then use other debugger tools to control execution.
-
-Preconditions:
-- When using `configurationName`, pass the exact existing run configuration name; do not pass a test method name or other derived target identifier.
-- When using `filePath` + `line`, point at a runnable code location such as `main`, a test, or another executable entry point.
-- Set at least one breakpoint first; otherwise the program may run to completion without pausing.
-- Pass either `configurationName`, or `filePath` together with `line`. These modes are mutually exclusive.
-
-Behavior:
-- Waits for session creation up to `timeout`.
-- Applies a grace wait (`graceWaitMs`) after the session starts and returns refreshed state.
-- Optional launch overrides (`programArguments`, `workingDirectory`, `envs`) are applied only for this debug launch and are not persisted.
-- `get_run_configurations` is the source of truth for override support: only pass launch overrides when the selected run configuration reports `supportsDynamicLaunchOverrides=true`.
-- Do not pass these override parameters unless you explicitly need to change the configured launch values for this debug launch.
-- Missing/null override parameters keep existing run configuration values unchanged.
-- For string overrides (`programArguments`, `workingDirectory`), missing/null or empty string (`""`) keeps the existing value unchanged.
-- Pass a whitespace-only string such as `" "` to clear an existing value for this debug launch.
+This MCP server will wait for session creation to succeed, up to `timeout` milliseconds.
+The program will be started in a paused state, so you can set breakpoints that you expect to be hit during startup.
 
 Next call:
-- `control_session(action=WAIT_FOR_PAUSE)` to wait for first suspension.
-- After pause, call `get_stack` and `get_frame_values` (or `evaluate_expression`) for runtime evidence.
+- `get_stack` and `get_frame_values` (or `evaluate_expression`) for runtime evidence.
 
-Returns a flat result with debugger session metadata plus the execution snapshot fields from the launch:
-- `sessionId`, `name`, `status`, and optional `runConfigurationName`
-- `output` preview and optional `fullOutputPath`
-- optional `exitCode` when process termination is already known"""
+Returns a flat result with debugger session metadata."""
 
     if envs is None:
         envs = {}
 
-    # DBSession.create(
-    #     id="sample",
-    #     name="sample name",
-    #     state=DebuggerState.PAUSED.value,
-    #     run_configuration_name="some run config",
-    #     is_active=True,
-    # )
+    with get_db(projectPath):
+        session_id = str(uuid.uuid4())
+        full_output_path = str(TEMP_DIR / f"{session_id}.output")
 
+        # TODO: actually do iiiiit
+        # subprocess.Popen()
 
-    print(configurationName)
-    print(filePath)
-    print(line)
-    print(timeout)
-    print(graceWaitMs)
-    print(programArguments)
-    print(workingDirectory)
-    print(envs)
-    print(projectPath)
+        session = DBSession.create(id=session_id, state=DebuggerState.PAUSED.value)
+        return StartDebuggerSessionResponse(
+            sessionId=session.id,
+            state=session.state,
+            breakpointsMuted=session.breakpoints_muted,
+            fullOutputPath=full_output_path,
+        )

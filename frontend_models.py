@@ -75,11 +75,7 @@ class DebugSession(BaseModel):
             description="Session identifier to use as `sessionId` in debugger calls. Uses session name by default; if duplicate names exist, format is `<sessionName>#<executionId>`.",
         ),
     ]
-    name: Annotated[str, Field(description="Session display name.")]
     state: Annotated[DebuggerState, Field(description="Current session state.")]
-    runConfigurationName: Annotated[
-        str | None, Field(default=None, description="Associated run configuration name when available."),
-    ] = None
     breakpointsMuted: Annotated[
         bool, Field(default=False, description="Whether breakpoints are globally muted for this debugger session."),
     ]
@@ -163,9 +159,6 @@ class DebuggerStatusResponse(BaseModel):
     """Current debugger status with all active sessions."""
 
     sessions: Annotated[list[DebugSession], Field(description="All currently known debug sessions.")]
-    activeSessionId: Annotated[
-        str | None, Field(default=None, description="Identifier of the active session, if any."),
-    ] = None
 
 
 class StackResponse(BaseModel):
@@ -285,36 +278,18 @@ class StartDebuggerSessionResponse(BaseModel):
     sessionId: Annotated[
         str,
         Field(
-            description="Session identifier to use as `sessionId` in subsequent debugger calls. Uses session name by default; if duplicate names exist, format is `<sessionName>#<executionId>`.",
+            description="Session identifier to use as `sessionId` in subsequent debugger calls.",
         ),
     ]
-    name: Annotated[str, Field(description="Human-readable session name.")]
     state: Annotated[DebuggerState, Field(description="Current session state.")]
-    runConfigurationName: Annotated[
-        str | None, Field(default=None, description="Associated run configuration name, if available."),
-    ] = None
-    # TODO: not sure if this is optional or not
     breakpointsMuted: Annotated[
         bool,
         Field(default=False, description="Whether breakpoints are globally muted for this debugger session."),
-    ]
-    exitCode: Annotated[
-        int | None,
-        Field(
-            default=None,
-            description="Process exit code. Absent when the tool returns before observing process termination, for example when the debuggee continues running after the session starts.",
-        ),
-    ] = None
-    output: Annotated[
-        str,
-        Field(
-            description="Captured process output snapshot. When additional output exists, `<truncated>` is appended to the preview.",
-        ),
     ]
     fullOutputPath: Annotated[
         str | None,
         Field(
             default=None,
-            description="Path to a temp file containing the full raw output. The file may continue growing while the process is still running and remains available while the IDE is running.",
+            description="Path to a temp file containing the full raw output. The file may continue growing while the process is still running and remains available after session termination.",
         ),
     ] = None

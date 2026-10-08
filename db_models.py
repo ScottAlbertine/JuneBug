@@ -16,12 +16,9 @@ class DBSourcePosition(Model):
 
 class DBSession(Model):
     id = TextField(primary_key=True)
-    name = TextField()
     state = TextField(default=DebuggerState.PAUSED.value)
-    run_configuration_name = TextField(null=True)
     breakpoints_muted = BooleanField(default=False)
-    is_active = BooleanField(default=False)
-    current_position = ForeignKeyField(DBSourcePosition)
+    current_position = ForeignKeyField(DBSourcePosition, null=True)
 
     class Meta:
         model_metadata_class = ThreadSafeDatabaseMetadata

@@ -1,18 +1,12 @@
 from contextlib import contextmanager
 from hashlib import md5
-from pathlib import Path
-from tempfile import gettempdir
 from typing import Generator
 
 from peewee import SqliteDatabase
 
 from annotations import ProjectPath
+from constants import TEMP_DIR
 from db_models import ALL_MODELS
-
-TEMP_DIR = Path(gettempdir())
-
-# TODO: remove this
-print(f"TEMP DIR: {TEMP_DIR}")
 
 databases: dict[str, SqliteDatabase] = {}
 

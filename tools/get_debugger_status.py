@@ -17,24 +17,20 @@ Next call:
 - If no sessions are running, call `start_debugger_session`.
 - If multiple sessions are active, use returned `id` as `sessionId` in subsequent calls."""
     with get_db(projectPath):
-
         sessions: list[DebugSession] = []
-        active_session_id: str | None = None
-        for session in DBSession.select(DBSession, DBSourcePosition).join(DBSourcePosition):
-            if session.is_active:
-                active_session_id = session.id
-            sessions.append(
-                DebugSession(
-                    id=session.id,
-                    name=session.name,
-                    state=session.state,
-                    runConfigurationName=session.run_configuration_name,
-                    breakpointsMuted=session.breakpoints_muted,
-                    currentPosition=SourcePosition(
-                        filePath=session.current_position.file_path,
-                        line=session.current_position.line_num,
-                        column=session.current_position.column,
-                    ),
-                ),
+        for db_session in DBSession.select(DBSession, DBSourcePosition).left_outer_join(DBSourcePosition):
+            position: SourcePosition | None = None
+            if db_session.current_position:
+                position = SourcePosition(
+                    filePath=db_session.current_position.file_path,
+                    line=db_session.current_position.line_num,
+                    column=db_session.current_position.column,
+                )
+            session = DebugSession(
+                id=db_session.id,
+                state=db_session.state,
+                breakpointsMuted=db_session.breakpoints_muted,
+                currentPosition=position,
             )
-        return DebuggerStatusResponse(sessions=sessions, activeSessionId=active_session_id)
+            sessions.append(session)
+        return DebuggerStatusResponse(sessions=sessions)
