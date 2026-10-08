@@ -11,6 +11,7 @@ from frontend_models import StartDebuggerSessionResponse
 
 def start_debugger_session(
     projectPath: ProjectPath,
+    pythonPath: Annotated[str, "Absolute path to the Python executable to use when running the program."],
     filePath: Annotated[str, "File path of the Python program to debug, relative to the project root."],
     timeout: Annotated[int, "Timeout in milliseconds to wait for the debug session to start. Default: 60000."] = 60000,
     programArguments: Annotated[str | None, "Optional command-line arguments given to the program."] = None,
