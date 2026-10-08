@@ -19,7 +19,8 @@ def xdebug_list_breakpoints(
         "Format: uses session name as ID by default; if multiple sessions share the same name, ID is `<sessionName>#<executionId>`. "
         "If null and exactly one active session exists, it is selected automatically. "
         "If multiple sessions are active and sessionId is omitted, the call fails. "
-        "Default: null. Optional; when omitted, `breakpointsMuted` is returned only if exactly one active session exists."
+        "Default: null. "
+        "Optional; when omitted, `breakpointsMuted` is returned only if exactly one active session exists."
     ] = None,
     projectPath: ProjectPath = None,
 ) -> dict[str, Any]:
