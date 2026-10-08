@@ -15,3 +15,12 @@ SessionID = Annotated[
     "If null and exactly one active session exists, it is selected automatically. "
     "If multiple sessions are active and sessionId is omitted, the call fails. Default: null."
 ]
+
+FrameIndex = Annotated[
+    int | None,
+    "Stack frame index counted from the top of the stack, the same `index` `xdebug_get_stack` reports: "
+    "0 is the frame execution is in, 1 its caller, and so on. "
+    "Obtain this from the current paused `xdebug_get_stack` result; "
+    "do not reuse a cached frame index after `RESUME`, `STEP_*`, `xdebug_run_to_line`, or any change in paused location. "
+    "If null, uses the frame currently selected in the debugger, the one `xdebug_get_stack` marks `isCurrent`. Default: null."
+]
