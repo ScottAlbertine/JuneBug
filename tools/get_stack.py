@@ -1,6 +1,7 @@
-from typing import Annotated, Any
+from typing import Annotated
 
 from annotations import ProjectPath, SessionID
+from models import StackResponse
 
 
 def get_stack(
@@ -9,72 +10,12 @@ def get_stack(
         str | None,
         "Thread ID to get stack for. "
         "This value should come from `get_threads` and matches the debugger thread display name, not an opaque numeric ID. "
-        "If not specified, uses the current/active thread. Default: null."
+        "If not specified, uses the current/active thread. Default: null.",
     ] = None,
     limit: Annotated[int, "Max frames to return. Default: 200."] = 200,
     offset: Annotated[int, "Page offset. Default: 0."] = 0,
     projectPath: ProjectPath = None,
-) -> dict[str, Any]:
-    # {
-    #   'properties': {
-    #     'frames': {
-    #       'type': 'array',
-    #       'items': {
-    #         'type': 'object',
-    #         'required': [
-    #           'presentation',
-    #           'index',
-    #           'isCurrent'
-    #         ],
-    #         'properties': {
-    #           'presentation': {
-    #             'type': 'string',
-    #             'description': 'Rendered function/method frame label from debugger UI.'
-    #           },
-    #           'index': {
-    #             'type': 'integer',
-    #             'description': '0-based frame index to use as `frameIndex` in other debugger tools.'
-    #           },
-    #           'file': {
-    #             'type': [
-    #               'string',
-    #               'null'
-    #             ],
-    #             'description': 'Source file path as provided by the debugger when available.'
-    #           },
-    #           'line': {
-    #             'type': [
-    #               'integer',
-    #               'null'
-    #             ],
-    #             'description': '1-based source line when available.'
-    #           },
-    #           'isCurrent': {
-    #             'type': 'boolean',
-    #             'description': 'Whether this is the currently selected frame.'
-    #           }
-    #         }
-    #       },
-    #       'description': 'Stack frames for the selected thread, ordered from top (index 0) to older frames.'
-    #     },
-    #     'threadId': {
-    #       'type': [
-    #         'string',
-    #         'null'
-    #       ],
-    #       'description': 'Thread identifier used to fetch this stack.'
-    #     },
-    #     'totalFrames': {
-    #       'type': 'integer',
-    #       'description': 'Total frame count for the stack.'
-    #     }
-    #   },
-    #   'required': [
-    #     'frames',
-    #     'totalFrames'
-    #   ],
-    #   'type': 'object'
-    # }
+) -> StackResponse:
     """Returns the call stack for a thread in the debug session.
 Use this tool to see the sequence of method calls that led to the current execution point.
 
@@ -99,4 +40,3 @@ Next call:
     print(limit)
     print(offset)
     print(projectPath)
-

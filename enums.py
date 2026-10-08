@@ -12,24 +12,29 @@ class ActionEnum(Enum):
     WAIT_FOR_PAUSE = "WAIT_FOR_PAUSE"
     DRAIN_EVENTS = "DRAIN_EVENTS"
 
+
 class DebuggerStatus(Enum):
     RUNNING = "running"
     PAUSED = "paused"
     STOPPED = "stopped"
+
 
 class DebuggerOutcome(Enum):
     PAUSED = "paused"
     STOPPED = "stopped"
     TIMEOUT = "timeout"
 
+
 # TODO: probably a better name needed here
 class BreakpointEventType(Enum):
     BREAKPOINT_ERROR = "BREAKPOINT_ERROR"
     TRACEPOINT_OUTPUT = "TRACEPOINT_OUTPUT"
 
+
 class BreakpointOwner(Enum):
     USER = "user"
     AGENT = "agent"
+
 
 class SuspendPolicy(Enum):
     ALL = "ALL"

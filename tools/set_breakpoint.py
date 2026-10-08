@@ -1,7 +1,8 @@
-from typing import Annotated, Any
+from typing import Annotated
 
 from annotations import ProjectPath
 from enums import SuspendPolicy
+from models import SetBreakpointResponse
 
 
 def set_breakpoint(
@@ -10,7 +11,7 @@ def set_breakpoint(
         "Canonical breakpoint ID returned by `set_breakpoint` or `list_breakpoints`. "
         "If provided, the tool runs in ID mode. "
         "Omit this or pass null in location mode; do not use placeholder strings such as empty string or fake path-like values. "
-        "Default: null."
+        "Default: null.",
     ] = None,
     sessionId: Annotated[
         str | None,
@@ -20,7 +21,7 @@ def set_breakpoint(
         "If null and exactly one active session exists, it is selected automatically. "
         "If multiple sessions are active and sessionId is omitted, the call fails. "
         "Default: null. "
-        "Use with `breakpointsMuted` in a dedicated mute-only call; do not combine that call with breakpoint target or settings parameters."
+        "Use with `breakpointsMuted` in a dedicated mute-only call; do not combine that call with breakpoint target or settings parameters.",
     ] = None,
     filePath: Annotated[
         str | None,
@@ -28,17 +29,17 @@ def set_breakpoint(
         "Supports project-relative paths, paths with '..', absolute paths, archive entries like '/path/lib.jar!/pkg/Foo.class', "
         "and URLs such as 'file://', 'jar://', and 'jrt://'. "
         "Any path returned from the other tools can be passed as is (e.g. paths from 'search_*' tools). "
-        "Required only in location mode. Optional in ID mode to relocate line breakpoints."
+        "Required only in location mode. Optional in ID mode to relocate line breakpoints.",
     ] = None,
     line: Annotated[
         int | None,
-        "1-based line number. Required only in location mode. Optional in ID mode to relocate line breakpoints."
+        "1-based line number. Required only in location mode. Optional in ID mode to relocate line breakpoints.",
     ] = None,
     condition: Annotated[
         str | None,
         "Optional condition expression - breakpoint will only trigger when this evaluates to true. "
         "Validation errors are reported asynchronously via control_session(...).breakpointErrorsTail (JVM-based debuggers only). "
-        "Default: null."
+        "Default: null.",
     ] = None,
     logExpression: Annotated[
         str | None,
@@ -46,19 +47,19 @@ def set_breakpoint(
         "When set, its result is logged each time the breakpoint is hit, read via control_session(action=DRAIN_EVENTS).tracepointOutputsTail. "
         "Combine with suspendPolicy=NONE to make a non-suspending logpoint - the preferred, most important way to capture runtime values without freezing threads. "
         "Keep it side-effect-free (no mutation, I/O, or iterator/stream advancement). logExpression=null clears it. "
-        "Default: null."
+        "Default: null.",
     ] = None,
     isLogMessage: Annotated[
         bool,
         "Whether to log breakpoint hit position (source location) when breakpoint is reached. "
         "In JVM-based debuggers output is available via control_session(action=DRAIN_EVENTS).tracepointOutputsTail. "
-        "Default: false."
+        "Default: false.",
     ] = False,
     isLogStack: Annotated[
         bool,
         "Whether to log stack trace when breakpoint is reached. "
         "In JVM-based debuggers output is available via control_session(action=DRAIN_EVENTS).tracepointOutputsTail. "
-        "Default: false."
+        "Default: false.",
     ] = False,
     temporary: Annotated[bool, "Temporary breakpoint (removed after first hit). Default: false."] = False,
     suspendPolicy: Annotated[SuspendPolicy, "Suspend policy: ALL, THREAD, NONE. Default: ALL."] = SuspendPolicy.ALL,
@@ -68,142 +69,10 @@ def set_breakpoint(
         "Session-wide breakpoint mute flag. "
         "When provided, call this tool with only `sessionId` plus `breakpointsMuted`; "
         "do not pass breakpointId, filePath, line, condition, logging, suspend, temporary, or enabled parameters. "
-        "Default: null."
+        "Default: null.",
     ] = None,
     projectPath: ProjectPath = None,
-) -> dict[str, Any]:
-    # {
-    #   'properties': {
-    #     'breakpointId': {
-    #       'type': [
-    #         'string',
-    #         'null'
-    #       ],
-    #       'description': 'Canonical breakpoint ID. Absent for breakpoint mute-only operations.'
-    #     },
-    #     'previousBreakpointId': {
-    #       'type': [
-    #         'string',
-    #         'null'
-    #       ],
-    #       'description': 'Previous canonical breakpoint ID when operation relocated an existing line breakpoint.'
-    #     },
-    #     'added': {
-    #       'type': [
-    #         'object',
-    #         'null'
-    #       ],
-    #       'required': [
-    #         'id',
-    #         'type',
-    #         'enabled',
-    #         'owner',
-    #         'isLogMessage',
-    #         'isLogStack',
-    #         'temporary',
-    #         'suspendPolicy',
-    #         'hitCount'
-    #       ],
-    #       'properties': {
-    #         'id': {
-    #           'type': 'string',
-    #           'description': 'Canonical breakpoint ID (stable across list/remove).'
-    #         },
-    #         'type': {
-    #           'type': 'string',
-    #           'description': 'Breakpoint type (line/exception/other).'
-    #         },
-    #         'file': {
-    #           'type': [
-    #             'string',
-    #             'null'
-    #           ],
-    #           'description': 'File path of the breakpoint as provided by the debugger (usually file URL).'
-    #         },
-    #         'line': {
-    #           'type': [
-    #             'integer',
-    #             'null'
-    #           ],
-    #           'description': '1-based breakpoint line when available.'
-    #         },
-    #         'enabled': {
-    #           'type': 'boolean',
-    #           'description': 'Whether breakpoint is enabled.'
-    #         },
-    #         'owner': {
-    #           'type': 'string',
-    #           'enum': [
-    #             'user',
-    #             'agent'
-    #           ],
-    #           'description': 'Breakpoint ownership marker: `agent` if created/updated by MCP toolset, otherwise `user`.'
-    #         },
-    #         'condition': {
-    #           'type': [
-    #             'string',
-    #             'null'
-    #           ],
-    #           'description': 'Conditional expression for triggering breakpoint, if set.'
-    #         },
-    #         'logExpression': {
-    #           'type': [
-    #             'string',
-    #             'null'
-    #           ],
-    #           'description': 'Evaluate-and-log expression of the logpoint, if set (the value logged when the line is reached).'
-    #         },
-    #         'isLogMessage': {
-    #           'type': 'boolean',
-    #           'description': 'Whether breakpoint logs source position when hit.'
-    #         },
-    #         'isLogStack': {
-    #           'type': 'boolean',
-    #           'description': 'Whether breakpoint logs stack trace when hit.'
-    #         },
-    #         'temporary': {
-    #           'type': 'boolean',
-    #           'description': 'Whether breakpoint is temporary.'
-    #         },
-    #         'suspendPolicy': {
-    #           'type': 'string',
-    #           'description': 'Breakpoint suspend policy (all/thread/none).'
-    #         },
-    #         'hitCount': {
-    #           'type': 'integer',
-    #           'description': 'Breakpoint hit count, 0 when unavailable.'
-    #         }
-    #       },
-    #       'description': 'Details of the newly added or updated breakpoint. Absent for breakpoint mute-only operations.'
-    #     },
-    #     'totalBreakpoints': {
-    #       'type': 'integer',
-    #       'description': 'Current total number of breakpoints after operation.'
-    #     },
-    #     'lineText': {
-    #       'type': [
-    #         'string',
-    #         'null'
-    #       ],
-    #       'description': 'Short excerpt of the actual source line where the breakpoint resides, truncated when needed. Present for line breakpoints only.'
-    #     },
-    #     'breakpointsMuted': {
-    #       'type': 'boolean',
-    #       'description': 'Whether breakpoints are globally muted for the resolved debugger session.'
-    #     },
-    #     'message': {
-    #       'type': [
-    #         'string',
-    #         'null'
-    #       ],
-    #       'description': 'Additional note when requested and actual positions differ.'
-    #     }
-    #   },
-    #   'required': [
-    #     'totalBreakpoints'
-    #   ],
-    #   'type': 'object'
-    # }
+) -> SetBreakpointResponse:
     """Creates or updates a breakpoint or a logpoint (a non-suspending "Evaluate and log" breakpoint).
 Use this tool to set line breakpoints, set logpoints via `logExpression`, update existing breakpoints by ID, and control tracepoint/logging behavior.
 
@@ -261,4 +130,3 @@ Next call:
     print(enabled)
     print(breakpointsMuted)
     print(projectPath)
-

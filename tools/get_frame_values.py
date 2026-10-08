@@ -10,7 +10,7 @@ def get_frame_values(
         int,
         "Maximum depth for expanding nested objects "
         "(0 = no children (only frame variables), 1 = variables with first level children, 2 = two levels of children, etc.). "
-        "Default: 0."
+        "Default: 0.",
     ] = 0,
     projectPath: ProjectPath = None,
 ) -> None:

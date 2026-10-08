@@ -8,14 +8,14 @@ def evaluate_expression(
         str,
         "Expression to evaluate in the current context. "
         "Pass raw expression text in the language of the current frame; "
-        "do not pass JSON-escaped payloads or literal backslash-escaped quoted text."
+        "do not pass JSON-escaped payloads or literal backslash-escaped quoted text.",
     ],
     sessionId: SessionID = None,
     frameIndex: FrameIndex = None,
     depth: Annotated[
         int,
         "Maximum depth for expanding children of the evaluated result "
-        "(0 = value only, 1 = immediate children, 2 = children + grandchildren, etc.). Default: 0."
+        "(0 = value only, 1 = immediate children, 2 = children + grandchildren, etc.). Default: 0.",
     ] = 0,
     projectPath: ProjectPath = None,
 ) -> None:

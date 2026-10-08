@@ -1,100 +1,44 @@
-from typing import Annotated, Any
+from typing import Annotated
 
 from annotations import ProjectPath
+from models import StartDebuggerSessionResponse
 
 
 def start_debugger_session(
     configurationName: Annotated[str | None, "Name of the existing run configuration to debug."] = None,
     filePath: Annotated[
         str | None,
-        "File path relative to the project root. Provide together with `line` to start debugging from a code location."
+        "File path relative to the project root. Provide together with `line` to start debugging from a code location.",
     ] = None,
     line: Annotated[
         int | None,
         "1-based line number for `filePath`. "
-        "Provide together with `filePath` and do not combine with `configurationName`."
+        "Provide together with `filePath` and do not combine with `configurationName`.",
     ] = None,
     timeout: Annotated[int, "Timeout in milliseconds to wait for the debug session to start. Default: 60000."] = 60000,
     graceWaitMs: Annotated[
-        int, "Grace wait in milliseconds after session starts to refresh state. Default: 2000."
+        int, "Grace wait in milliseconds after session starts to refresh state. Default: 2000.",
     ] = 2000,
     programArguments: Annotated[
         str | None,
         "Optional program arguments override for this launch only. "
         "Pass this only when the selected run configuration reports `supportsDynamicLaunchOverrides=true` in `get_run_configurations`. "
-        "Missing/null or empty string keeps the existing value; whitespace-only string clears it."
+        "Missing/null or empty string keeps the existing value; whitespace-only string clears it.",
     ] = None,
     workingDirectory: Annotated[
         str | None,
         "Optional working directory override for this launch only. "
         "Pass this only when the selected run configuration reports `supportsDynamicLaunchOverrides=true` in `get_run_configurations`. "
-        "Missing/null or empty string keeps the existing value; whitespace-only string clears it."
+        "Missing/null or empty string keeps the existing value; whitespace-only string clears it.",
     ] = None,
     envs: Annotated[
         dict[str, str] | None,
         "Optional environment variable overrides for this launch only. "
         "Pass this only when the selected run configuration reports `supportsDynamicLaunchOverrides=true` in `get_run_configurations`. "
-        "Missing/null keeps existing env unchanged; when provided, values are merged over existing env."
+        "Missing/null keeps existing env unchanged; when provided, values are merged over existing env.",
     ] = None,
     projectPath: ProjectPath = None,
-) -> dict[str, Any]:
-    # {
-    #   'properties': {
-    #     'sessionId': {
-    #       'type': 'string',
-    #       'description': 'Session identifier to use as `sessionId` in subsequent debugger calls. Uses session name by default; if duplicate names exist, format is `<sessionName>#<executionId>`.'
-    #     },
-    #     'name': {
-    #       'type': 'string',
-    #       'description': 'Human-readable session name.'
-    #     },
-    #     'state': {
-    #       'type': 'string',
-    #       'enum': [
-    #         'running',
-    #         'paused',
-    #         'stopped'
-    #       ],
-    #       'description': 'Current session state.'
-    #     },
-    #     'runConfigurationName': {
-    #       'type': [
-    #         'string',
-    #         'null'
-    #       ],
-    #       'description': 'Associated run configuration name, if available.'
-    #     },
-    #     'breakpointsMuted': {
-    #       'type': 'boolean',
-    #       'description': 'Whether breakpoints are globally muted for this debugger session.'
-    #     },
-    #     'exitCode': {
-    #       'type': [
-    #         'integer',
-    #         'null'
-    #       ],
-    #       'description': 'Process exit code. Absent when the tool returns before observing process termination, for example when the debuggee continues running after the session starts.'
-    #     },
-    #     'output': {
-    #       'type': 'string',
-    #       'description': 'Captured process output snapshot. When additional output exists, `<truncated>` is appended to the preview.'
-    #     },
-    #     'fullOutputPath': {
-    #       'type': [
-    #         'string',
-    #         'null'
-    #       ],
-    #       'description': 'Path to a temp file containing the full raw output. The file may continue growing while the process is still running and remains available while the IDE is running.'
-    #     }
-    #   },
-    #   'required': [
-    #     'sessionId',
-    #     'name',
-    #     'state',
-    #     'output'
-    #   ],
-    #   'type': 'object'
-    # }
+) -> StartDebuggerSessionResponse:
     """Start a debugger session for either an existing run configuration by name or a code location
 (`filePath` + `line`) in the current project.
 Use this tool to start a debugger session.
@@ -141,4 +85,3 @@ Returns a flat result with debugger session metadata plus the execution snapshot
     print(workingDirectory)
     print(envs)
     print(projectPath)
-

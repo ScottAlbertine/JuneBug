@@ -8,14 +8,14 @@ def get_value_by_path(
         list[str],
         "List of child names to navigate through, e.g. ['myObject', 'field', 'subField'] or ['items', '[0]', 'name']. "
         "Use exact node names from the current paused `get_frame_values` / `get_value_by_path` output "
-        "and refresh stale path tokens after the paused location changes."
+        "and refresh stale path tokens after the paused location changes.",
     ],
     sessionId: SessionID = None,
     frameIndex: FrameIndex = None,
     depth: Annotated[
         int,
         "Maximum depth for expanding children of the resolved value "
-        "(0 = value only, 1 = immediate children, 2 = children + grandchildren, etc.). Default: 0."
+        "(0 = value only, 1 = immediate children, 2 = children + grandchildren, etc.). Default: 0.",
     ] = 0,
     projectPath: ProjectPath = None,
 ) -> None:
@@ -45,4 +45,3 @@ Next call:
     print(path)
     print(depth)
     print(projectPath)
-
