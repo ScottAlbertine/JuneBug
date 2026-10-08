@@ -1,13 +1,13 @@
 from typing import Annotated
 
 from annotations import ProjectPath, SessionID
-from enums import ActionEnum
+from enums import Action
 from models import ControlSessionResponse
 
 
 def control_session(
     action: Annotated[
-        ActionEnum,
+        Action,
         "Action to perform: STEP_INTO, STEP_OVER, STEP_OUT, RESUME, PAUSE, STOP, WAIT_FOR_PAUSE, DRAIN_EVENTS. "
         "Event draining is currently populated only by JVM-based debuggers (Java, Kotlin, etc.).",
     ],
