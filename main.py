@@ -16,7 +16,6 @@ from tools import (
     xdebug_start_debugger_session,
 )
 
-# TODO: dedupe a bunch of these annotated strings, there's a lot of repeats
 # TODO: turn the response dicts into response objects, after reading up on how to do so on the FastMCP docs
 
 # TODO: update the server description, and any other params that the intellij original specifies on this call
