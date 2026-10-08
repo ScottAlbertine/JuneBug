@@ -16,7 +16,7 @@ Even better, IntelliJ Idea has already built an MCP server that exposes this kin
 This is not how I want things to go, I want it to happen in the background, without the distraction and overhead of the UI.
 
 ## What I plan to do
-1. Have Junie examine and copy the signatures of Intellij's debug MCP server.
+1. Have Junie examine and copy the signatures of Intellij's debug MCP server. (done)
 2. Fill in those methods with actual functionality to do the python equivalent, using DAP as the underlying protocol.
 3. Package this up as an extremely simple "double click it and it runs in your system tray" server, for Windows, Mac, and Linux.
 
