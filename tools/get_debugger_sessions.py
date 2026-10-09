@@ -4,7 +4,7 @@ from db_models import DBDebugSession, DBSourcePosition
 from frontend_models import DebugSession, DebugSessions
 
 
-def get_debugger_sessions(projectPath: ProjectPath) -> DebugSessions | str:
+def get_debugger_sessions(projectPath: ProjectPath) -> DebugSessions:
     """Returns all active debugger sessions and their states.
 
 Preconditions:

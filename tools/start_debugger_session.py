@@ -16,7 +16,7 @@ def start_debugger_session(
     pythonPath: Annotated[str, "Absolute path to the Python executable to use when running the program."],
     filePath: Annotated[str, "File path of the Python program to debug, relative to the project root."],
     timeout: Annotated[int, "Timeout in milliseconds to wait for the debug session to start. Default: 60000."] = 60000,
-    programArguments: Annotated[str | None, "Optional command-line arguments given to the program."] = None,
+    programArguments: Annotated[list[str] | None, "Optional command-line arguments given to the program."] = None,
     workingDirectory: Annotated[
         str | None,
         "Optional working directory override for this program. Missing/null or empty string defaults to `projectPath`.",
@@ -38,6 +38,10 @@ Next call:
 
 Returns a flat result with debugger session metadata."""
 
+    # TODO: snake case all args, gonna be an annoying find/replace
+    if programArguments is None:
+        programArguments = []
+
     if env is None:
         env = {}
 
@@ -55,6 +59,7 @@ Returns a flat result with debugger session metadata."""
             "--listen", f"127.0.0.1:{port}",
             "--wait-for-client",
             filePath,
+            *programArguments,
         ],
         stdout=open(stdout_file_path, "w"),
         stderr=open(stderr_file_path, "w"),
