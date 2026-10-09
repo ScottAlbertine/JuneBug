@@ -1,7 +1,7 @@
 from annotations import ProjectPath
 from db import get_db
 from db_models import DBDebugSession, DBSourcePosition
-from frontend_models import DebugSession, DebugSessions, SourcePosition
+from frontend_models import DebugSession, DebugSessions
 
 
 def get_debugger_sessions(projectPath: ProjectPath) -> DebugSessions | str:
