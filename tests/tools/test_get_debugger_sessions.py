@@ -6,33 +6,31 @@ from fastmcp import Client
 import pytest
 
 from constants import TEMP_DIR
-from main import mcp
 from tests.conftest import PROJECT_ROOT
 import tests.fakes.fake_main as fake_main
 from tests.utils import MatchAny
 
 
 @pytest.mark.asyncio
-async def test_get_real_sessions() -> None:
+async def test_get_real_sessions(client: Client) -> None:
     """Create 2 real sessions, check that they show up under the appropriate project path, but not under a different path."""
-    async with Client(mcp) as client:
-        await client.call_tool(
-            "start_debugger_session", {
-                "projectPath": str(PROJECT_ROOT),
-                "pythonPath": sys.executable,
-                "filePath": str(Path(fake_main.__file__).relative_to(PROJECT_ROOT)),
-            },
-        )
-        await client.call_tool(
-            "start_debugger_session", {
-                "projectPath": str(PROJECT_ROOT),
-                "pythonPath": sys.executable,
-                "filePath": str(Path(fake_main.__file__).relative_to(PROJECT_ROOT)),
-            },
-        )
-        result = await client.call_tool("get_debugger_sessions", {"projectPath": str(PROJECT_ROOT)})
+    await client.call_tool(
+        "start_debugger_session", {
+            "projectPath": str(PROJECT_ROOT),
+            "pythonPath": sys.executable,
+            "filePath": str(Path(fake_main.__file__).relative_to(PROJECT_ROOT)),
+        },
+    )
+    await client.call_tool(
+        "start_debugger_session", {
+            "projectPath": str(PROJECT_ROOT),
+            "pythonPath": sys.executable,
+            "filePath": str(Path(fake_main.__file__).relative_to(PROJECT_ROOT)),
+        },
+    )
+    result = await client.call_tool("get_debugger_sessions", {"projectPath": str(PROJECT_ROOT)})
 
-        empty_result = await client.call_tool("get_debugger_sessions", {"projectPath": "fake"})
+    empty_result = await client.call_tool("get_debugger_sessions", {"projectPath": "fake"})
 
     # pre-pull some data for validation, we trust anything in here
     sessions = result.structured_content["sessions"]
