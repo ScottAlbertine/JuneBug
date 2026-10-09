@@ -6,26 +6,26 @@ from frontend_models import ControlSessionResponse
 
 
 def control_session(
-    projectPath: ProjectPath,
+    project_path: ProjectPath,
     action: Annotated[
         Action,
         "Action to perform: STEP_INTO, STEP_OVER, STEP_OUT, RESUME, PAUSE, STOP, WAIT_FOR_PAUSE, DRAIN_EVENTS. "
         "Event draining is currently populated only by JVM-based debuggers (Java, Kotlin, etc.).",
     ],
-    sessionId: SessionID = None,
+    session_id: SessionID = None,
     timeout: Annotated[
         int,
         "Timeout in milliseconds to wait for action completion. "
         "Guidance: STEP_* / PAUSE usually 5000-15000; WAIT_FOR_PAUSE usually 30000-120000 depending on workload and breakpoints. "
         "Default: 30000.",
     ] = 30000,
-    eventsLimit: Annotated[
+    events_limit: Annotated[
         int,
         "Maximum number of latest events to drain per event list. "
-        "For DRAIN_EVENTS this limit is applied independently to breakpointErrorsTail and tracepointOutputsTail. "
+        "For DRAIN_EVENTS this limit is applied independently to breakpoint_errors_tail and tracepoint_outputs_tail. "
         "Default: 100.",
     ] = 100,
-    clearEventsAfterRead: Annotated[
+    clear_events_after_read: Annotated[
         bool | None,
         "Compatibility flag. Returned events are always removed from internal buffers, regardless of this value.",
     ] = None,
@@ -49,10 +49,10 @@ Actions:
 
 Important notes:
 - If the program is running, use WAIT_FOR_PAUSE or PAUSE before STEP_* / RESUME.
-- Use a current `sessionId` from `get_debugger_status` or `start_debugger_session`. If a session stops, times out, or disappears, refresh the session list before the next session-scoped call.
+- Use a current `session_id` from `get_debugger_status` or `start_debugger_session`. If a session stops, times out, or disappears, refresh the session list before the next session-scoped call.
 - RESUME does NOT set breakpoints. If there are no enabled breakpoints (or none will be hit next), the program may run to completion and the session may stop without pausing.
 - After RESUME, call WAIT_FOR_PAUSE to confirm the next suspension. If WAIT_FOR_PAUSE times out, consider PAUSE and re-check breakpoints.
-- `DRAIN_EVENTS` also requires an existing session; do not reuse a stale `sessionId` after the session has terminated.
+- `DRAIN_EVENTS` also requires an existing session; do not reuse a stale `session_id` after the session has terminated.
 
 Next call:
 - After `RESUME`, call `control_session(action=WAIT_FOR_PAUSE)`.
@@ -60,17 +60,17 @@ Next call:
 
 Status values in the result:
 - running: Program is executing
-- paused: Execution is suspended (breakpoint, step, or manual pause); paused results also include `frameValues`, a current-frame snapshot in `get_frame_values(depth=0)` format when available
+- paused: Execution is suspended (breakpoint, step, or manual pause); paused results also include `frame_values`, a current-frame snapshot in `get_frame_values(depth=0)` format when available
 - stopped: Debug session has terminated
-- `breakpointErrorsTail` is returned for any action
-- `tracepointOutputsTail` is returned only for `DRAIN_EVENTS`
+- `breakpoint_errors_tail` is returned for any action
+- `tracepoint_outputs_tail` is returned only for `DRAIN_EVENTS`
 
 Event support scope:
 - Breakpoint error and tracepoint output events are currently reported only by JVM-based debuggers (Java, Kotlin, etc.).
 - On other debugger backends these event tails can be empty even when breakpoints/logging are configured."""
     print(action)
-    print(sessionId)
+    print(session_id)
     print(timeout)
-    print(eventsLimit)
-    print(clearEventsAfterRead)
-    print(projectPath)
+    print(events_limit)
+    print(clear_events_after_read)
+    print(project_path)

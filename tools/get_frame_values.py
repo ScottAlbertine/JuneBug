@@ -4,9 +4,9 @@ from annotations import FrameIndex, ProjectPath, SessionID
 
 
 def get_frame_values(
-    projectPath: ProjectPath,
-    sessionId: SessionID = None,
-    frameIndex: FrameIndex = None,
+    project_path: ProjectPath,
+    session_id: SessionID = None,
+    frame_index: FrameIndex = None,
     depth: Annotated[
         int,
         "Maximum depth for expanding nested objects "
@@ -27,8 +27,8 @@ Format:
 Next call:
 - Use `get_value_by_path` to drill into nested fields.
 - Use `evaluate_expression` for computed checks in the same frame.
-- Do not reuse a cached `frameIndex` after `RESUME`, `STEP_*`, `run_to_line`, or any change in paused location."""
-    print(sessionId)
-    print(frameIndex)
+- Do not reuse a cached `frame_index` after `RESUME`, `STEP_*`, `run_to_line`, or any change in paused location."""
+    print(session_id)
+    print(frame_index)
     print(depth)
-    print(projectPath)
+    print(project_path)

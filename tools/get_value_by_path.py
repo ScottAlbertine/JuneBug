@@ -4,15 +4,15 @@ from annotations import FrameIndex, ProjectPath, SessionID
 
 
 def get_value_by_path(
-    projectPath: ProjectPath,
+    project_path: ProjectPath,
     path: Annotated[
         list[str],
         "List of child names to navigate through, e.g. ['myObject', 'field', 'subField'] or ['items', '[0]', 'name']. "
         "Use exact node names from the current paused `get_frame_values` / `get_value_by_path` output "
         "and refresh stale path tokens after the paused location changes.",
     ],
-    sessionId: SessionID = None,
-    frameIndex: FrameIndex = None,
+    session_id: SessionID = None,
+    frame_index: FrameIndex = None,
     depth: Annotated[
         int,
         "Maximum depth for expanding children of the resolved value "
@@ -40,8 +40,8 @@ Refresh `path` tokens after `RESUME`, `STEP_*`, `run_to_line`, or any other chan
 Next call:
 - Use another `get_value_by_path` call to continue drilling deeper.
 - Use `evaluate_expression` when direct name-path navigation is insufficient."""
-    print(sessionId)
-    print(frameIndex)
+    print(session_id)
+    print(frame_index)
     print(path)
     print(depth)
-    print(projectPath)
+    print(project_path)

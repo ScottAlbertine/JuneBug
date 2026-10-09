@@ -5,8 +5,8 @@ from frontend_models import RunToLineResponse
 
 
 def run_to_line(
-    projectPath: ProjectPath,
-    filePath: Annotated[
+    project_path: ProjectPath,
+    file_path: Annotated[
         str,
         "Target source file path. Path to the file. "
         "Supports project-relative paths, paths with '..', absolute paths, archive entries like '/path/lib.jar!/pkg/Foo.class', "
@@ -14,7 +14,7 @@ def run_to_line(
         "Any path returned from the other tools can be passed as is (e.g. paths from 'search_*' tools).",
     ],
     line: Annotated[int, "Target line number (1-based)."],
-    sessionId: SessionID = None,
+    session_id: SessionID = None,
     timeout: Annotated[int, "Timeout in milliseconds waiting for paused/stopped result. Default: 30000."] = 30000,
 ) -> RunToLineResponse:
     """Resumes execution to a target line.
@@ -31,9 +31,9 @@ Outcome:
 
 Next call:
 - If paused, call `get_stack` / `get_frame_values` / `evaluate_expression`.
-- If the session stopped or disappeared, refresh `sessionId` via `get_debugger_status` before issuing another session-scoped call."""
-    print(sessionId)
-    print(filePath)
+- If the session stopped or disappeared, refresh `session_id` via `get_debugger_status` before issuing another session-scoped call."""
+    print(session_id)
+    print(file_path)
     print(line)
     print(timeout)
-    print(projectPath)
+    print(project_path)

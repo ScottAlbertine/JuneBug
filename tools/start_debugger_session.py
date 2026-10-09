@@ -12,14 +12,14 @@ from utils import find_free_port, install_debugpy
 
 
 def start_debugger_session(
-    projectPath: ProjectPath,
-    pythonPath: Annotated[str, "Absolute path to the Python executable to use when running the program."],
-    filePath: Annotated[str, "File path of the Python program to debug, relative to the project root."],
+    project_path: ProjectPath,
+    python_path: Annotated[str, "Absolute path to the Python executable to use when running the program."],
+    file_path: Annotated[str, "File path of the Python program to debug, relative to the project root."],
     timeout: Annotated[int, "Timeout in milliseconds to wait for the debug session to start. Default: 60000."] = 60000,
-    programArguments: Annotated[list[str] | None, "Optional command-line arguments given to the program."] = None,
-    workingDirectory: Annotated[
+    program_arguments: Annotated[list[str] | None, "Optional command-line arguments given to the program."] = None,
+    working_directory: Annotated[
         str | None,
-        "Optional working directory override for this program. Missing/null or empty string defaults to `projectPath`.",
+        "Optional working directory override for this program. Missing/null or empty string defaults to `project_path`.",
     ] = None,
     env: Annotated[
         dict[str, str] | None,
@@ -38,14 +38,13 @@ Next call:
 
 Returns a flat result with debugger session metadata."""
 
-    # TODO: snake case all args, gonna be an annoying find/replace
-    if programArguments is None:
-        programArguments = []
+    if program_arguments is None:
+        program_arguments = []
 
     if env is None:
         env = {}
 
-    install_debugpy(pythonPath)
+    install_debugpy(python_path)
 
     session_id = str(uuid.uuid4())
     stdout_file_path = TEMP_DIR / f"{session_id}.stdout.txt"
@@ -53,21 +52,21 @@ Returns a flat result with debugger session metadata."""
     port = find_free_port()
     debugee = subprocess.Popen(
         args=[
-            pythonPath,
+            python_path,
             "-Xfrozen_modules=off",
             "-m", "debugpy",
             "--listen", f"127.0.0.1:{port}",
             "--wait-for-client",
-            filePath,
-            *programArguments,
+            file_path,
+            *program_arguments,
         ],
         stdout=open(stdout_file_path, "w"),
         stderr=open(stderr_file_path, "w"),
-        cwd=workingDirectory or projectPath,
+        cwd=working_directory or project_path,
         env=env,
     )
 
-    with get_db(projectPath):
+    with get_db(project_path):
         session = DBDebugSession.create(
             id=session_id,
             pid=debugee.pid,

@@ -6,10 +6,10 @@ from frontend_models import RemoveBreakpointResponse
 
 
 def remove_breakpoint(
-    projectPath: ProjectPath,
-    breakpointId: Annotated[
+    project_path: ProjectPath,
+    breakpoint_id: Annotated[
         str | None, "Canonical breakpoint ID returned by `set_breakpoint` or `list_breakpoints`."] = None,
-    filePath: Annotated[
+    file_path: Annotated[
         str | None,
         "Optional input: Path to the file. "
         "Supports project-relative paths, paths with '..', absolute paths, "
@@ -25,16 +25,16 @@ Use this tool to remove previously set breakpoints.
 Behavior:
 - `owner` defaults to `agent`.
 - If only `owner` is provided, removes all breakpoints of that owner.
-- If `breakpointId` is provided, removes matching breakpoint(s) for the selected owner.
-- If `filePath`+`line` are provided, removes matching line breakpoint(s) for the selected owner.
+- If `breakpoint_id` is provided, removes matching breakpoint(s) for the selected owner.
+- If `file_path`+`line` are provided, removes matching line breakpoint(s) for the selected owner.
 - If multiple selectors are provided, all of them are combined (logical AND).
 - Idempotent: removing a non-existing breakpoint returns removed=false.
 - To remove all breakpoints regardless of owner, call twice: once with `owner=user`, once with `owner=agent`.
 
 Next call:
 - Use `list_breakpoints` to verify the remaining set."""
-    print(breakpointId)
-    print(filePath)
+    print(breakpoint_id)
+    print(file_path)
     print(line)
     print(owner)
-    print(projectPath)
+    print(project_path)

@@ -16,26 +16,26 @@ from tests.utils import MatchAny, MatchRegex
 async def test_simple(client: Client) -> None:
     create_result = await client.call_tool(
         "start_debugger_session", {
-            "projectPath": str(PROJECT_ROOT),
-            "pythonPath": sys.executable,
-            "filePath": str(Path(fake_main.__file__).relative_to(PROJECT_ROOT)),
+            "project_path": str(PROJECT_ROOT),
+            "python_path": sys.executable,
+            "file_path": str(Path(fake_main.__file__).relative_to(PROJECT_ROOT)),
         },
     )
-    get_result = await client.call_tool("get_debugger_sessions", {"projectPath": str(PROJECT_ROOT)})
+    get_result = await client.call_tool("get_debugger_sessions", {"project_path": str(PROJECT_ROOT)})
 
     session_id = create_result.structured_content["id"]
     expected_session = {
-        "breakpointsMuted": False,
-        "currentPosition": None,
-        "debugeePid": MatchAny(int),
+        "breakpoints_muted": False,
+        "current_position": None,
+        "debugee_pid": MatchAny(int),
         "id": session_id,
         "state": "paused",
-        "stdOutPath": f"{TEMP_DIR}{os.sep}{session_id}.stdout.txt",
-        "stdErrPath": f"{TEMP_DIR}{os.sep}{session_id}.stderr.txt",
+        "std_out_path": f"{TEMP_DIR}{os.sep}{session_id}.stdout.txt",
+        "std_err_path": f"{TEMP_DIR}{os.sep}{session_id}.stderr.txt",
     }
 
     assert create_result.structured_content == expected_session
-    proc = psutil.Process(create_result.structured_content["debugeePid"])
+    proc = psutil.Process(create_result.structured_content["debugee_pid"])
     assert proc.is_running()
     assert proc.cmdline() == [
         MatchRegex(r".+[Pp]ython3?"),  # don't worry about symlinks, just make sure it's python of some sort
@@ -49,8 +49,8 @@ async def test_simple(client: Client) -> None:
 
     # Check that stdout and stderr have been created, but not written to.
     # This proves that the files were opened, and that fake_main hasn't actually started yet.
-    assert Path(create_result.structured_content["stdOutPath"]).read_text() == ""
-    assert Path(create_result.structured_content["stdErrPath"]).read_text() == ""
+    assert Path(create_result.structured_content["std_out_path"]).read_text() == ""
+    assert Path(create_result.structured_content["std_err_path"]).read_text() == ""
 
     # Check that the DB insert succeeded by using `get_debugger_sessions`
     assert get_result.structured_content == {"sessions": [expected_session]}
@@ -59,16 +59,16 @@ async def test_simple(client: Client) -> None:
 async def test_fancy(client: Client) -> None:
     result = await client.call_tool(
         "start_debugger_session", {
-            "projectPath": str(PROJECT_ROOT),
-            "pythonPath": sys.executable,
-            "filePath": str(Path(fake_main.__file__).relative_to(PROJECT_ROOT)),
-            "programArguments": ["a", "b", "c"],
-            "workingDirectory": TEMP_DIR,
+            "project_path": str(PROJECT_ROOT),
+            "python_path": sys.executable,
+            "file_path": str(Path(fake_main.__file__).relative_to(PROJECT_ROOT)),
+            "program_arguments": ["a", "b", "c"],
+            "working_directory": TEMP_DIR,
             "env": {"some": "body", "once": "told me"},
         },
     )
 
-    proc = psutil.Process(result.structured_content["debugeePid"])
+    proc = psutil.Process(result.structured_content["debugee_pid"])
     assert proc.is_running()
     assert proc.cmdline() == [
         MatchRegex(r".+[Pp]ython3?"),  # don't worry about symlinks, just make sure it's python of some sort
@@ -92,9 +92,9 @@ async def test_bad_python_path(client: Client) -> None:
     ):
         await client.call_tool(
             "start_debugger_session", {
-                "projectPath": str(PROJECT_ROOT),
-                "pythonPath": "/not/a/real/path",
-                "filePath": str(Path(fake_main.__file__).relative_to(PROJECT_ROOT)),
+                "project_path": str(PROJECT_ROOT),
+                "python_path": "/not/a/real/path",
+                "file_path": str(Path(fake_main.__file__).relative_to(PROJECT_ROOT)),
             },
         )
 
@@ -106,8 +106,8 @@ async def test_debugpy_install_failure(client: Client) -> None:
     ):
         await client.call_tool(
             "start_debugger_session", {
-                "projectPath": str(PROJECT_ROOT),
-                "pythonPath": str(Path(__file__).parent.parent / "fakes" / "python_that_cant_install_debugpy.sh"),
-                "filePath": str(Path(fake_main.__file__).relative_to(PROJECT_ROOT)),
+                "project_path": str(PROJECT_ROOT),
+                "python_path": str(Path(__file__).parent.parent / "fakes" / "python_that_cant_install_debugpy.sh"),
+                "file_path": str(Path(fake_main.__file__).relative_to(PROJECT_ROOT)),
             },
         )

@@ -5,9 +5,9 @@ from frontend_models import StackResponse
 
 
 def get_stack(
-    projectPath: ProjectPath,
-    sessionId: SessionID = None,
-    threadId: Annotated[
+    project_path: ProjectPath,
+    session_id: SessionID = None,
+    thread_id: Annotated[
         str | None,
         "Thread ID to get stack for. "
         "This value should come from `get_threads` and matches the debugger thread display name, not an opaque numeric ID. "
@@ -23,20 +23,20 @@ Preconditions:
 - Session must be suspended.
 
 Behavior:
-- `threadId` should come from `get_threads` and matches the debugger thread display name (defaults to active thread).
+- `thread_id` should come from `get_threads` and matches the debugger thread display name (defaults to active thread).
 - Includes frames even when source position is missing (file/line may be null).
 
 Pagination:
 - `offset`/`limit` are applied after collecting the full stack.
 
-Frame fields include: index, file, line, isCurrent, presentation.
+Frame fields include: index, file, line, is_current, presentation.
 `file` is reported as provided by the debugger (no path normalization).
 
 Next call:
 - Use frame index from the current paused result in `get_frame_values`, `get_value_by_path`, or `evaluate_expression`.
-- Do not reuse a cached `frameIndex` after `RESUME`, `STEP_*`, `run_to_line`, or any change in paused location."""
-    print(sessionId)
-    print(threadId)
+- Do not reuse a cached `frame_index` after `RESUME`, `STEP_*`, `run_to_line`, or any change in paused location."""
+    print(session_id)
+    print(thread_id)
     print(limit)
     print(offset)
-    print(projectPath)
+    print(project_path)

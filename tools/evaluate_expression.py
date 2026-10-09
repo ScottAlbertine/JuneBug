@@ -4,15 +4,15 @@ from annotations import FrameIndex, ProjectPath, SessionID
 
 
 def evaluate_expression(
-    projectPath: ProjectPath,
+    project_path: ProjectPath,
     expression: Annotated[
         str,
         "Expression to evaluate in the current context. "
         "Pass raw expression text in the language of the current frame; "
         "do not pass JSON-escaped payloads or literal backslash-escaped quoted text.",
     ],
-    sessionId: SessionID = None,
-    frameIndex: FrameIndex = None,
+    session_id: SessionID = None,
+    frame_index: FrameIndex = None,
     depth: Annotated[
         int,
         "Maximum depth for expanding children of the evaluated result "
@@ -38,8 +38,8 @@ Input rules:
 Next call:
 - If expression confirms hypothesis, continue with `control_session(STEP_*|RESUME)`.
 - If more detail is needed, inspect related values via `get_frame_values` / `get_value_by_path`."""
-    print(sessionId)
-    print(frameIndex)
+    print(session_id)
+    print(frame_index)
     print(expression)
     print(depth)
-    print(projectPath)
+    print(project_path)

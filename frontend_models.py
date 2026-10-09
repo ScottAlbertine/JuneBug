@@ -26,33 +26,33 @@ class Breakpoint(BaseModel):
     condition: Annotated[
         str | None, Field(default=None, description="Conditional expression for triggering breakpoint, if set."),
     ] = None
-    logExpression: Annotated[
+    log_expression: Annotated[
         str | None,
         Field(
             default=None,
             description="Evaluate-and-log expression of the logpoint, if set (the value logged when the line is reached).",
         ),
     ] = None
-    isLogMessage: Annotated[bool, Field(description="Whether breakpoint logs source position when hit.")]
-    isLogStack: Annotated[bool, Field(description="Whether breakpoint logs stack trace when hit.")]
+    is_log_message: Annotated[bool, Field(description="Whether breakpoint logs source position when hit.")]
+    is_log_stack: Annotated[bool, Field(description="Whether breakpoint logs stack trace when hit.")]
     temporary: Annotated[bool, Field(description="Whether breakpoint is temporary.")]
-    suspendPolicy: Annotated[str, Field(description="Breakpoint suspend policy (all/thread/none).")]
-    hitCount: Annotated[int, Field(description="Breakpoint hit count, 0 when unavailable.")]
+    suspend_policy: Annotated[str, Field(description="Breakpoint suspend policy (all/thread/none).")]
+    hit_count: Annotated[int, Field(description="Breakpoint hit count, 0 when unavailable.")]
 
 
 class DebuggerEvent(BaseModel):
     """A debugger event."""
 
     type: Annotated[DebuggerEventType, Field(description="Event type (BREAKPOINT_ERROR or TRACEPOINT_OUTPUT).")]
-    timestampMs: Annotated[int, Field(description="Unix timestamp in milliseconds when the event was recorded.")]
+    timestamp_ms: Annotated[int, Field(description="Unix timestamp in milliseconds when the event was recorded.")]
     # TODO: try having this be a native datetime, see if it marshalls
-    timestampIso: Annotated[str, Field(description="ISO-8601 timestamp when the event was recorded.")]
-    sessionId: Annotated[str, Field(description="Debugger session identifier.")]
+    timestamp_iso: Annotated[str, Field(description="ISO-8601 timestamp when the event was recorded.")]
+    session_id: Annotated[str, Field(description="Debugger session identifier.")]
     message: Annotated[str, Field(description="Primary event message.")]
-    breakpointId: Annotated[
+    breakpoint_id: Annotated[
         str | None, Field(default=None, description="Canonical breakpoint ID when available."),
     ] = None
-    filePath: Annotated[
+    file_path: Annotated[
         str | None, Field(default=None, description="Breakpoint file path as provided by debugger when available."),
     ] = None
     line: Annotated[int | None, Field(default=None, description="1-based breakpoint line when available.")] = None
@@ -64,7 +64,7 @@ class DebuggerEvent(BaseModel):
 class SourcePosition(BaseModel):
     """An absolute position in source code."""
 
-    filePath: Annotated[str, Field(description="File path as provided by the debugger (usually VirtualFile.url).")]
+    file_path: Annotated[str, Field(description="File path as provided by the debugger (usually VirtualFile.url).")]
     line: Annotated[int, Field(description="1-based line number.")]
     column: Annotated[int | None, Field(default=None, description="1-based column number when available.")] = None
 
@@ -74,7 +74,7 @@ class SourcePosition(BaseModel):
             return None
 
         return cls(
-            filePath=position.file_path,
+            file_path=position.file_path,
             line=position.line_num,
             column=position.column,
         )
@@ -84,27 +84,27 @@ class SourcePosition(BaseModel):
 class DebugSession(BaseModel):
     """A debug session."""
 
-    id: Annotated[str, Field(description="Session identifier to use as `sessionId` in subsequent debugger calls.")]
+    id: Annotated[str, Field(description="Session identifier to use as `session_id` in subsequent debugger calls.")]
     state: Annotated[DebuggerState, Field(description="Current session state.")]
-    debugeePid: Annotated[int, "Pid of the process being debugged."]
-    stdOutPath: Annotated[
+    debugee_pid: Annotated[int, "Pid of the process being debugged."]
+    std_out_path: Annotated[
         str | None,
         Field(
             default=None,
             description="Path to a temp file where the debugee process puts its stdout. The file will continue growing while the process is still running and remains available after session termination.",
         ),
     ] = None
-    stdErrPath: Annotated[
+    std_err_path: Annotated[
         str | None,
         Field(
             default=None,
             description="Path to a temp file where the debugee process puts its stdout. The file will continue growing while the process is still running and remains available after session termination.",
         ),
     ] = None
-    breakpointsMuted: Annotated[
+    breakpoints_muted: Annotated[
         bool, Field(default=False, description="Whether breakpoints are globally muted for this debugger session.")
     ]
-    currentPosition: Annotated[
+    current_position: Annotated[
         SourcePosition | None,
         Field(default=None, description="Current source position for paused sessions, if available."),
     ] = None
@@ -113,12 +113,12 @@ class DebugSession(BaseModel):
     def from_db(cls, session: DBDebugSession) -> DebugSession:
         return cls(
             id=session.id,
-            debugeePid=session.pid,
+            debugee_pid=session.pid,
             state=session.state,
-            breakpointsMuted=session.breakpoints_muted,
-            stdOutPath=session.std_out_path,
-            stdErrPath=session.std_err_path,
-            currentPosition=SourcePosition.from_db(session.current_position),
+            breakpoints_muted=session.breakpoints_muted,
+            std_out_path=session.std_out_path,
+            std_err_path=session.std_err_path,
+            current_position=SourcePosition.from_db(session.current_position),
         )
 
 
@@ -132,46 +132,46 @@ class StackFrame(BaseModel):
     """A stack frame."""
 
     presentation: Annotated[str, Field(description="Rendered function/method frame label from debugger UI.")]
-    index: Annotated[int, Field(description="0-based frame index to use as `frameIndex` in other debugger tools.")]
+    index: Annotated[int, Field(description="0-based frame index to use as `frame_index` in other debugger tools.")]
     file: Annotated[
         str | None, Field(default=None, description="Source file path as provided by the debugger when available."),
     ] = None
     line: Annotated[int | None, Field(default=None, description="1-based source line when available.")] = None
-    isCurrent: Annotated[bool, Field(description="Whether this is the currently selected frame.")]
+    is_current: Annotated[bool, Field(description="Whether this is the currently selected frame.")]
 
 
 class Thread(BaseModel):
     """A thread in the debug session."""
 
-    id: Annotated[str, Field(description="Thread identifier to pass as `threadId` in `get_stack`.")]
+    id: Annotated[str, Field(description="Thread identifier to pass as `thread_id` in `get_stack`.")]
     name: Annotated[str, Field(description="Human-readable thread name.")]
     state: Annotated[str, Field(description="Current thread status from debugger perspective.")]
-    isCurrent: Annotated[bool, Field(description="Whether this thread is currently selected.")]
-    additionalInfo: Annotated[
+    is_current: Annotated[bool, Field(description="Whether this thread is currently selected.")]
+    additional_info: Annotated[
         str | None, Field(default=None, description="Additional thread display info when available."),
     ] = None
-    additionalInfoTooltip: Annotated[
+    additional_info_tooltip: Annotated[
         str | None, Field(default=None, description="Tooltip for additional thread display info when available."),
     ] = None
-    frameCount: Annotated[int | None, Field(default=None, description="Number of stack frames when available.")] = None
+    frame_count: Annotated[int | None, Field(default=None, description="Number of stack frames when available.")] = None
 
 
 class ControlSessionResponse(BaseModel):
     """Response from a debug session control action."""
 
     status: Annotated[DebuggerState, Field(description="Session state after the control action.")]
-    newPosition: Annotated[
+    new_position: Annotated[
         SourcePosition | None,
         Field(default=None, description="Current source position when the session is paused (if available)."),
     ] = None
-    frameValues: Annotated[
+    frame_values: Annotated[
         str | None,
         Field(
             default=None,
             description="Snapshot of current frame values when the session is paused, using the same text format as `get_frame_values` with `depth=0`.",
         ),
     ] = None
-    breakpointsMuted: Annotated[
+    breakpoints_muted: Annotated[
         bool,
         Field(default=False, description="Whether breakpoints are globally muted for this debugger session."),
     ]
@@ -182,14 +182,14 @@ class ControlSessionResponse(BaseModel):
             description="Additional context message for timeout/already-paused/already-stopped situations.",
         ),
     ] = None
-    breakpointErrorsTail: Annotated[
+    breakpoint_errors_tail: Annotated[
         list[DebuggerEvent] | None,
         Field(
             default=None,
             description="Latest drained breakpoint error events. Returned for any control_session action. Indicates errors in breakpoints configuration like invalid conditional/log expressions. Currently populated only by JVM-based debuggers (Java, Kotlin, etc.).",
         ),
     ] = None
-    tracepointOutputsTail: Annotated[
+    tracepoint_outputs_tail: Annotated[
         list[DebuggerEvent] | None,
         Field(
             default=None,
@@ -205,10 +205,10 @@ class StackResponse(BaseModel):
         list[StackFrame],
         Field(description="Stack frames for the selected thread, ordered from top (index 0) to older frames."),
     ]
-    threadId: Annotated[
+    thread_id: Annotated[
         str | None, Field(default=None, description="Thread identifier used to fetch this stack."),
     ] = None
-    totalFrames: Annotated[int, Field(description="Total frame count for the stack.")]
+    total_frames: Annotated[int, Field(description="Total frame count for the stack.")]
 
 
 class ThreadsResponse(BaseModel):
@@ -217,16 +217,16 @@ class ThreadsResponse(BaseModel):
     threads: Annotated[list[Thread], Field(description="Threads available in the suspended debug session (paginated).")]
     offset: Annotated[int, Field(description="Requested page offset.")]
     limit: Annotated[int, Field(description="Requested page limit.")]
-    totalCount: Annotated[int, Field(description="Total known thread count.")]
+    total_count: Annotated[int, Field(description="Total known thread count.")]
 
 
 class BreakpointsResponse(BaseModel):
     """List of configured breakpoints."""
 
     breakpoints: Annotated[list[Breakpoint], Field(description="List of currently configured breakpoints.")]
-    totalCount: Annotated[int, Field(description="Total count.")]
-    enabledCount: Annotated[int, Field(description="Enabled count.")]
-    breakpointsMuted: Annotated[
+    total_count: Annotated[int, Field(description="Total count.")]
+    enabled_count: Annotated[int, Field(description="Enabled count.")]
+    breakpoints_muted: Annotated[
         bool,
         Field(default=False, description="Whether breakpoints are globally muted for the resolved debugger session."),
     ]
@@ -236,11 +236,11 @@ class RemoveBreakpointResponse(BaseModel):
     """Result of a breakpoint removal operation."""
 
     removed: Annotated[bool, Field(description="Whether at least one breakpoint was removed.")]
-    removedCount: Annotated[int, Field(description="Number of breakpoints removed at the requested location.")]
-    breakpointId: Annotated[
+    removed_count: Annotated[int, Field(description="Number of breakpoints removed at the requested location.")]
+    breakpoint_id: Annotated[
         str | None, Field(default=None, description="Removed breakpoint ID when operation targeted one ID."),
     ] = None
-    totalBreakpoints: Annotated[int, Field(description="Current total number of breakpoints after removal.")]
+    total_breakpoints: Annotated[int, Field(description="Current total number of breakpoints after removal.")]
     message: Annotated[
         str | None, Field(default=None, description="Additional note when no matching breakpoint is found."),
     ] = None
@@ -249,11 +249,11 @@ class RemoveBreakpointResponse(BaseModel):
 class RunToLineResponse(BaseModel):
     """Result of a run-to-line operation."""
 
-    sessionId: Annotated[str, Field(description="Session identifier.")]
+    session_id: Annotated[str, Field(description="Session identifier.")]
     outcome: Annotated[
         DebuggerOutcome, Field(description="Outcome after attempting run-to-line (paused/stopped/timeout)."),
     ]
-    currentPosition: Annotated[
+    current_position: Annotated[
         SourcePosition | None,
         Field(default=None, description="Current position when outcome is paused and position is known."),
     ] = None
@@ -265,11 +265,11 @@ class RunToLineResponse(BaseModel):
 class SetBreakpointResponse(BaseModel):
     """Result of a breakpoint set/update operation."""
 
-    breakpointId: Annotated[
+    breakpoint_id: Annotated[
         str | None,
         Field(default=None, description="Canonical breakpoint ID. Absent for breakpoint mute-only operations."),
     ] = None
-    previousBreakpointId: Annotated[
+    previous_breakpoint_id: Annotated[
         str | None,
         Field(
             default=None,
@@ -283,15 +283,15 @@ class SetBreakpointResponse(BaseModel):
             description="Details of the newly added or updated breakpoint. Absent for breakpoint mute-only operations.",
         ),
     ] = None
-    totalBreakpoints: Annotated[int, Field(description="Current total number of breakpoints after operation.")]
-    lineText: Annotated[
+    total_breakpoints: Annotated[int, Field(description="Current total number of breakpoints after operation.")]
+    line_text: Annotated[
         str | None,
         Field(
             default=None,
             description="Short excerpt of the actual source line where the breakpoint resides, truncated when needed. Present for line breakpoints only.",
         ),
     ] = None
-    breakpointsMuted: Annotated[
+    breakpoints_muted: Annotated[
         bool,
         Field(default=False, description="Whether breakpoints are globally muted for the resolved debugger session."),
     ]
@@ -304,6 +304,6 @@ class SetVariableResponse(BaseModel):
     """Response from mutating a variable value by path in the selected stack frame."""
 
     path: Annotated[list[str], Field(description="Variable path used for mutation.")]
-    oldValue: Annotated[str, Field(description="Value before mutation.")]
-    newValue: Annotated[str, Field(description="Value after mutation.")]
+    old_value: Annotated[str, Field(description="Value before mutation.")]
+    new_value: Annotated[str, Field(description="Value after mutation.")]
     applied: Annotated[bool, Field(description="Whether mutation was applied.")]

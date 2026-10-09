@@ -5,8 +5,8 @@ from frontend_models import ThreadsResponse
 
 
 def get_threads(
-    projectPath: ProjectPath,
-    sessionId: SessionID = None,
+    project_path: ProjectPath,
+    session_id: SessionID = None,
     limit: Annotated[int, "Page size. Default: 50, max: 200."] = 50,
     offset: Annotated[int, "Page offset. Default: 0."] = 0,
 ) -> ThreadsResponse:
@@ -26,9 +26,9 @@ Ordering:
 - Active thread first.
 - Remaining threads are sorted by descending stack depth.
 
-Schema fields: id, name, state, isCurrent, additionalInfo, additionalInfoTooltip, frameCount.
-`additionalInfo`/`additionalInfoTooltip` use additional display info when available."""
-    print(sessionId)
+Schema fields: id, name, state, is_current, additional_info, additional_info_tooltip, frame_count.
+`additional_info`/`additional_info_tooltip` use additional display info when available."""
+    print(session_id)
     print(limit)
     print(offset)
-    print(projectPath)
+    print(project_path)
