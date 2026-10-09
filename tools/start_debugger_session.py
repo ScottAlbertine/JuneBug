@@ -55,7 +55,7 @@ Returns a flat result with debugger session metadata."""
             python_path,
             "-Xfrozen_modules=off",
             "-m", "debugpy",
-            "--listen", f"127.0.0.1:{port}",
+            "--listen", f"{port}",
             "--wait-for-client",
             file_path,
             *program_arguments,

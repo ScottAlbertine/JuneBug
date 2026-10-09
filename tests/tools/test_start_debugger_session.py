@@ -41,7 +41,7 @@ async def test_simple(client: Client) -> None:
         MatchRegex(r".+[Pp]ython3?"),  # don't worry about symlinks, just make sure it's python of some sort
         "-Xfrozen_modules=off",
         "-m", "debugpy",
-        "--listen", MatchRegex(r"127\.0\.0\.1:\d{4,5}"),
+        "--listen", MatchRegex(r"\d{4,5}"),
         "--wait-for-client",
         "tests/fakes/fake_main.py",
     ]
@@ -74,7 +74,7 @@ async def test_fancy(client: Client) -> None:
         MatchRegex(r".+[Pp]ython3?"),  # don't worry about symlinks, just make sure it's python of some sort
         "-Xfrozen_modules=off",
         "-m", "debugpy",
-        "--listen", MatchRegex(r"127\.0\.0\.1:\d{4,5}"),
+        "--listen", MatchRegex(r"\d{4,5}"),
         "--wait-for-client",
         "tests/fakes/fake_main.py",
         "a", "b", "c",
