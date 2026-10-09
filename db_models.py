@@ -14,9 +14,13 @@ class DBSourcePosition(Model):
         model_metadata_class = ThreadSafeDatabaseMetadata
 
 
-class DBSession(Model):
+class DBDebugSession(Model):
     id = TextField(primary_key=True)
     state = TextField(default=DebuggerState.PAUSED.value)
+    pid = IntegerField()
+    std_out_path = TextField()
+    std_err_path = TextField()
+    port = IntegerField()
     breakpoints_muted = BooleanField(default=False)
     current_position = ForeignKeyField(DBSourcePosition, null=True)
 
@@ -25,6 +29,6 @@ class DBSession(Model):
 
 
 ALL_MODELS = [
-    DBSession,
+    DBDebugSession,
     DBSourcePosition,
 ]

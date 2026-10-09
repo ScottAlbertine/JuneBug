@@ -1,8 +1,11 @@
-from typing import Annotated
+from typing import Annotated, TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
 from enums import BreakpointOwner, DebuggerEventType, DebuggerOutcome, DebuggerState
+
+if TYPE_CHECKING:
+    from db_models import DBDebugSession, DBSourcePosition
 
 
 class Breakpoint(BaseModel):
@@ -65,24 +68,64 @@ class SourcePosition(BaseModel):
     line: Annotated[int, Field(description="1-based line number.")]
     column: Annotated[int | None, Field(default=None, description="1-based column number when available.")] = None
 
+    @classmethod
+    def from_db(cls, position: DBSourcePosition | None) -> SourcePosition | None:
+        if position is None:
+            return None
+
+        return cls(
+            filePath=position.file_path,
+            line=position.line_num,
+            column=position.column,
+        )
+
+
 
 class DebugSession(BaseModel):
     """A debug session."""
 
-    id: Annotated[
-        str,
-        Field(
-            description="Session identifier to use as `sessionId` in debugger calls. Uses session name by default; if duplicate names exist, format is `<sessionName>#<executionId>`.",
-        ),
-    ]
+    id: Annotated[str, Field(description="Session identifier to use as `sessionId` in subsequent debugger calls.")]
     state: Annotated[DebuggerState, Field(description="Current session state.")]
+    debugeePid: Annotated[int, "Pid of the process being debugged."]
+    stdOutPath: Annotated[
+        str | None,
+        Field(
+            default=None,
+            description="Path to a temp file where the debugee process puts its stdout. The file will continue growing while the process is still running and remains available after session termination.",
+        ),
+    ] = None
+    stdErrPath: Annotated[
+        str | None,
+        Field(
+            default=None,
+            description="Path to a temp file where the debugee process puts its stdout. The file will continue growing while the process is still running and remains available after session termination.",
+        ),
+    ] = None
     breakpointsMuted: Annotated[
-        bool, Field(default=False, description="Whether breakpoints are globally muted for this debugger session."),
+        bool, Field(default=False, description="Whether breakpoints are globally muted for this debugger session.")
     ]
     currentPosition: Annotated[
         SourcePosition | None,
         Field(default=None, description="Current source position for paused sessions, if available."),
     ] = None
+
+    @classmethod
+    def from_db(cls, session: DBDebugSession) -> DebugSession:
+        return cls(
+            id=session.id,
+            debugeePid=session.pid,
+            state=session.state,
+            breakpointsMuted=session.breakpoints_muted,
+            stdOutPath=session.std_out_path,
+            stdErrPath=session.std_err_path,
+            currentPosition=SourcePosition.from_db(session.current_position),
+        )
+
+
+class DebugSessions(BaseModel):
+    """Current debugger status with all active sessions."""
+
+    sessions: Annotated[list[DebugSession], Field(description="All currently known debug sessions.")]
 
 
 class StackFrame(BaseModel):
@@ -153,12 +196,6 @@ class ControlSessionResponse(BaseModel):
             description="Latest drained tracepoint output events. Returned only for DRAIN_EVENTS action. Currently populated only by JVM-based debuggers (Java, Kotlin, etc.).",
         ),
     ] = None
-
-
-class DebuggerStatusResponse(BaseModel):
-    """Current debugger status with all active sessions."""
-
-    sessions: Annotated[list[DebugSession], Field(description="All currently known debug sessions.")]
 
 
 class StackResponse(BaseModel):
@@ -270,26 +307,3 @@ class SetVariableResponse(BaseModel):
     oldValue: Annotated[str, Field(description="Value before mutation.")]
     newValue: Annotated[str, Field(description="Value after mutation.")]
     applied: Annotated[bool, Field(description="Whether mutation was applied.")]
-
-
-class StartDebuggerSessionResponse(BaseModel):
-    """Response from starting a debugger session for a run configuration or code location."""
-
-    sessionId: Annotated[
-        str,
-        Field(
-            description="Session identifier to use as `sessionId` in subsequent debugger calls.",
-        ),
-    ]
-    state: Annotated[DebuggerState, Field(description="Current session state.")]
-    breakpointsMuted: Annotated[
-        bool,
-        Field(default=False, description="Whether breakpoints are globally muted for this debugger session."),
-    ]
-    fullOutputPath: Annotated[
-        str | None,
-        Field(
-            default=None,
-            description="Path to a temp file containing the full raw output. The file may continue growing while the process is still running and remains available after session termination.",
-        ),
-    ] = None

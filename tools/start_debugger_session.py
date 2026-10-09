@@ -1,12 +1,14 @@
+import subprocess
 from typing import Annotated
 import uuid
 
 from annotations import ProjectPath
 from constants import TEMP_DIR
 from db import get_db
-from db_models import DBSession
+from db_models import DBDebugSession
 from enums import DebuggerState
-from frontend_models import StartDebuggerSessionResponse
+from frontend_models import DebugSession
+from utils import find_free_port, install_debugpy
 
 
 def start_debugger_session(
@@ -19,12 +21,12 @@ def start_debugger_session(
         str | None,
         "Optional working directory override for this program. Missing/null or empty string defaults to `projectPath`.",
     ] = None,
-    envs: Annotated[
+    env: Annotated[
         dict[str, str] | None,
         "Optional environment variables to set during the program's execution. "
         "Missing/null keeps existing env unchanged; when provided, values are merged over existing env.",
     ] = None,
-) -> StartDebuggerSessionResponse:
+) -> DebugSession:
     """Start a debugger session for a given Python program in the current project.
 Use this tool to start a debugger session.
 The session will be started and you can then use other debugger tools to control execution.
@@ -36,20 +38,38 @@ Next call:
 
 Returns a flat result with debugger session metadata."""
 
-    if envs is None:
-        envs = {}
+    if env is None:
+        env = {}
+
+    install_debugpy(pythonPath)
+
+    session_id = str(uuid.uuid4())
+    stdout_file_path = TEMP_DIR / f"{session_id}.stdout.txt"
+    stderr_file_path = TEMP_DIR / f"{session_id}.stderr.txt"
+    port = find_free_port()
+    debugee = subprocess.Popen(
+        args=[
+            pythonPath,
+            "-Xfrozen_modules=off",
+            "-m", "debugpy",
+            "--listen", f"127.0.0.1:{port}",
+            "--wait-for-client",
+            filePath,
+        ],
+        stdout=open(stdout_file_path, "w"),
+        stderr=open(stderr_file_path, "w"),
+        cwd=workingDirectory or projectPath,
+        env=env,
+    )
 
     with get_db(projectPath):
-        session_id = str(uuid.uuid4())
-        full_output_path = str(TEMP_DIR / f"{session_id}.output")
-
-        # TODO: actually do iiiiit
-        # subprocess.Popen()
-
-        session = DBSession.create(id=session_id, state=DebuggerState.PAUSED.value)
-        return StartDebuggerSessionResponse(
-            sessionId=session.id,
-            state=session.state,
-            breakpointsMuted=session.breakpoints_muted,
-            fullOutputPath=full_output_path,
+        session = DBDebugSession.create(
+            id=session_id,
+            pid=debugee.pid,
+            port=port,
+            # TODO: maybe a stdin path too?
+            std_out_path=stdout_file_path,
+            std_err_path=stderr_file_path,
+            state=DebuggerState.PAUSED.value,
         )
+        return DebugSession.from_db(session)

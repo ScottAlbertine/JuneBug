@@ -3,7 +3,7 @@ from fastmcp import FastMCP
 from tools import (
     control_session,
     evaluate_expression,
-    get_debugger_status,
+    get_debugger_sessions,
     get_frame_values,
     get_stack,
     get_threads,
@@ -21,7 +21,7 @@ mcp = FastMCP("JuneBug MCP Server")
 
 mcp.tool(control_session)
 mcp.tool(evaluate_expression)
-mcp.tool(get_debugger_status)
+mcp.tool(get_debugger_sessions)
 mcp.tool(get_frame_values)
 mcp.tool(get_stack)
 mcp.tool(get_threads)
