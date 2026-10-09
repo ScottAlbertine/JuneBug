@@ -68,8 +68,8 @@ Returns a flat result with debugger session metadata."""
             pid=debugee.pid,
             port=port,
             # TODO: maybe a stdin path too?
-            std_out_path=stdout_file_path,
-            std_err_path=stderr_file_path,
+            std_out_path=str(stdout_file_path),
+            std_err_path=str(stderr_file_path),
             state=DebuggerState.PAUSED.value,
         )
         return DebugSession.from_db(session)
