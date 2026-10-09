@@ -12,10 +12,7 @@ from tests.conftest import PROJECT_ROOT
 import tests.fakes.fake_main as fake_main
 from tests.utils import MatchAny, MatchRegex
 
-# TODO: dedupe the pytest mark asyncio
-# all tests should be marked asyncio
 
-@pytest.mark.asyncio
 async def test_simple(client: Client) -> None:
     create_result = await client.call_tool(
         "start_debugger_session", {
@@ -59,7 +56,6 @@ async def test_simple(client: Client) -> None:
     assert get_result.structured_content == {"sessions": [expected_session]}
 
 
-@pytest.mark.asyncio
 async def test_fancy(client: Client) -> None:
     result = await client.call_tool(
         "start_debugger_session", {
@@ -89,7 +85,6 @@ async def test_fancy(client: Client) -> None:
     assert env["once"] == "told me"
 
 
-@pytest.mark.asyncio
 async def test_bad_python_path(client: Client) -> None:
     with pytest.raises(
         ToolError,
@@ -104,7 +99,6 @@ async def test_bad_python_path(client: Client) -> None:
         )
 
 
-@pytest.mark.asyncio
 async def test_debugpy_install_failure(client: Client) -> None:
     with pytest.raises(
         ToolError,

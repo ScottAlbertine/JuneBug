@@ -11,7 +11,6 @@ import tests.fakes.fake_main as fake_main
 from tests.utils import MatchAny
 
 
-@pytest.mark.asyncio
 async def test_get_real_sessions(client: Client) -> None:
     """Create 2 real sessions, check that they show up under the appropriate project path, but not under a different path."""
     await client.call_tool(
