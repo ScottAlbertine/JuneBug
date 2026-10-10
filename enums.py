@@ -1,5 +1,7 @@
 from enum import Enum
 
+# TODO: unify enum caseing
+
 
 class Action(Enum):
     STEP_INTO = "STEP_INTO"
@@ -38,3 +40,8 @@ class SuspendPolicy(Enum):
     ALL = "ALL"
     THREAD = "THREAD"
     NONE = "NONE"
+
+class ThreadState(Enum):
+    RUNNING = "running"
+    PAUSED = "paused"
+    UNKNOWN = "unknown"

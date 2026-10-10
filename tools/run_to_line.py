@@ -30,7 +30,7 @@ Outcome:
 
 Next call:
 - If paused, call `get_stack` / `get_frame_values` / `evaluate_expression`.
-- If the session stopped or disappeared, refresh `session_id` via `get_debugger_status` before issuing another session-scoped call."""
+- If the session stopped or disappeared, refresh `session_id` via `get_debugger_sessions` before issuing another session-scoped call."""
     print(session_id)
     print(file_path)
     print(line)

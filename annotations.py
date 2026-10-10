@@ -31,7 +31,7 @@ ProjectPath = Annotated[
 
 SessionID = Annotated[
     str | None,
-    "Debug session ID. Use the current ID returned by `get_debugger_status` or `start_debugger_session`. "
+    "Debug session ID. Use the current ID returned by `get_debugger_sessions` or `start_debugger_session`. "
     "If a session has stopped, timed out, or disappeared, refresh the session list before reusing an old ID. "
     "Format: uses session name as ID by default; if multiple sessions share the same name, ID is `<sessionName>#<executionId>`. "
     "If null and exactly one active session exists, it is selected automatically. "

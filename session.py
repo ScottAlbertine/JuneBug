@@ -6,7 +6,9 @@ from dap.protocol import ErrorResponse
 
 from constants import TEMP_DIR
 from enums import DebuggerState
+from exceptions import DAPError
 from models import SessionStatus, Thread
+from threads import Threads
 from utils import connect_to_port
 
 
@@ -20,7 +22,7 @@ class Session:
     #     self.sock.__exit__(exc_type, exc_val, traceback)
 
     def __init__(
-        self, session_id: str, project_path: str, port: int, timeout: int, we_own: bool, pid: int | None = None
+        self, session_id: str, project_path: str, port: int, timeout: int, we_own: bool, pid: int | None = None,
     ):
         """Timeout is in milliseconds."""
         self.breakpoints_muted: bool = False
@@ -34,6 +36,7 @@ class Session:
         self.state: DebuggerState = DebuggerState.PAUSED
         self.std_out_path = str(TEMP_DIR / f"{session_id}.stdout.txt") if we_own else None
         self.std_err_path = str(TEMP_DIR / f"{session_id}.stderr.txt") if we_own else None
+        self.threads = Threads()
 
         self.sock.settimeout(30)  # TODO: make this configurable?
 
@@ -46,23 +49,8 @@ class Session:
         self._pull_until(lambda e: isinstance(e, InitializedEvent))
         # nothing can happen until we attach, let's do that automatically
         self._attach()
-
-    def _pull_until(self, matcher: Callable[[Event], bool]) -> Event:
-        """Pull events from the DAP client until the given matcher function returns true on an event, then return that event."""
-        for event in self._event_iterator:
-
-            print(event.model_dump_json(indent=2))
-
-            # TODO: handle passive events that update our internal model of the debugger's state here
-            omg = 5
-
-            # yes, the typing says this is impossible, but trust me, it happens
-            if isinstance(event, ErrorResponse):
-                # TODO: probably raise exceptions here
-                blah = 5
-
-            if matcher(event):
-                return event
+        # always get the initial registry of threads at this point, because we can.
+        self.get_threads()
 
     def _pull(self) -> Iterator[Event]:
         """
@@ -72,6 +60,27 @@ class Session:
         """
         while True:
             yield from self.client.recv(self.sock.recv(self.CHUNK_SIZE))
+
+    def _pull_until(self, matcher: Callable[[Event], bool]) -> Event:
+        """Pull events from the DAP client until the given matcher function returns true on an event, then return that event."""
+        for event in self._event_iterator:
+            if isinstance(event, ErrorResponse):
+                # yes, the typing says this is impossible, but trust me, it happens
+                raise DAPError(event)
+            self._handle_event(event)
+            if matcher(event):
+                return event
+
+    def _handle_event(self, event: Event) -> None:
+        """
+        Handle any state updates that need to happen when we see certain events.
+        This gets passed every event that we pull.
+        """
+        print(event.model_dump_json(indent=2))  # for easy logging
+        if event.event == "thread" and "threadId" in event.body:
+            self.threads.update(event)
+
+        # TODO: handle other passive events that update our internal model of the debugger's state here
 
     def _send(self):
         self.sock.sendall(self.client.send())
@@ -88,20 +97,25 @@ class Session:
             current_position=self.current_position,
         )
 
+    def pause(self):
+        """Pause all threads in this session."""
+        for thread in self.get_threads():
+            self._pause(thread.id)
+
     def resume(self):
+        """Resume this session."""
         if not self.has_configuration_done:
             # this has to happen once per session, and only once, and it automatically resumes all threads
             self._configuration_done()
-            return
-        for thread in self.threads():
-            self._continue_execution(thread.id)
+            self.has_configuration_done = True
+        else:
+            for thread in self.get_threads():
+                self._continue_execution(thread.id)
+        self.state = DebuggerState.RUNNING
 
-    def threads(self) -> list[Thread]:
-        """Get all threads."""
-        return [
-            Thread(id=thread_dict["id"], name=thread_dict["name"])
-            for thread_dict in self._threads().body["body"]["threads"]
-        ]
+    def get_threads(self) -> list[Thread]:
+        """Get all threads, sorted by id."""
+        return self.threads.refresh(self._fetch_threads())
 
     # DAP commands
 
@@ -128,7 +142,6 @@ class Session:
         """Continue execution."""
         self.client.continue_execution(thread_id)
         self._send()
-        # return self.pull_until(lambda e: True)
 
     def _disconnect(self) -> Event:
         """Disconnect from the debug adapter."""
@@ -214,7 +227,7 @@ class Session:
         self._send()
         return self._pull_until(lambda e: True)
 
-    def _threads(self) -> Event:
+    def _fetch_threads(self) -> Event:
         """Get all threads."""
         self.client.threads()
         self._send()

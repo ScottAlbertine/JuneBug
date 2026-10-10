@@ -2,7 +2,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-from enums import BreakpointOwner, DebuggerEventType, DebuggerOutcome, DebuggerState
+from enums import BreakpointOwner, DebuggerEventType, DebuggerOutcome, DebuggerState, ThreadState
 
 
 class Breakpoint(BaseModel):
@@ -117,16 +117,9 @@ class Thread(BaseModel):
     """A thread in the debug session."""
 
     id: Annotated[int, Field(description="Thread identifier to pass as `thread_id` in `get_stack`.")]
-    name: Annotated[str, Field(description="Human-readable thread name.")]
-    # state: Annotated[str, Field(description="Current thread status from debugger perspective.")]
-    # is_current: Annotated[bool, Field(description="Whether this thread is currently selected.")]
-    # additional_info: Annotated[
-    #     str | None, Field(default=None, description="Additional thread display info when available."),
-    # ] = None
-    # additional_info_tooltip: Annotated[
-    #     str | None, Field(default=None, description="Tooltip for additional thread display info when available."),
-    # ] = None
-    # frame_count: Annotated[int | None, Field(default=None, description="Number of stack frames when available.")] = None
+    name: Annotated[str | None, Field(description="Human-readable thread name.")]
+    state: Annotated[ThreadState, Field(description="Current thread status as last reported to the debugger.")]
+    is_current: Annotated[bool, Field(description="Whether this thread is currently selected.")]
 
 
 class StackResponse(BaseModel):
