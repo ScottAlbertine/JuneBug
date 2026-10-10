@@ -3,7 +3,11 @@ from typing import Annotated
 from pydantic import BeforeValidator, Field
 from pydantic_core import PydanticCustomError
 
-from constants import NO_PROJECT_PATH_ERROR
+NO_PROJECT_PATH_ERROR = """
+You must specify the project path via `project_path` parameter when calling a tool.
+If you're aware of the current working directory you may pass it as `project_path`.
+In the case when it's unobvious which project to use you have to ASK the USER about a project providing him a numbered list of the projects.
+"""
 
 
 def validate_project_path(project_path: str | None) -> str:
