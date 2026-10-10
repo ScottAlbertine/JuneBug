@@ -1,11 +1,11 @@
 from typing import Annotated
 
-from annotations import ProjectPath, SessionID
-from frontend_models import ThreadsResponse
+from annotations import SessionID
+from models import ThreadsResponse
+import session_service
 
 
 def get_threads(
-    project_path: ProjectPath,
     session_id: SessionID = None,
     limit: Annotated[int, "Page size. Default: 50, max: 200."] = 50,
     offset: Annotated[int, "Page offset. Default: 0."] = 0,
@@ -28,7 +28,9 @@ Ordering:
 
 Schema fields: id, name, state, is_current, additional_info, additional_info_tooltip, frame_count.
 `additional_info`/`additional_info_tooltip` use additional display info when available."""
-    print(session_id)
-    print(limit)
-    print(offset)
-    print(project_path)
+    # TODO: make above docstring and our actual behavior, match, in either direction
+
+    session = session_service.get_session(session_id)
+    threads = session.threads()
+
+    return ThreadsResponse(threads=threads[offset:offset + limit], total_count=len(threads))

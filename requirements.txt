@@ -1,5 +1,5 @@
+dap-python==1.0.1
 fastmcp==4.1.0
-peewee==4.5.3
 psutil==7.2.2
 pydantic==2.14.0
 pytest==9.1.1

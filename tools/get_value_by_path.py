@@ -1,10 +1,9 @@
 from typing import Annotated
 
-from annotations import FrameIndex, ProjectPath, SessionID
+from annotations import FrameIndex, SessionID
 
 
 def get_value_by_path(
-    project_path: ProjectPath,
     path: Annotated[
         list[str],
         "List of child names to navigate through, e.g. ['myObject', 'field', 'subField'] or ['items', '[0]', 'name']. "
@@ -44,4 +43,3 @@ Next call:
     print(frame_index)
     print(path)
     print(depth)
-    print(project_path)

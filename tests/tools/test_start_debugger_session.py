@@ -13,7 +13,7 @@ import tests.fakes.fake_main as fake_main
 from tests.utils import MatchAny, MatchRegex
 
 
-async def test_simple(client: Client) -> None:
+async def test_simple(client: Client, clear_sessions: None) -> None:
     create_result = await client.call_tool(
         "start_debugger_session", {
             "project_path": str(PROJECT_ROOT),
@@ -56,7 +56,7 @@ async def test_simple(client: Client) -> None:
     assert get_result.structured_content == {"sessions": [expected_session]}
 
 
-async def test_fancy(client: Client) -> None:
+async def test_fancy(client: Client, clear_sessions: None) -> None:
     result = await client.call_tool(
         "start_debugger_session", {
             "project_path": str(PROJECT_ROOT),
@@ -85,7 +85,7 @@ async def test_fancy(client: Client) -> None:
     assert env["once"] == "told me"
 
 
-async def test_bad_python_path(client: Client) -> None:
+async def test_bad_python_path(client: Client, clear_sessions: None) -> None:
     with pytest.raises(
         ToolError,
         match=r"Error calling tool 'start_debugger_session': \[Errno 2] No such file or directory: '/not/a/real/path'",
@@ -99,7 +99,7 @@ async def test_bad_python_path(client: Client) -> None:
         )
 
 
-async def test_debugpy_install_failure(client: Client) -> None:
+async def test_debugpy_install_failure(client: Client, clear_sessions: None) -> None:
     with pytest.raises(
         ToolError,
         match=r"Failed to install debugpy with .+?\. \n\n Stderr: \n sample stderr \n\n Stdout: \n sample stdout \n",

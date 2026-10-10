@@ -1,10 +1,9 @@
 from typing import Annotated
 
-from annotations import FrameIndex, ProjectPath, SessionID
+from annotations import FrameIndex, SessionID
 
 
 def evaluate_expression(
-    project_path: ProjectPath,
     expression: Annotated[
         str,
         "Expression to evaluate in the current context. "
@@ -42,4 +41,3 @@ Next call:
     print(frame_index)
     print(expression)
     print(depth)
-    print(project_path)

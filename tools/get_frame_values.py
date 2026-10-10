@@ -1,10 +1,9 @@
 from typing import Annotated
 
-from annotations import FrameIndex, ProjectPath, SessionID
+from annotations import FrameIndex, SessionID
 
 
 def get_frame_values(
-    project_path: ProjectPath,
     session_id: SessionID = None,
     frame_index: FrameIndex = None,
     depth: Annotated[
@@ -31,4 +30,3 @@ Next call:
     print(session_id)
     print(frame_index)
     print(depth)
-    print(project_path)

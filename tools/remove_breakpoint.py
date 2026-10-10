@@ -1,12 +1,12 @@
 from typing import Annotated
 
-from annotations import ProjectPath
+from annotations import SessionID
 from enums import BreakpointOwner
-from frontend_models import RemoveBreakpointResponse
+from models import RemoveBreakpointResponse
 
 
 def remove_breakpoint(
-    project_path: ProjectPath,
+    session_id: SessionID,
     breakpoint_id: Annotated[
         str | None, "Canonical breakpoint ID returned by `set_breakpoint` or `list_breakpoints`."] = None,
     file_path: Annotated[
@@ -33,8 +33,8 @@ Behavior:
 
 Next call:
 - Use `list_breakpoints` to verify the remaining set."""
+    print(session_id)
     print(breakpoint_id)
     print(file_path)
     print(line)
     print(owner)
-    print(project_path)

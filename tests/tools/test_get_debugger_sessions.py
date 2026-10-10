@@ -3,7 +3,6 @@ from pathlib import Path
 import sys
 
 from fastmcp import Client
-import pytest
 
 from constants import TEMP_DIR
 from tests.conftest import PROJECT_ROOT
@@ -11,7 +10,7 @@ import tests.fakes.fake_main as fake_main
 from tests.utils import MatchAny
 
 
-async def test_get_real_sessions(client: Client) -> None:
+async def test_get_real_sessions(client: Client, clear_sessions: None) -> None:
     """Create 2 real sessions, check that they show up under the appropriate project path, but not under a different path."""
     await client.call_tool(
         "start_debugger_session", {

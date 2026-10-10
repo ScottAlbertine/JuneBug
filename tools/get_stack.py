@@ -1,16 +1,14 @@
 from typing import Annotated
 
-from annotations import ProjectPath, SessionID
-from frontend_models import StackResponse
+from annotations import SessionID
+from models import StackResponse
 
 
 def get_stack(
-    project_path: ProjectPath,
     session_id: SessionID = None,
     thread_id: Annotated[
-        str | None,
-        "Thread ID to get stack for. "
-        "This value should come from `get_threads` and matches the debugger thread display name, not an opaque numeric ID. "
+        int | None,
+        "Thread ID to get stack for. This value should come from `get_threads`. "
         "If not specified, uses the current/active thread. Default: null.",
     ] = None,
     limit: Annotated[int, "Max frames to return. Default: 200."] = 200,
@@ -39,4 +37,3 @@ Next call:
     print(thread_id)
     print(limit)
     print(offset)
-    print(project_path)

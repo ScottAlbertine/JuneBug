@@ -1,11 +1,10 @@
 from typing import Annotated
 
-from annotations import ProjectPath, SessionID
-from frontend_models import RunToLineResponse
+from annotations import SessionID
+from models import RunToLineResponse
 
 
 def run_to_line(
-    project_path: ProjectPath,
     file_path: Annotated[
         str,
         "Target source file path. Path to the file. "
@@ -36,4 +35,3 @@ Next call:
     print(file_path)
     print(line)
     print(timeout)
-    print(project_path)

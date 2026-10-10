@@ -1,11 +1,8 @@
-from typing import Annotated, TYPE_CHECKING
+from typing import Annotated
 
 from pydantic import BaseModel, Field
 
 from enums import BreakpointOwner, DebuggerEventType, DebuggerOutcome, DebuggerState
-
-if TYPE_CHECKING:
-    from db_models import DBDebugSession, DBSourcePosition
 
 
 class Breakpoint(BaseModel):
@@ -68,25 +65,13 @@ class SourcePosition(BaseModel):
     line: Annotated[int, Field(description="1-based line number.")]
     column: Annotated[int | None, Field(default=None, description="1-based column number when available.")] = None
 
-    @classmethod
-    def from_db(cls, position: DBSourcePosition | None) -> SourcePosition | None:
-        if position is None:
-            return None
 
-        return cls(
-            file_path=position.file_path,
-            line=position.line_num,
-            column=position.column,
-        )
-
-
-
-class DebugSession(BaseModel):
-    """A debug session."""
+class SessionStatus(BaseModel):
+    """Status of a debug session."""
 
     id: Annotated[str, Field(description="Session identifier to use as `session_id` in subsequent debugger calls.")]
     state: Annotated[DebuggerState, Field(description="Current session state.")]
-    debugee_pid: Annotated[int, "Pid of the process being debugged."]
+    debugee_pid: Annotated[int | None, "Pid of the process being debugged, if this MCP server knows it."]
     std_out_path: Annotated[
         str | None,
         Field(
@@ -102,30 +87,18 @@ class DebugSession(BaseModel):
         ),
     ] = None
     breakpoints_muted: Annotated[
-        bool, Field(default=False, description="Whether breakpoints are globally muted for this debugger session.")
+        bool, Field(default=False, description="Whether breakpoints are globally muted for this debugger session."),
     ]
     current_position: Annotated[
         SourcePosition | None,
         Field(default=None, description="Current source position for paused sessions, if available."),
     ] = None
 
-    @classmethod
-    def from_db(cls, session: DBDebugSession) -> DebugSession:
-        return cls(
-            id=session.id,
-            debugee_pid=session.pid,
-            state=session.state,
-            breakpoints_muted=session.breakpoints_muted,
-            std_out_path=session.std_out_path,
-            std_err_path=session.std_err_path,
-            current_position=SourcePosition.from_db(session.current_position),
-        )
 
+class SessionStatuses(BaseModel):
+    """Statuses of all active debug sessions."""
 
-class DebugSessions(BaseModel):
-    """Current debugger status with all active sessions."""
-
-    sessions: Annotated[list[DebugSession], Field(description="All currently known debug sessions.")]
+    sessions: Annotated[list[SessionStatus], Field(description="All currently known debug sessions.")]
 
 
 class StackFrame(BaseModel):
@@ -143,59 +116,17 @@ class StackFrame(BaseModel):
 class Thread(BaseModel):
     """A thread in the debug session."""
 
-    id: Annotated[str, Field(description="Thread identifier to pass as `thread_id` in `get_stack`.")]
+    id: Annotated[int, Field(description="Thread identifier to pass as `thread_id` in `get_stack`.")]
     name: Annotated[str, Field(description="Human-readable thread name.")]
-    state: Annotated[str, Field(description="Current thread status from debugger perspective.")]
-    is_current: Annotated[bool, Field(description="Whether this thread is currently selected.")]
-    additional_info: Annotated[
-        str | None, Field(default=None, description="Additional thread display info when available."),
-    ] = None
-    additional_info_tooltip: Annotated[
-        str | None, Field(default=None, description="Tooltip for additional thread display info when available."),
-    ] = None
-    frame_count: Annotated[int | None, Field(default=None, description="Number of stack frames when available.")] = None
-
-
-class ControlSessionResponse(BaseModel):
-    """Response from a debug session control action."""
-
-    status: Annotated[DebuggerState, Field(description="Session state after the control action.")]
-    new_position: Annotated[
-        SourcePosition | None,
-        Field(default=None, description="Current source position when the session is paused (if available)."),
-    ] = None
-    frame_values: Annotated[
-        str | None,
-        Field(
-            default=None,
-            description="Snapshot of current frame values when the session is paused, using the same text format as `get_frame_values` with `depth=0`.",
-        ),
-    ] = None
-    breakpoints_muted: Annotated[
-        bool,
-        Field(default=False, description="Whether breakpoints are globally muted for this debugger session."),
-    ]
-    message: Annotated[
-        str | None,
-        Field(
-            default=None,
-            description="Additional context message for timeout/already-paused/already-stopped situations.",
-        ),
-    ] = None
-    breakpoint_errors_tail: Annotated[
-        list[DebuggerEvent] | None,
-        Field(
-            default=None,
-            description="Latest drained breakpoint error events. Returned for any control_session action. Indicates errors in breakpoints configuration like invalid conditional/log expressions. Currently populated only by JVM-based debuggers (Java, Kotlin, etc.).",
-        ),
-    ] = None
-    tracepoint_outputs_tail: Annotated[
-        list[DebuggerEvent] | None,
-        Field(
-            default=None,
-            description="Latest drained tracepoint output events. Returned only for DRAIN_EVENTS action. Currently populated only by JVM-based debuggers (Java, Kotlin, etc.).",
-        ),
-    ] = None
+    # state: Annotated[str, Field(description="Current thread status from debugger perspective.")]
+    # is_current: Annotated[bool, Field(description="Whether this thread is currently selected.")]
+    # additional_info: Annotated[
+    #     str | None, Field(default=None, description="Additional thread display info when available."),
+    # ] = None
+    # additional_info_tooltip: Annotated[
+    #     str | None, Field(default=None, description="Tooltip for additional thread display info when available."),
+    # ] = None
+    # frame_count: Annotated[int | None, Field(default=None, description="Number of stack frames when available.")] = None
 
 
 class StackResponse(BaseModel):
@@ -206,7 +137,7 @@ class StackResponse(BaseModel):
         Field(description="Stack frames for the selected thread, ordered from top (index 0) to older frames."),
     ]
     thread_id: Annotated[
-        str | None, Field(default=None, description="Thread identifier used to fetch this stack."),
+        int | None, Field(default=None, description="Thread identifier used to fetch this stack."),
     ] = None
     total_frames: Annotated[int, Field(description="Total frame count for the stack.")]
 
@@ -215,8 +146,6 @@ class ThreadsResponse(BaseModel):
     """List of threads in the debug session."""
 
     threads: Annotated[list[Thread], Field(description="Threads available in the suspended debug session (paginated).")]
-    offset: Annotated[int, Field(description="Requested page offset.")]
-    limit: Annotated[int, Field(description="Requested page limit.")]
     total_count: Annotated[int, Field(description="Total known thread count.")]
 
 

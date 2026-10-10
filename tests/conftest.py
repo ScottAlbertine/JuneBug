@@ -7,8 +7,8 @@ from fastmcp import Client
 import pytest
 import pytest_asyncio
 
-import db
 from main import mcp
+import session_service
 from tests.utils import kill_processes_by_module
 
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
@@ -18,11 +18,10 @@ PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 CLEANUP_MODULES = ["fake_main"]
 
 
-@pytest.fixture(autouse=True, scope="function")
-def clean_dbs() -> None:
-    """To prevent tests affecting each other, always start each test with no databases."""
-    db.databases = {}
-
+@pytest.fixture()
+def clear_sessions() -> None:
+    """These tests list sessions, so they need to clear that list before each one runs."""
+    session_service.SESSIONS = {}
 
 @pytest.fixture(autouse=True, scope="session")
 def _cleanup_test_processes() -> Generator[None, None, None]:

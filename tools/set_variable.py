@@ -1,11 +1,10 @@
 from typing import Annotated
 
-from annotations import FrameIndex, ProjectPath, SessionID
-from frontend_models import SetVariableResponse
+from annotations import FrameIndex, SessionID
+from models import SetVariableResponse
 
 
 def set_variable(
-    project_path: ProjectPath,
     path: Annotated[
         list[str],
         "Path to target value, same format as `get_value_by_path`. "
@@ -44,4 +43,3 @@ Next call:
     print(frame_index)
     print(path)
     print(new_value)
-    print(project_path)

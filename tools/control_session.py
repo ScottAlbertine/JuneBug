@@ -1,12 +1,12 @@
 from typing import Annotated
 
-from annotations import ProjectPath, SessionID
+from annotations import SessionID
 from enums import Action
-from frontend_models import ControlSessionResponse
+from models import SessionStatus
+import session_service
 
 
 def control_session(
-    project_path: ProjectPath,
     action: Annotated[
         Action,
         "Action to perform: STEP_INTO, STEP_OVER, STEP_OUT, RESUME, PAUSE, STOP, WAIT_FOR_PAUSE, DRAIN_EVENTS. "
@@ -29,7 +29,7 @@ def control_session(
         bool | None,
         "Compatibility flag. Returned events are always removed from internal buffers, regardless of this value.",
     ] = None,
-) -> ControlSessionResponse:
+) -> SessionStatus:
     """Controls the execution of a debug session.
 Use this tool to step through code, resume execution, pause, or stop the debug session.
 
@@ -68,9 +68,11 @@ Status values in the result:
 Event support scope:
 - Breakpoint error and tracepoint output events are currently reported only by JVM-based debuggers (Java, Kotlin, etc.).
 - On other debugger backends these event tails can be empty even when breakpoints/logging are configured."""
-    print(action)
-    print(session_id)
-    print(timeout)
-    print(events_limit)
-    print(clear_events_after_read)
-    print(project_path)
+    # TODO: update the above docs to match the new return type
+
+    session = session_service.get_session(session_id)
+
+    if action == Action.RESUME:
+        session.resume()
+
+    return session.get_status()

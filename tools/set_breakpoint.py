@@ -1,19 +1,10 @@
 from typing import Annotated
 
-from annotations import ProjectPath
 from enums import SuspendPolicy
-from frontend_models import SetBreakpointResponse
+from models import SetBreakpointResponse
 
 
 def set_breakpoint(
-    project_path: ProjectPath,
-    breakpoint_id: Annotated[
-        str | None,
-        "Canonical breakpoint ID returned by `set_breakpoint` or `list_breakpoints`. "
-        "If provided, the tool runs in ID mode. "
-        "Omit this or pass null in location mode; do not use placeholder strings such as empty string or fake path-like values. "
-        "Default: null.",
-    ] = None,
     session_id: Annotated[
         str | None,
         "Debug session ID. Use the current ID returned by `get_debugger_status` or `start_debugger_session`. "
@@ -23,6 +14,13 @@ def set_breakpoint(
         "If multiple sessions are active and session_id is omitted, the call fails. "
         "Default: null. "
         "Use with `breakpoints_muted` in a dedicated mute-only call; do not combine that call with breakpoint target or settings parameters.",
+    ] = None,
+    breakpoint_id: Annotated[
+        str | None,
+        "Canonical breakpoint ID returned by `set_breakpoint` or `list_breakpoints`. "
+        "If provided, the tool runs in ID mode. "
+        "Omit this or pass null in location mode; do not use placeholder strings such as empty string or fake path-like values. "
+        "Default: null.",
     ] = None,
     file_path: Annotated[
         str | None,
@@ -117,8 +115,8 @@ Apply semantics:
 Next call:
 - Use returned `line_text` and/or `list_breakpoints` to verify placement.
 - Start/continue execution via `start_debugger_session` or `control_session(action=RESUME)`."""
-    print(breakpoint_id)
     print(session_id)
+    print(breakpoint_id)
     print(file_path)
     print(line)
     print(condition)
@@ -129,4 +127,3 @@ Next call:
     print(suspend_policy)
     print(enabled)
     print(breakpoints_muted)
-    print(project_path)
