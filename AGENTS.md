@@ -1,8 +1,8 @@
 # JuneBug — Agent Notes
 
-## Writing Guidelines for This File
+## Python Toolchain
 
-This file is read by every Junie session. **Only include actionable guidance** — information and rules a future session should follow. **Do not include** session-specific notes, test results, evidence tables, or observations that don't translate into a concrete rule or workaround. If you discover something new, document what to do about it, not how you found it.
+This is a `direnv` project (`.envrc` uses `layout python3`). The Python virtual environment lives at `.direnv/python-3.14/`.
 
 ## PyCharm Attached File Truncation
 
