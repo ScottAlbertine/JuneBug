@@ -35,7 +35,6 @@ Actions:
 - PAUSE: Pause program execution
 - STOP: Stop the debug session
 - WAIT_FOR_PAUSE: Wait until the session pauses (breakpoint hit or paused manually)
-- DRAIN_EVENTS: Drain tracepoint outputs for the session (breakpoint errors are drained for all actions)
 
 Important notes:
 - If the program is running, use WAIT_FOR_PAUSE or PAUSE before STEP_* / RESUME.
@@ -68,8 +67,6 @@ State values in the result:
     elif action == Action.STOP:
         pass
     elif action == Action.WAIT_FOR_PAUSE:
-        pass
-    elif action == Action.DRAIN_EVENTS:
         pass
 
     return session.get_status()
