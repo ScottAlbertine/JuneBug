@@ -7,9 +7,7 @@ from fastmcp import Client
 from tests.conftest import PROJECT_ROOT
 import tests.fakes.fake_main as fake_main
 import tests.fakes.fake_main_multi_thread as fake_main_multi_thread
-
-# What the main thread should look like, before you start the process running
-MAIN_THREAD = {"id": 1, "is_current": False, "name": "MainThread", "state": "unknown"}
+from tests.utils import MAIN_THREAD
 
 
 async def test_simple(client: Client) -> None:

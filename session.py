@@ -13,7 +13,7 @@ from utils import connect_to_port
 
 
 class Session:
-    """A DAP client that actually connects to a socket and sends/receives messages in a useful manner."""
+    """A debug session, equivalent to a debugger instance like a `pdb` process or a PyCharm debugger tab."""
     CHUNK_SIZE = 65536
 
     # TODO: handle closing the socket when we need to, not sure when that is, figure it out
@@ -77,7 +77,7 @@ class Session:
         This gets passed every event that we pull.
         """
         print(event.model_dump_json(indent=2))  # for easy logging
-        if event.event == "thread" and "threadId" in event.body:
+        if event.body is not None and "threadId" in event.body:
             self.threads.update(event)
 
         # TODO: handle other passive events that update our internal model of the debugger's state here
@@ -98,9 +98,9 @@ class Session:
         )
 
     def pause(self):
-        """Pause all threads in this session."""
-        for thread in self.get_threads():
-            self._pause(thread.id)
+        """Pause this session."""
+        self._pause(self.get_threads()[0].id)
+        self.state = DebuggerState.PAUSED
 
     def resume(self):
         """Resume this session."""
@@ -109,8 +109,7 @@ class Session:
             self._configuration_done()
             self.has_configuration_done = True
         else:
-            for thread in self.get_threads():
-                self._continue_execution(thread.id)
+            self._continue_execution(self.get_threads()[0].id)
         self.state = DebuggerState.RUNNING
 
     def get_threads(self) -> list[Thread]:
@@ -171,7 +170,7 @@ class Session:
         """Pause execution."""
         self.client.pause(thread_id)
         self._send()
-        return self._pull_until(lambda e: True)
+        return self._pull_until(lambda e: e.event == "response" and e.body["command"] == "pause")
 
     def _scopes(self, frame_id: int) -> Event:
         """Get the scopes for a stack frame."""

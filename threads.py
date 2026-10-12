@@ -39,12 +39,22 @@ class Threads:
         """Update a single thread based on a 'thread' event from DAP."""
         body = dap_thread_event.body
         thread_id = body["threadId"]
+        reason = body.get("reason")
+        if reason == "exited":
+            self._threads.pop(thread_id, None)
+            return
+
         if thread_id not in self._threads:
             self._threads[thread_id] = Thread(
                 id=thread_id, name=None, state=ThreadState.UNKNOWN, is_current=False,
             )
-        reason = body.get("reason")
         if reason == "started":
             self._threads[thread_id].state = ThreadState.RUNNING
-        if reason == "exited":
-            del self._threads[thread_id]
+        if reason == "pause":
+            self._threads[thread_id].state = ThreadState.PAUSED
+        if body.get("allThreadsStopped"):
+            for thread in self._threads.values():
+                thread.state = ThreadState.PAUSED
+        if body.get("allThreadsContinued"):
+            for thread in self._threads.values():
+                thread.state = ThreadState.RUNNING

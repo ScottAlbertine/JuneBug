@@ -3,6 +3,9 @@ import signal
 
 import psutil
 
+# What the main thread should look like, before you start the process running
+MAIN_THREAD = {"id": 1, "is_current": False, "name": "MainThread", "state": "unknown"}
+
 
 class MatchAny:
     """Fake object that matches any object of the given type."""

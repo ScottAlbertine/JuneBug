@@ -24,7 +24,6 @@ Ordering:
 
 Schema fields: id, name, state, is_current.
 """
-
     session = session_service.get_session(session_id)
     threads = session.get_threads()
     return ThreadsResponse(threads=threads[offset:offset + limit], total_count=len(threads))
