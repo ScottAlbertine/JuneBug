@@ -21,16 +21,19 @@ def start_debugger_session(
         "Missing/null keeps existing env unchanged; when provided, values are merged over existing env.",
     ] = None,
 ) -> SessionStatus:
-    """Start a debugger session for a given Python program in the current project.
-Use this tool to start a debugger session.
-The session will be started and you can then use other debugger tools to control execution.
-This MCP server will wait for session creation to succeed, up to `timeout` milliseconds.
-The program will be started in a paused state, so you can set breakpoints that you expect to be hit during startup.
+    """
+    Start a debugger session for a given Python program in the current project.
+    Use this tool to start a debugger session.
+    The session will be started and you can then use other debugger tools to control execution.
+    This MCP server will wait for session creation to succeed, up to `timeout` milliseconds.
+    The program will be started in a paused state, before the first line of code has run.
+    This allows you to set breakpoints that you expect to be hit during startup, before resuming the process.
 
-Next call:
-- `get_stack` and `get_frame_values` (or `evaluate_expression`) for runtime evidence.
+    Next call:
+    - `set_breakpoint` to set the first breakpoint you want.
 
-Returns a flat result with debugger session metadata."""
+    Returns a flat result with debugger session metadata.
+    """
 
     if program_arguments is None:
         program_arguments = []

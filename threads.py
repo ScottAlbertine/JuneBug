@@ -37,10 +37,14 @@ class Threads:
 
     def update(self, dap_thread_event: Event) -> None:
         """Update a single thread based on a 'thread' event from DAP."""
-        thread_id = dap_thread_event.body["threadId"]
+        body = dap_thread_event.body
+        thread_id = body["threadId"]
         if thread_id not in self._threads:
             self._threads[thread_id] = Thread(
                 id=thread_id, name=None, state=ThreadState.UNKNOWN, is_current=False,
             )
-        if dap_thread_event.body.get("reason") == "started":
+        reason = body.get("reason")
+        if reason == "started":
             self._threads[thread_id].state = ThreadState.RUNNING
+        if reason == "exited":
+            del self._threads[thread_id]

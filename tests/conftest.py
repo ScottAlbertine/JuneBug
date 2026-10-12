@@ -1,6 +1,7 @@
 """Shared test configuration and fixtures."""
 
 from pathlib import Path
+import pkgutil
 from typing import AsyncGenerator, Generator
 
 from fastmcp import Client
@@ -14,14 +15,16 @@ from tests.utils import kill_processes_by_module
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 
 # Module names whose running processes should be killed at session teardown.
-# Add new test target modules here as they are created.
-CLEANUP_MODULES = ["fake_main"]
+CLEANUP_MODULES = [
+    name for _, name, _ in pkgutil.iter_modules(__import__("tests.fakes", fromlist=[""]).__path__)
+]
 
 
 @pytest.fixture()
 def clear_sessions() -> None:
     """These tests list sessions, so they need to clear that list before each one runs."""
     session_service.SESSIONS = {}
+
 
 @pytest.fixture(autouse=True, scope="session")
 def _cleanup_test_processes() -> Generator[None, None, None]:

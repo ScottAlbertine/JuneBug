@@ -107,7 +107,7 @@ async def test_debugpy_install_failure(client: Client, clear_sessions: None) -> 
         await client.call_tool(
             "start_debugger_session", {
                 "project_path": str(PROJECT_ROOT),
-                "python_path": str(Path(__file__).parent.parent / "fakes" / "python_that_cant_install_debugpy.sh"),
+                "python_path": str(Path(__file__).parent / "fakes" / "python_that_cant_install_debugpy.sh"),
                 "file_path": str(Path(fake_main.__file__).relative_to(PROJECT_ROOT)),
             },
         )
