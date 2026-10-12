@@ -52,6 +52,7 @@ State values in the result:
 - paused: Execution is suspended (breakpoint, step, or manual pause)
 - stopped: Debug session has terminated
 """
+    # TODO: fix the above docsting
     session = session_service.get_session(session_id)
 
     if action == Action.STEP_INTO:

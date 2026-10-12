@@ -1,61 +1,34 @@
-from typing import Annotated
+from pathlib import Path
+from typing import Annotated, Any
 
 from pydantic import BaseModel, Field
 
-from enums import BreakpointOwner, DebuggerEventType, DebuggerOutcome, DebuggerState, ThreadState
+from enums import BreakpointType, DebuggerOutcome, DebuggerState, SuspendPolicy, ThreadState
 
 
 class Breakpoint(BaseModel):
     """A configured breakpoint."""
 
-    id: Annotated[str, Field(description="Canonical breakpoint ID (stable across list/remove).")]
-    type: Annotated[str, Field(description="Breakpoint type (line/exception/other).")]
-    file: Annotated[
-        str | None,
-        Field(default=None, description="File path of the breakpoint as provided by the debugger (usually file URL)."),
-    ] = None
-    line: Annotated[int | None, Field(default=None, description="1-based breakpoint line when available.")] = None
-    enabled: Annotated[bool, Field(description="Whether breakpoint is enabled.")]
-    owner: Annotated[
-        BreakpointOwner,
-        Field(description="Breakpoint ownership marker: `agent` if created/updated by MCP toolset, otherwise `user`."),
-    ]
-    condition: Annotated[
-        str | None, Field(default=None, description="Conditional expression for triggering breakpoint, if set."),
-    ] = None
-    log_expression: Annotated[
+    type: Annotated[BreakpointType, Field(description="Breakpoint type (line/exception/other).")]
+    file: Annotated[Path, Field(default=None, description="File path of the breakpoint.")]
+    line: Annotated[int, Field(default=None, description="1-based breakpoint line number.")]
+    line_text: Annotated[
         str | None,
         Field(
             default=None,
-            description="Evaluate-and-log expression of the logpoint, if set (the value logged when the line is reached).",
+            description="Short excerpt of the actual source line where the breakpoint resides, truncated when needed. Present for line breakpoints only.",
         ),
     ] = None
-    is_log_message: Annotated[bool, Field(description="Whether breakpoint logs source position when hit.")]
-    is_log_stack: Annotated[bool, Field(description="Whether breakpoint logs stack trace when hit.")]
+    condition: Annotated[
+        str | None, Field(default=None, description="Conditional expression for triggering breakpoint, if set."),
+    ] = None
     temporary: Annotated[bool, Field(description="Whether breakpoint is temporary.")]
-    suspend_policy: Annotated[str, Field(description="Breakpoint suspend policy (all/thread/none).")]
+    suspend_policy: Annotated[SuspendPolicy, Field(description="Breakpoint suspend policy (all/thread/none).")]
     hit_count: Annotated[int, Field(description="Breakpoint hit count, 0 when unavailable.")]
 
-
-class DebuggerEvent(BaseModel):
-    """A debugger event."""
-
-    type: Annotated[DebuggerEventType, Field(description="Event type (BREAKPOINT_ERROR or TRACEPOINT_OUTPUT).")]
-    timestamp_ms: Annotated[int, Field(description="Unix timestamp in milliseconds when the event was recorded.")]
-    # TODO: try having this be a native datetime, see if it marshalls
-    timestamp_iso: Annotated[str, Field(description="ISO-8601 timestamp when the event was recorded.")]
-    session_id: Annotated[str, Field(description="Debugger session identifier.")]
-    message: Annotated[str, Field(description="Primary event message.")]
-    breakpoint_id: Annotated[
-        str | None, Field(default=None, description="Canonical breakpoint ID when available."),
-    ] = None
-    file_path: Annotated[
-        str | None, Field(default=None, description="Breakpoint file path as provided by debugger when available."),
-    ] = None
-    line: Annotated[int | None, Field(default=None, description="1-based breakpoint line when available.")] = None
-    details: Annotated[
-        str | None, Field(default=None, description="Additional event context details when available."),
-    ] = None
+    def to_dap(self) -> dict[str, Any]:
+        """Turn this breakpoint into a dictionary that can be sent to DAP. Matches the "SourceBreakpoint" DAP schema."""
+        return {"line": self.line, "condition": self.condition}
 
 
 class SourcePosition(BaseModel):
@@ -181,44 +154,6 @@ class RunToLineResponse(BaseModel):
     ] = None
     message: Annotated[
         str | None, Field(default=None, description="Additional context message (timeout or errors)."),
-    ] = None
-
-
-class SetBreakpointResponse(BaseModel):
-    """Result of a breakpoint set/update operation."""
-
-    breakpoint_id: Annotated[
-        str | None,
-        Field(default=None, description="Canonical breakpoint ID. Absent for breakpoint mute-only operations."),
-    ] = None
-    previous_breakpoint_id: Annotated[
-        str | None,
-        Field(
-            default=None,
-            description="Previous canonical breakpoint ID when operation relocated an existing line breakpoint.",
-        ),
-    ] = None
-    added: Annotated[
-        Breakpoint | None,
-        Field(
-            default=None,
-            description="Details of the newly added or updated breakpoint. Absent for breakpoint mute-only operations.",
-        ),
-    ] = None
-    total_breakpoints: Annotated[int, Field(description="Current total number of breakpoints after operation.")]
-    line_text: Annotated[
-        str | None,
-        Field(
-            default=None,
-            description="Short excerpt of the actual source line where the breakpoint resides, truncated when needed. Present for line breakpoints only.",
-        ),
-    ] = None
-    breakpoints_muted: Annotated[
-        bool,
-        Field(default=False, description="Whether breakpoints are globally muted for the resolved debugger session."),
-    ]
-    message: Annotated[
-        str | None, Field(default=None, description="Additional note when requested and actual positions differ."),
     ] = None
 
 

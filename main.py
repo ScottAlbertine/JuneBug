@@ -12,6 +12,7 @@ from tools import (
     remove_breakpoint,
     run_to_line,
     set_breakpoint,
+    set_breakpoints_muted,
     set_variable,
     start_debugger_session,
 )
@@ -30,6 +31,7 @@ mcp.tool(list_breakpoints)
 mcp.tool(remove_breakpoint)
 mcp.tool(run_to_line)
 mcp.tool(set_breakpoint)
+mcp.tool(set_breakpoints_muted)
 mcp.tool(set_variable)
 mcp.tool(start_debugger_session)
 

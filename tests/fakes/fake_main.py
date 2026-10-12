@@ -4,7 +4,7 @@ from time import sleep
 
 
 def main(args: list[str]) -> None:
-    print("it started")
+    print("it started", flush=True)
     if "--loop-forever" in args:
         while True:
             sleep(1)

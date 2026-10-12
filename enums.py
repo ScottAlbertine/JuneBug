@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 # TODO: unify enum caseing
 
 
@@ -11,17 +12,12 @@ class Action(Enum):
     PAUSE = "PAUSE"
     STOP = "STOP"
     WAIT_FOR_PAUSE = "WAIT_FOR_PAUSE"
-    DRAIN_EVENTS = "DRAIN_EVENTS"
 
 
-class BreakpointOwner(Enum):
-    USER = "user"
-    AGENT = "agent"
-
-
-class DebuggerEventType(Enum):
-    BREAKPOINT_ERROR = "BREAKPOINT_ERROR"
-    TRACEPOINT_OUTPUT = "TRACEPOINT_OUTPUT"
+class BreakpointType(Enum):
+    LINE = "line"
+    EXCEPTION = "exception"
+    OTHER = "other"
 
 
 class DebuggerOutcome(Enum):
@@ -40,6 +36,7 @@ class SuspendPolicy(Enum):
     ALL = "ALL"
     THREAD = "THREAD"
     NONE = "NONE"
+
 
 class ThreadState(Enum):
     RUNNING = "running"

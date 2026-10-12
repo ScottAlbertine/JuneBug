@@ -7,19 +7,26 @@ from models import Thread
 
 
 class Threads:
-    """Data structure for storing the tracked threads under a given `Session`."""
+    """
+    Data structure for storing the tracked threads under a given `Session`.
+    The way DAP handles threads is very stupid.
+    You can, and should, dynamically fetch the list of all threads from DAP at any time.
+    However, that list only contains ID and name, that's it.
+    You have to manually track the status on your side, along with the current thread.
+    That is what this data structure is for.
+    """
 
     def __init__(self):
         self._threads: dict[int, Thread] = {}
 
-    def refresh(self, dap_threads: Event) -> list[Thread]:
+    def refresh(self, dap_threads_response: Event) -> list[Thread]:
         """
         Refresh our registry of tracked threads based DAP's response to a 'threads' request.
         Returns all the threads we're tracking, after the refresh, sorted by id.
         """
         # remove any thread that doesn't show up on an update.
         to_remove = set(self._threads.keys())
-        for dap_thread in dap_threads.body["body"]["threads"]:
+        for dap_thread in dap_threads_response.body["body"]["threads"]:
             thread_id: int = dap_thread["id"]
             thread_name: str = dap_thread["name"]
             if thread_id in self._threads:

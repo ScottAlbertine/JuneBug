@@ -9,6 +9,7 @@ from .list_breakpoints import list_breakpoints
 from .remove_breakpoint import remove_breakpoint
 from .run_to_line import run_to_line
 from .set_breakpoint import set_breakpoint
+from .set_breakpoints_muted import set_breakpoints_muted
 from .set_variable import set_variable
 from .start_debugger_session import start_debugger_session
 
@@ -24,6 +25,7 @@ __all__ = [
     "remove_breakpoint",
     "run_to_line",
     "set_breakpoint",
+    "set_breakpoints_muted",
     "set_variable",
     "start_debugger_session",
 ]

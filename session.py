@@ -1,13 +1,15 @@
 """A debug session, equivalent to a debugger instance like a `pdb` process or a PyCharm debugger tab."""
+from pathlib import Path
 from typing import Any, Callable, Iterator
 
 from dap import DAPClient, Event, InitializedEvent
 from dap.protocol import ErrorResponse
 
+from breakpoints import Breakpoints, File
 from constants import TEMP_DIR
-from enums import DebuggerState
+from enums import DebuggerState, SuspendPolicy
 from exceptions import DAPError
-from models import SessionStatus, Thread
+from models import Breakpoint, SessionStatus, Thread
 from threads import Threads
 from utils import connect_to_port
 
@@ -25,6 +27,7 @@ class Session:
         self, session_id: str, project_path: str, port: int, timeout: int, we_own: bool, pid: int | None = None,
     ):
         """Timeout is in milliseconds."""
+        self.breakpoints = Breakpoints()
         self.breakpoints_muted: bool = False
         self.client = DAPClient(clientID=session_id, clientName="JuneBug", locale="en-US")
         self.current_position = None  # TODO: track this
@@ -80,6 +83,9 @@ class Session:
         if event.body is not None and "threadId" in event.body:
             self.threads.update(event)
 
+        if event.event == "terminated":
+            self.state = DebuggerState.STOPPED
+
         # TODO: handle other passive events that update our internal model of the debugger's state here
 
     def _send(self):
@@ -97,6 +103,10 @@ class Session:
             current_position=self.current_position,
         )
 
+    def get_threads(self) -> list[Thread]:
+        """Get all threads, sorted by id."""
+        return self.threads.refresh(self._fetch_threads())
+
     def pause(self):
         """Pause this session."""
         self._pause(self.get_threads()[0].id)
@@ -112,9 +122,17 @@ class Session:
             self._continue_execution(self.get_threads()[0].id)
         self.state = DebuggerState.RUNNING
 
-    def get_threads(self) -> list[Thread]:
-        """Get all threads, sorted by id."""
-        return self.threads.refresh(self._fetch_threads())
+    def set_breakpoint(
+        self, path: Path, line: int, condition: str | None, temporary: bool, suspend_policy: SuspendPolicy,
+    ) -> Breakpoint:
+        """ Set a new breakpoint. See the docstring on the `Breakpoints` class to understand why this is so complex."""
+        bp = self.breakpoints.add_breakpoint(path, line, condition, temporary, suspend_policy)
+        self.breakpoints.refresh(self._set_breakpoints(self.breakpoints.get_file(path)))
+        return bp
+
+    def set_breakpoints_muted(self, breakpoints_muted: bool):
+        self.breakpoints_muted = breakpoints_muted
+        # TODO: actually remove all breakpoints from the process
 
     # DAP commands
 
@@ -178,9 +196,9 @@ class Session:
         self._send()
         return self._pull_until(lambda e: True)
 
-    def _set_breakpoints(self, source: dict[str, Any], breakpoints: list[dict[str, Any]]) -> Event:
-        """Set breakpoints for a source."""
-        self.client.set_breakpoints(source, breakpoints)
+    def _set_breakpoints(self, file: File) -> Event:
+        """Set breakpoints for a file."""
+        self.client.set_breakpoints({"path": str(file.path)}, [bp.to_dap() for bp in file.get_breakpoints()])
         self._send()
         return self._pull_until(lambda e: e.event == "response" and e.body["command"] == "setBreakpoints")
 

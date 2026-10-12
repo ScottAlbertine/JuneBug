@@ -1,3 +1,4 @@
+from pathlib import Path
 from socket import AF_INET, SOCK_STREAM, socket
 import subprocess
 from time import sleep, time
@@ -43,3 +44,21 @@ def connect_to_port(port: int, timeout: float) -> socket:
             sleep(0.1)
 
     raise TimeoutError()
+
+
+def normalize_file_path(base_path: str, file_path: str) -> Path:
+    """Normalize a file path string to a standard absolute Path.
+
+    Handles relative paths, absolute paths, paths with ``..`` components,
+    and ``file://`` URLs.
+
+    :param file_path: A file path in any supported format.
+    :param base_path: Base directory for resolving relative paths.
+    :return: A normalized absolute :class:`Path`.
+    """
+    if file_path.startswith("file://"):
+        file_path = file_path[7:]
+    p = Path(file_path)
+    if not p.is_absolute():
+        p = Path(base_path) / p
+    return p.resolve()
