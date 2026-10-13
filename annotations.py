@@ -38,6 +38,13 @@ SessionID = Annotated[
     "If multiple sessions are active and session_id is omitted, the call fails. Default: null.",
 ]
 
+FilePath = Annotated[
+    str,
+    "Path to the file. Supports project-relative paths, paths with '..', absolute paths, and URLs such as 'file://'.",
+]
+
+LineNum = Annotated[int, "1-based line number. The target location must be executable."]
+
 FrameIndex = Annotated[
     int | None,
     "Stack frame index counted from the top of the stack, the same `index` `get_stack` reports: "

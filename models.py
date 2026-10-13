@@ -9,6 +9,7 @@ from enums import BreakpointType, DebuggerOutcome, DebuggerState, SuspendPolicy,
 class Breakpoint(BaseModel):
     """A configured breakpoint."""
 
+    id: Annotated[int | None, Field(description="Breakpoint id.")]
     type: Annotated[BreakpointType, Field(description="Breakpoint type (line/exception/other).")]
     file: Annotated[Path, Field(default=None, description="File path of the breakpoint.")]
     line: Annotated[int, Field(default=None, description="1-based breakpoint line number.")]
@@ -29,14 +30,6 @@ class Breakpoint(BaseModel):
     def to_dap(self) -> dict[str, Any]:
         """Turn this breakpoint into a dictionary that can be sent to DAP. Matches the "SourceBreakpoint" DAP schema."""
         return {"line": self.line, "condition": self.condition}
-
-
-class SourcePosition(BaseModel):
-    """An absolute position in source code."""
-
-    file_path: Annotated[str, Field(description="File path as provided by the debugger (usually VirtualFile.url).")]
-    line: Annotated[int, Field(description="1-based line number.")]
-    column: Annotated[int | None, Field(default=None, description="1-based column number when available.")] = None
 
 
 class SessionStatus(BaseModel):
@@ -63,7 +56,7 @@ class SessionStatus(BaseModel):
         bool, Field(default=False, description="Whether breakpoints are globally muted for this debugger session."),
     ]
     current_position: Annotated[
-        SourcePosition | None,
+        Breakpoint | None,
         Field(default=None, description="Current source position for paused sessions, if available."),
     ] = None
 
@@ -127,20 +120,6 @@ class BreakpointsResponse(BaseModel):
     ]
 
 
-class RemoveBreakpointResponse(BaseModel):
-    """Result of a breakpoint removal operation."""
-
-    removed: Annotated[bool, Field(description="Whether at least one breakpoint was removed.")]
-    removed_count: Annotated[int, Field(description="Number of breakpoints removed at the requested location.")]
-    breakpoint_id: Annotated[
-        str | None, Field(default=None, description="Removed breakpoint ID when operation targeted one ID."),
-    ] = None
-    total_breakpoints: Annotated[int, Field(description="Current total number of breakpoints after removal.")]
-    message: Annotated[
-        str | None, Field(default=None, description="Additional note when no matching breakpoint is found."),
-    ] = None
-
-
 class RunToLineResponse(BaseModel):
     """Result of a run-to-line operation."""
 
@@ -149,7 +128,7 @@ class RunToLineResponse(BaseModel):
         DebuggerOutcome, Field(description="Outcome after attempting run-to-line (paused/stopped/timeout)."),
     ]
     current_position: Annotated[
-        SourcePosition | None,
+        Breakpoint | None,
         Field(default=None, description="Current position when outcome is paused and position is known."),
     ] = None
     message: Annotated[

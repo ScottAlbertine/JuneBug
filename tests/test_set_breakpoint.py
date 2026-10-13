@@ -9,6 +9,7 @@ import pytest
 
 from tests.conftest import PROJECT_ROOT
 import tests.fakes.fake_main as fake_main
+from tests.utils import MAIN_THREAD
 
 
 async def test_set_breakpoint(client: Client) -> None:
@@ -29,6 +30,7 @@ async def test_set_breakpoint(client: Client) -> None:
     )
 
     assert breakpoint_response.structured_content == {
+        "id": 0,
         "type": "line",
         "file": "/Users/scott/Repos/JuneBug/tests/fakes/fake_main.py",
         "line": 13,
@@ -40,20 +42,14 @@ async def test_set_breakpoint(client: Client) -> None:
     }
 
     # check that the breakpoint was set, by hitting it.
-    # TODO: this should be WAIT_FOR_PAUSE instead, and it should have a paused state
-    # That will let us get rid of the sleep below
-    resume_1 = await client.call_tool(
-        "control_session", {"session_id": session_id, "action": "RESUME"},
+    wait_for_pause = await client.call_tool(
+        "control_session", {"session_id": session_id, "action": "WAIT_FOR_PAUSE"},
     )
-    assert resume_1.structured_content["state"] == "running"
-
-    sleep(1)
+    assert wait_for_pause.structured_content["state"] == "paused"
 
     # check that the breakpoint was hit, based on thread state, stdout, and pid existence
     threads = await client.call_tool("get_threads", {"session_id": session_id})
-    assert threads.structured_content == {
-        'threads': [{'id': 1, 'is_current': False, 'name': 'MainThread', 'state': 'paused'}], 'total_count': 1,
-    }
+    assert threads.structured_content == {'threads': [MAIN_THREAD], 'total_count': 1}
     assert Path(std_out_path).read_text() == "it started\n"
     assert psutil.Process(pid).is_running()
 
@@ -65,15 +61,13 @@ async def test_set_breakpoint(client: Client) -> None:
 
     sleep(1)
 
-    # Check that the program runs to completion, based on thread state, stdout, and pid existence
+    # Check that the program has run to completion, based on thread state, stdout, and pid existence
     with pytest.raises(
         ToolError,
         match=rf"Error calling tool 'get_threads': DAP Error from command threads: Server\[pid={pid}] disconnected unexpectedly",
     ):
         threads = await client.call_tool("get_threads", {"session_id": session_id})
-        assert threads.structured_content == {
-            'threads': [{'id': 1, 'is_current': False, 'name': 'MainThread', 'state': 'running'}], 'total_count': 1,
-        }
+        assert threads.structured_content == {'threads': [MAIN_THREAD], 'total_count': 1}
     assert Path(std_out_path).read_text() == "it started\nit finished\n"
     assert psutil.Process(pid).status() == psutil.STATUS_ZOMBIE
 
@@ -99,6 +93,7 @@ async def test_set_breakpoint__odd_file_paths(client: Client, file_to_breakpoint
         "set_breakpoint", {"session_id": session_id, "file_path": file_to_breakpoint, "line": 13},
     )
     assert breakpoint_response.structured_content == {
+        "id": 0,
         "type": "line",
         "file": "/Users/scott/Repos/JuneBug/tests/fakes/fake_main.py",
         "line": 13,

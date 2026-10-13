@@ -12,16 +12,19 @@ class File:
 
     def __init__(self, path: Path):
         self.path = path
-        self.breakpoints: dict[int, Breakpoint] = {}
+        self._breakpoints: dict[int, Breakpoint] = {}
 
     def add_breakpoint(self, breakpoint: Breakpoint) -> None:
-        self.breakpoints[breakpoint.line] = breakpoint
+        self._breakpoints[breakpoint.line] = breakpoint
 
     def get_breakpoints(self) -> list[Breakpoint]:
-        return list(self.breakpoints.values())
+        return list(self._breakpoints.values())
 
     def get_breakpoint(self, line: int) -> Breakpoint | None:
-        return self.breakpoints.get(line)
+        return self._breakpoints.get(line)
+
+    def remove_breakpoint(self, line: int) -> None:
+        self._breakpoints.pop(line, None)
 
 
 class Breakpoints:
@@ -48,6 +51,7 @@ class Breakpoints:
         self, path: Path, line: int, condition: str | None, temporary: bool, suspend_policy: SuspendPolicy,
     ) -> Breakpoint:
         bp = Breakpoint(
+            id=None,  # for now
             type=BreakpointType.LINE,
             file=path,
             line=line,
@@ -69,6 +73,15 @@ class Breakpoints:
     def get_breakpoint(self, path: Path, line: int) -> Breakpoint | None:
         return self.get_file(path).get_breakpoint(line)
 
+    def get_breakpoint_by_id(self, breakpoint_id: int) -> Breakpoint | None:
+        return self._breakpoints.get(breakpoint_id)
+
+    def remove_breakpoint(self, path: Path, line: int):
+        file = self.get_file(path)
+        bp = file.get_breakpoint(line)
+        file.remove_breakpoint(line)
+        self._breakpoints.pop(bp.id, None)
+
     def refresh(self, dap_set_breakpoints_response: Event) -> None:
         """
         Refresh our registries of tracked breakpoints based DAP's response to a 'setBreakpoints' request.
@@ -83,4 +96,5 @@ class Breakpoints:
                 raise KeyError(
                     "New breakpoint returned from debugger that we weren't already tracking, figure out what's up with that.",
                 )
-            self._breakpoints[dap_breakpoint["id"]] = bp
+            bp.id = dap_breakpoint["id"]
+            self._breakpoints[bp.id] = bp

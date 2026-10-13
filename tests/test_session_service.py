@@ -7,6 +7,7 @@ import pytest
 
 from tests.conftest import PROJECT_ROOT
 import tests.fakes.fake_main as fake_main
+from tests.utils import MAIN_THREAD
 
 
 async def test_automatic_single_session_finding(client: Client, clear_sessions: None) -> None:
@@ -21,9 +22,7 @@ async def test_automatic_single_session_finding(client: Client, clear_sessions: 
 
     # get its threads without a session ID
     threads = await client.call_tool("get_threads")
-    assert threads.structured_content == {
-        "threads": [{"id": 1, "is_current": False, "name": "MainThread", "state": "unknown"}], "total_count": 1,
-    }
+    assert threads.structured_content == {"threads": [MAIN_THREAD], "total_count": 1}
 
     # create a second session
     await client.call_tool(

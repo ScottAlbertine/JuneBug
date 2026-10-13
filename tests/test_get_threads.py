@@ -1,6 +1,5 @@
 from pathlib import Path
 import sys
-from time import sleep
 
 from fastmcp import Client
 
@@ -25,11 +24,12 @@ async def test_simple(client: Client) -> None:
 
 
 async def test_multi_threaded(client: Client) -> None:
+    file_to_breakpoint = str(Path(fake_main_multi_thread.__file__).relative_to(PROJECT_ROOT))
     create_result = await client.call_tool(
         "start_debugger_session", {
             "project_path": str(PROJECT_ROOT),
             "python_path": sys.executable,
-            "file_path": str(Path(fake_main_multi_thread.__file__).relative_to(PROJECT_ROOT)),
+            "file_path": file_to_breakpoint,
         },
     )
     session_id = create_result.structured_content["id"]
@@ -38,21 +38,32 @@ async def test_multi_threaded(client: Client) -> None:
     starting_threads = await client.call_tool("get_threads", {"session_id": session_id})
     assert starting_threads.structured_content == {"threads": [MAIN_THREAD], "total_count": 1}
 
+    # wait until all the threads are spawned
     await client.call_tool(
-        "control_session", {"session_id": session_id, "action": "RESUME"},
+        "set_breakpoint", {"session_id": session_id, "file_path": file_to_breakpoint, "line": 38},
+    )
+    await client.call_tool("control_session", {"session_id": session_id, "action": "WAIT_FOR_PAUSE"})
+
+    # unbreakpoint that breakpoint
+    await client.call_tool(
+        "remove_breakpoint", {"session_id": session_id, "file_path": file_to_breakpoint, "line": 38},
     )
 
-    # TODO: replace this with setting a breakpoint before resuming the session, then resume, then wait until stopped, then check threads
-    # that should reduce this wait time down to minimum
-    sleep(1)
+    # add a breakpoint in the BusyWorker thread
+    await client.call_tool(
+        "set_breakpoint", {"session_id": session_id, "file_path": file_to_breakpoint, "line": 14},
+    )
+    # wait until it's hit
+    await client.call_tool("control_session", {"session_id": session_id, "action": "WAIT_FOR_PAUSE"})
 
+    # then we can check that a non-main thread is current, and that the main thread is not current.
     threads = await client.call_tool("get_threads", {"session_id": session_id})
     assert threads.structured_content == {
         "threads": [
-            {"id": 1, "is_current": False, "name": "MainThread", "state": "running"},
-            {"id": 2, "is_current": False, "name": "BusyWorker", "state": "running"},
-            {"id": 4, "is_current": False, "name": "DaemonOne", "state": "running"},
-            {"id": 5, "is_current": False, "name": "DaemonTwo", "state": "running"},
+            {"id": 1, "is_current": False, "name": "MainThread", "state": "paused"},
+            {"id": 2, "is_current": True, "name": "BusyWorker", "state": "paused"},
+            {"id": 4, "is_current": False, "name": "DaemonOne", "state": "paused"},
+            {"id": 5, "is_current": False, "name": "DaemonTwo", "state": "paused"},
         ],
         "total_count": 4,
     }
@@ -62,8 +73,8 @@ async def test_multi_threaded(client: Client) -> None:
     page_1 = await client.call_tool("get_threads", {"session_id": session_id, "limit": 2, "offset": 1})
     assert page_1.structured_content == {
         "threads": [
-            {"id": 2, "is_current": False, "name": "BusyWorker", "state": "running"},
-            {"id": 4, "is_current": False, "name": "DaemonOne", "state": "running"},
+            {"id": 2, "is_current": True, "name": "BusyWorker", "state": "paused"},
+            {"id": 4, "is_current": False, "name": "DaemonOne", "state": "paused"},
         ],
         "total_count": 4,
     }

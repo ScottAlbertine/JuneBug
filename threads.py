@@ -40,6 +40,9 @@ class Threads:
         for thread_id in to_remove:
             del self._threads[thread_id]
 
+        if len(self._threads) == 1:
+            next(iter(self._threads.values())).is_current = True
+
         return [self._threads[id] for id in sorted(self._threads.keys())]
 
     def update(self, dap_thread_event: Event) -> None:
@@ -65,3 +68,13 @@ class Threads:
         if body.get("allThreadsContinued"):
             for thread in self._threads.values():
                 thread.state = ThreadState.RUNNING
+
+    def pause_at_start(self) -> None:
+        """Pause the only thread upon startup. Should only ever be called once per session."""
+        if len(self._threads) == 1:
+            next(iter(self._threads.values())).state = ThreadState.PAUSED
+
+    def set_current(self, thread_id: int) -> None:
+        """Set the thread with the given ID as the current thread, all others as not the current thread."""
+        for thread in self._threads.values():
+            thread.is_current = (thread.id == thread_id)

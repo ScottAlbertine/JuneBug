@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from annotations import SessionID
+from annotations import FilePath, LineNum, SessionID
 from enums import SuspendPolicy
 from models import Breakpoint
 import session_service
@@ -8,11 +8,8 @@ from utils import normalize_file_path
 
 
 def set_breakpoint(
-    file_path: Annotated[
-        str,
-        "Path to the file. Supports project-relative paths, paths with '..', absolute paths, and URLs such as 'file://'.",
-    ],
-    line: Annotated[int, "1-based line number. The target location must be executable."],
+    file_path: FilePath,
+    line: LineNum,
     session_id: SessionID = None,
     condition: Annotated[
         str | None,

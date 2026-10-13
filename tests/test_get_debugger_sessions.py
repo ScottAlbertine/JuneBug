@@ -59,4 +59,6 @@ async def test_get_real_sessions(client: Client, clear_sessions: None) -> None:
     }
     assert sessions[0]["debugee_pid"] != sessions[1]["debugee_pid"]
 
+    # TODO: get one of the above sessions to show `current_position` and the other to show `breakpoints_muted`.
+
     assert empty_result.structured_content == {"sessions": []}

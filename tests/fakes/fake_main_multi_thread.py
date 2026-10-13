@@ -11,7 +11,8 @@ def worker_done() -> None:
 def worker_busy() -> None:
     """Thread that loops forever doing busy work."""
     while True:
-        pass
+        sleep(1)
+        print("busy work", flush=True)
 
 
 def worker_daemon() -> None:
@@ -35,6 +36,7 @@ def main() -> None:
 
     while True:
         sleep(1)
+        print("main work", flush=True)
 
 
 if __name__ == "__main__":

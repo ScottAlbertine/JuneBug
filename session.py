@@ -30,7 +30,7 @@ class Session:
         self.breakpoints = Breakpoints()
         self.breakpoints_muted: bool = False
         self.client = DAPClient(clientID=session_id, clientName="JuneBug", locale="en-US")
-        self.current_position = None  # TODO: track this
+        self.current_position: Breakpoint | None = None
         self.debugee_pid = pid
         self.has_configuration_done = False
         self.project_path = project_path
@@ -40,8 +40,6 @@ class Session:
         self.std_out_path = str(TEMP_DIR / f"{session_id}.stdout.txt") if we_own else None
         self.std_err_path = str(TEMP_DIR / f"{session_id}.stderr.txt") if we_own else None
         self.threads = Threads()
-
-        self.sock.settimeout(30)  # TODO: make this configurable?
 
         # set up the event iterator
         self._event_iterator = self._pull()
@@ -54,6 +52,8 @@ class Session:
         self._attach()
         # always get the initial registry of threads at this point, because we can.
         self.get_threads()
+        # the first thread always starts paused
+        self.threads.pause_at_start()
 
     def _pull(self) -> Iterator[Event]:
         """
@@ -82,6 +82,12 @@ class Session:
         print(event.model_dump_json(indent=2))  # for easy logging
         if event.body is not None and "threadId" in event.body:
             self.threads.update(event)
+
+        if event.event == "stopped":
+            self.threads.set_current(event.body["threadId"])
+            if hit_breakpoint_ids := event.body.get("hitBreakpointIds"):
+                self.current_position = self.breakpoints.get_breakpoint_by_id(hit_breakpoint_ids[0])
+            self.state = DebuggerState.PAUSED
 
         if event.event == "terminated":
             self.state = DebuggerState.STOPPED
@@ -125,14 +131,25 @@ class Session:
     def set_breakpoint(
         self, path: Path, line: int, condition: str | None, temporary: bool, suspend_policy: SuspendPolicy,
     ) -> Breakpoint:
-        """ Set a new breakpoint. See the docstring on the `Breakpoints` class to understand why this is so complex."""
+        """Set a new breakpoint. See the docstring on the `Breakpoints` class to understand why this is so complex."""
         bp = self.breakpoints.add_breakpoint(path, line, condition, temporary, suspend_policy)
         self.breakpoints.refresh(self._set_breakpoints(self.breakpoints.get_file(path)))
         return bp
 
+    def remove_breakpoint(self, path: Path, line: int) -> None:
+        """Remove a breakpoint."""
+        self.breakpoints.remove_breakpoint(path, line)
+        self._set_breakpoints(self.breakpoints.get_file(path))
+
     def set_breakpoints_muted(self, breakpoints_muted: bool):
+        """Set all breakpoints to muted."""
         self.breakpoints_muted = breakpoints_muted
         # TODO: actually remove all breakpoints from the process
+
+    def wait_for_pause(self):
+        """Wait for the debugger to pause on a line on its own."""
+        self.resume()
+        self._pull_until(lambda e: e.event == "stopped" or e.event == "terminated")
 
     # DAP commands
 

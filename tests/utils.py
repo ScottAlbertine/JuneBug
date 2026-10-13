@@ -4,7 +4,7 @@ import signal
 import psutil
 
 # What the main thread should look like, before you start the process running
-MAIN_THREAD = {"id": 1, "is_current": False, "name": "MainThread", "state": "unknown"}
+MAIN_THREAD = {"id": 1, "is_current": True, "name": "MainThread", "state": "paused"}
 
 
 class MatchAny:

@@ -1,20 +1,9 @@
-from typing import Annotated
+from annotations import FilePath, LineNum, SessionID
+import session_service
+from utils import normalize_file_path
 
-from annotations import SessionID
-from models import RemoveBreakpointResponse
 
-
-def remove_breakpoint(
-    session_id: SessionID,
-    file_path: Annotated[
-        str | None,
-        "Optional input: Path to the file. "
-        "Supports project-relative paths, paths with '..', absolute paths, "
-        "archive entries like '/path/lib.jar!/pkg/Foo.class', and URLs such as 'file://', 'jar://', and 'jrt://'. "
-        "Any path returned from the other tools can be passed as is (e.g. paths from 'search_*' tools).",
-    ] = None,
-    line: Annotated[int | None, "Optional input: line number (1-based) of the breakpoint to remove."] = None,
-) -> RemoveBreakpointResponse:
+def remove_breakpoint(file_path: FilePath, line: LineNum, session_id: SessionID = None) -> None:
     """Removes previously set breakpoints.
 
     Behavior:
@@ -23,6 +12,7 @@ def remove_breakpoint(
     Next call:
     - Use `list_breakpoints` to verify the remaining set.
     """
-    print(session_id)
-    print(file_path)
-    print(line)
+
+    session = session_service.get_session(session_id)
+    path = normalize_file_path(session.project_path, file_path)
+    session.remove_breakpoint(path, line)

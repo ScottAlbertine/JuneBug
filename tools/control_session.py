@@ -68,6 +68,6 @@ State values in the result:
     elif action == Action.STOP:
         pass
     elif action == Action.WAIT_FOR_PAUSE:
-        pass
+        session.wait_for_pause()
 
     return session.get_status()
