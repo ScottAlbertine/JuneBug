@@ -19,7 +19,7 @@ async def test_simple(client: Client) -> None:
     )
     session_id = create_result.structured_content["id"]
 
-    threads = await client.call_tool("get_threads", {"session_id": session_id})
+    threads = await client.call_tool("list_threads", {"session_id": session_id})
     assert threads.structured_content == {"threads": [MAIN_THREAD], "total_count": 1}
 
 
@@ -35,7 +35,7 @@ async def test_multi_threaded(client: Client) -> None:
     session_id = create_result.structured_content["id"]
 
     # check that, until you resume the process, there's only the one thread.
-    starting_threads = await client.call_tool("get_threads", {"session_id": session_id})
+    starting_threads = await client.call_tool("list_threads", {"session_id": session_id})
     assert starting_threads.structured_content == {"threads": [MAIN_THREAD], "total_count": 1}
 
     # wait until all the threads are spawned
@@ -57,7 +57,7 @@ async def test_multi_threaded(client: Client) -> None:
     await client.call_tool("control_session", {"session_id": session_id, "action": "wait_for_pause"})
 
     # then we can check that a non-main thread is current, and that the main thread is not current.
-    threads = await client.call_tool("get_threads", {"session_id": session_id})
+    threads = await client.call_tool("list_threads", {"session_id": session_id})
     assert threads.structured_content == {
         "threads": [
             {"id": 1, "is_current": False, "name": "MainThread", "state": "paused"},
@@ -70,7 +70,7 @@ async def test_multi_threaded(client: Client) -> None:
 
     # while we're in here, test thread pagination
     # it's the literal exact same setup as this test, so there's no point in doing it all twice
-    page_1 = await client.call_tool("get_threads", {"session_id": session_id, "limit": 2, "offset": 1})
+    page_1 = await client.call_tool("list_threads", {"session_id": session_id, "limit": 2, "offset": 1})
     assert page_1.structured_content == {
         "threads": [
             {"id": 2, "is_current": True, "name": "BusyWorker", "state": "paused"},

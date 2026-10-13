@@ -51,7 +51,7 @@ class Session:
         # nothing can happen until we attach, let's do that automatically
         self._attach()
         # always get the initial registry of threads at this point, because we can.
-        self.get_threads()
+        self.list_threads()
         # the first thread always starts paused
         self.threads.pause_at_start()
 
@@ -109,13 +109,13 @@ class Session:
             current_position=self.current_position,
         )
 
-    def get_threads(self) -> list[Thread]:
+    def list_threads(self) -> list[Thread]:
         """Get all threads, sorted by id."""
         return self.threads.refresh(self._fetch_threads())
 
     def pause(self):
         """Pause this session."""
-        self._pause(self.get_threads()[0].id)
+        self._pause(self.list_threads()[0].id)
         # TODO: set current position somehow?
         self.state = DebuggerState.PAUSED
 
@@ -126,7 +126,7 @@ class Session:
             self._configuration_done()
             self.has_configuration_done = True
         else:
-            self._continue_execution(self.get_threads()[0].id)
+            self._continue_execution(self.list_threads()[0].id)
         self.current_position = None  # TODO: test this
         self.state = DebuggerState.RUNNING
 

@@ -21,7 +21,7 @@ async def test_automatic_single_session_finding(client: Client, clear_sessions: 
     )
 
     # get its threads without a session ID
-    threads = await client.call_tool("get_threads")
+    threads = await client.call_tool("list_threads")
     assert threads.structured_content == {"threads": [MAIN_THREAD], "total_count": 1}
 
     # create a second session
@@ -36,6 +36,6 @@ async def test_automatic_single_session_finding(client: Client, clear_sessions: 
     # see that you need a session ID to distinguish between the two.
     with pytest.raises(
         ToolError,
-        match=r"Error calling tool 'get_threads': Session ID is required for this tool call, and you did not specify a session ID\.",
+        match=r"Error calling tool 'list_threads': Session ID is required for this tool call, and you did not specify a session ID\.",
     ):
-        threads = await client.call_tool("get_threads")
+        threads = await client.call_tool("list_threads")

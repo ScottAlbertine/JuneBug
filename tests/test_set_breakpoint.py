@@ -47,7 +47,7 @@ async def test_set_breakpoint(client: Client) -> None:
     assert wait_for_pause.structured_content["state"] == "paused"
 
     # check that the breakpoint was hit, based on thread state, stdout, and pid existence
-    threads = await client.call_tool("get_threads", {"session_id": session_id})
+    threads = await client.call_tool("list_threads", {"session_id": session_id})
     assert threads.structured_content == {'threads': [MAIN_THREAD], 'total_count': 1}
     assert Path(std_out_path).read_text() == "it started\n"
     assert psutil.Process(pid).is_running()
@@ -63,9 +63,9 @@ async def test_set_breakpoint(client: Client) -> None:
     # Check that the program has run to completion, based on thread state, stdout, and pid existence
     with pytest.raises(
         ToolError,
-        match=rf"Error calling tool 'get_threads': DAP Error from command threads: Server\[pid={pid}] disconnected unexpectedly",
+        match=rf"Error calling tool 'list_threads': DAP Error from command threads: Server\[pid={pid}] disconnected unexpectedly",
     ):
-        threads = await client.call_tool("get_threads", {"session_id": session_id})
+        threads = await client.call_tool("list_threads", {"session_id": session_id})
         assert threads.structured_content == {'threads': [MAIN_THREAD], 'total_count': 1}
     assert Path(std_out_path).read_text() == "it started\nit finished\n"
     assert psutil.Process(pid).status() == psutil.STATUS_ZOMBIE

@@ -5,7 +5,7 @@ from models import ThreadsResponse
 import session_service
 
 
-def get_threads(
+def list_threads(
     session_id: SessionID = None,
     limit: Annotated[int, "Page size. Default: 50, max: 200."] = 50,
     offset: Annotated[int, "Page offset. Default: 0."] = 0,
@@ -25,5 +25,5 @@ Ordering:
 Schema fields: id, name, state, is_current.
 """
     session = session_service.get_session(session_id)
-    threads = session.get_threads()
+    threads = session.list_threads()
     return ThreadsResponse(threads=threads[offset:offset + limit], total_count=len(threads))

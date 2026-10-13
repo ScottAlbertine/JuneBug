@@ -19,7 +19,7 @@ async def test_resume_and_pause(client: Client) -> None:
     session_id = create_result.structured_content["id"]
 
     # check that, until you resume the process, there's only the one thread.
-    starting_threads = await client.call_tool("get_threads", {"session_id": session_id})
+    starting_threads = await client.call_tool("list_threads", {"session_id": session_id})
     assert starting_threads.structured_content == {"threads": [MAIN_THREAD], "total_count": 1}
 
     first_resume = await client.call_tool(
@@ -30,7 +30,7 @@ async def test_resume_and_pause(client: Client) -> None:
     # resume only makes sense with sleep, tragically for my test times
     sleep(1)
 
-    threads = await client.call_tool("get_threads", {"session_id": session_id})
+    threads = await client.call_tool("list_threads", {"session_id": session_id})
     assert threads.structured_content == {
         "threads": [
             {"id": 1, "is_current": True, "name": "MainThread", "state": "running"},
@@ -49,7 +49,7 @@ async def test_resume_and_pause(client: Client) -> None:
     # sadly, a flat pause also needs time to let all the threads pause and inform the session about it
     sleep(1)
 
-    threads = await client.call_tool("get_threads", {"session_id": session_id})
+    threads = await client.call_tool("list_threads", {"session_id": session_id})
     assert threads.structured_content == {
         "threads": [
             {"id": 1, "is_current": MatchAny(bool), "name": "MainThread", "state": "paused"},
@@ -65,7 +65,7 @@ async def test_resume_and_pause(client: Client) -> None:
     )
     assert second_resume.structured_content["state"] == "running"
 
-    threads = await client.call_tool("get_threads", {"session_id": session_id})
+    threads = await client.call_tool("list_threads", {"session_id": session_id})
     assert threads.structured_content == {
         "threads": [
             {"id": 1, "is_current": MatchAny(bool), "name": "MainThread", "state": "running"},

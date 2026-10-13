@@ -8,7 +8,7 @@ def get_stack(
     session_id: SessionID = None,
     thread_id: Annotated[
         int | None,
-        "Thread ID to get stack for. This value should come from `get_threads`. "
+        "Thread ID to get stack for. This value should come from `list_threads`. "
         "If not specified, uses the current/active thread. Default: null.",
     ] = None,
     limit: Annotated[int, "Max frames to return. Default: 200."] = 200,
@@ -21,7 +21,7 @@ Preconditions:
 - Session must be suspended.
 
 Behavior:
-- `thread_id` should come from `get_threads` and matches the debugger thread display name (defaults to active thread).
+- `thread_id` should come from `list_threads` and matches the debugger thread display name (defaults to active thread).
 - Includes frames even when source position is missing (file/line may be null).
 
 Pagination:
