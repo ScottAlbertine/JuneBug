@@ -9,6 +9,7 @@ from enums import BreakpointType, DebuggerOutcome, DebuggerState, SuspendPolicy,
 class Breakpoint(BaseModel):
     """A configured breakpoint."""
 
+    # `id` is excluded because it's unstable. All IDs change anytime we mute/unmute all breakpoints, for example
     id: Annotated[int | None, Field(description="Breakpoint id.", exclude=True)]
     type: Annotated[BreakpointType, Field(description="Breakpoint type (line/exception/other).")]
     file: Annotated[Path, Field(default=None, description="File path of the breakpoint.")]
