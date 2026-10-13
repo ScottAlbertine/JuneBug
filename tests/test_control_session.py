@@ -1,23 +1,13 @@
-from pathlib import Path
-import sys
 from time import sleep
 
 from fastmcp import Client
 
-from tests.conftest import PROJECT_ROOT
-import tests.fakes.fake_main as fake_main
-import tests.fakes.fake_main_multi_thread as fake_main_multi_thread
-from tests.utils import MAIN_THREAD, MatchAny
+from tests.constants import FAKE_MAIN, FAKE_MAIN_MULTI_THREAD, MAIN_THREAD, PROJECT_ROOT
+from tests.utils import MatchAny, create_session
 
 
 async def test_resume_and_pause(client: Client) -> None:
-    file_to_breakpoint = str(Path(fake_main_multi_thread.__file__).relative_to(PROJECT_ROOT))
-    create_result = await client.call_tool(
-        "start_debugger_session", {
-            "project_path": str(PROJECT_ROOT), "python_path": sys.executable, "file_path": file_to_breakpoint,
-        },
-    )
-    session_id = create_result.structured_content["id"]
+    session_id = (await create_session(client, file_path=FAKE_MAIN_MULTI_THREAD))["id"]
 
     # check that, until you resume the process, there's only the one thread.
     starting_threads = await client.call_tool("list_threads", {"session_id": session_id})
@@ -79,17 +69,10 @@ async def test_resume_and_pause(client: Client) -> None:
 
 
 async def test_wait_for_pause(client: Client) -> None:
-    file_to_breakpoint = str(Path(fake_main.__file__).relative_to(PROJECT_ROOT))
-
-    session = await client.call_tool(
-        "start_debugger_session", {
-            "project_path": str(PROJECT_ROOT), "python_path": sys.executable, "file_path": file_to_breakpoint,
-        },
-    )
-    session_id = session.structured_content["id"]
+    session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
 
     await client.call_tool(
-        "set_breakpoint", {"session_id": session_id, "file_path": file_to_breakpoint, "line": 13},
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 13},
     )
 
     # check that the breakpoint was set, by hitting it.
@@ -114,5 +97,3 @@ async def test_wait_for_pause(client: Client) -> None:
             "suspend_policy": "all",
         },
     }
-
-

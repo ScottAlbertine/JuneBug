@@ -1,45 +1,27 @@
-from pathlib import Path
-import sys
-
 from fastmcp import Client
 
-from tests.conftest import PROJECT_ROOT
-import tests.fakes.fake_library as fake_library
-import tests.fakes.fake_main_with_import as fake_main_with_import
-
-_FAKE_MAIN_PATH = str(Path(fake_main_with_import.__file__).relative_to(PROJECT_ROOT))
-_FAKE_LIB_PATH = str(Path(fake_library.__file__).relative_to(PROJECT_ROOT))
-
-
-# TODO: make this a util function, it's used all over the place
-async def _create_session(client: Client) -> str:
-    """Start a debugger session and return (session_id, file_to_breakpoint)."""
-    session_start = await client.call_tool(
-        "start_debugger_session", {
-            "project_path": str(PROJECT_ROOT), "python_path": sys.executable, "file_path": _FAKE_MAIN_PATH,
-        },
-    )
-    return session_start.structured_content["id"]
+from tests.constants import FAKE_LIBRARY, FAKE_MAIN_WITH_IMPORT, PROJECT_ROOT
+from tests.utils import create_session
 
 
 async def test_list_breakpoints(client: Client) -> None:
     """After setting breakpoints, list_breakpoints returns them sorted by file then line."""
-    session_id = await _create_session(client)
+    session_id = (await create_session(client, file_path=FAKE_MAIN_WITH_IMPORT))["id"]
 
     all_breakpoints = await client.call_tool("list_breakpoints", {"session_id": session_id})
     assert all_breakpoints.structured_content == {"breakpoints": [], "breakpoints_muted": False}
 
     # Set two breakpoints on different lines, in the wrong order on purpose to test sorting
     await client.call_tool(
-        "set_breakpoint", {"session_id": session_id, "file_path": _FAKE_MAIN_PATH, "line": 10},
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_WITH_IMPORT, "line": 10},
     )
     await client.call_tool(
-        "set_breakpoint", {"session_id": session_id, "file_path": _FAKE_MAIN_PATH, "line": 7},
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_WITH_IMPORT, "line": 7},
     )
 
     # set another breakpoint in a different file, doing it against alphabetical order to test file sorting
     await client.call_tool(
-        "set_breakpoint", {"session_id": session_id, "file_path": _FAKE_LIB_PATH, "line": 2},
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_LIBRARY, "line": 2},
     )
 
     breakpoint_1 = {
@@ -78,14 +60,14 @@ async def test_list_breakpoints(client: Client) -> None:
     }
 
     just_main_breakpoints = await client.call_tool(
-        "list_breakpoints", {"session_id": session_id, "file_path": _FAKE_MAIN_PATH},
+        "list_breakpoints", {"session_id": session_id, "file_path": FAKE_MAIN_WITH_IMPORT},
     )
     assert just_main_breakpoints.structured_content == {
         "breakpoints": [breakpoint_2, breakpoint_3], "breakpoints_muted": False,
     }
 
     just_lib_breakpoints = await client.call_tool(
-        "list_breakpoints", {"session_id": session_id, "file_path": _FAKE_LIB_PATH},
+        "list_breakpoints", {"session_id": session_id, "file_path": FAKE_LIBRARY},
     )
     assert just_lib_breakpoints.structured_content == {"breakpoints": [breakpoint_1], "breakpoints_muted": False}
 

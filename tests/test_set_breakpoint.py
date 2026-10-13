@@ -1,5 +1,4 @@
 from pathlib import Path
-import sys
 from time import sleep
 
 from fastmcp import Client
@@ -7,29 +6,23 @@ from fastmcp.exceptions import ToolError
 import psutil
 import pytest
 
-from tests.conftest import PROJECT_ROOT
+from tests.constants import FAKE_MAIN, MAIN_THREAD, PROJECT_ROOT
 import tests.fakes.fake_main as fake_main
-from tests.utils import MAIN_THREAD
+from tests.utils import create_session
 
 
 # TODO: try setting a breakpoint on every line in fake main, even on lines that don't exist, see what happens, handle all the edge cases
 # Try listing them too, to see how they show up after
 
 async def test_set_breakpoint(client: Client) -> None:
-    file_to_breakpoint = str(Path(fake_main.__file__).relative_to(PROJECT_ROOT))
 
-    session_start = await client.call_tool(
-        "start_debugger_session", {
-            "project_path": str(PROJECT_ROOT), "python_path": sys.executable, "file_path": file_to_breakpoint,
-        },
-    )
-    start_response = session_start.structured_content
+    start_response = await create_session(client, file_path=FAKE_MAIN)
     session_id = start_response["id"]
     pid = start_response["debugee_pid"]
     std_out_path = start_response["std_out_path"]
 
     breakpoint_response = await client.call_tool(
-        "set_breakpoint", {"session_id": session_id, "file_path": file_to_breakpoint, "line": 13},
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 13},
     )
 
     assert breakpoint_response.structured_content == {
@@ -84,12 +77,7 @@ async def test_set_breakpoint(client: Client) -> None:
 )
 async def test_set_breakpoint__odd_file_paths(client: Client, file_to_breakpoint: str) -> None:
     """Test non-standard, aka non-relative paths to the file to breakpoint"""
-    session_start = await client.call_tool(
-        "start_debugger_session", {
-            "project_path": str(PROJECT_ROOT), "python_path": sys.executable, "file_path": file_to_breakpoint,
-        },
-    )
-    session_id = session_start.structured_content["id"]
+    session_id = (await create_session(client, file_path=file_to_breakpoint))["id"]
 
     breakpoint_response = await client.call_tool(
         "set_breakpoint", {"session_id": session_id, "file_path": file_to_breakpoint, "line": 13},

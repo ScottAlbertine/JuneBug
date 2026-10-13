@@ -1,28 +1,18 @@
-from pathlib import Path
-import sys
-
 from fastmcp import Client
 
-from tests.conftest import PROJECT_ROOT
-import tests.fakes.fake_main as fake_main
+from tests.constants import FAKE_MAIN, PROJECT_ROOT
+from tests.utils import create_session
 
 
 async def test_mute_breakpoints(client: Client) -> None:
-    file_to_breakpoint = str(Path(fake_main.__file__).relative_to(PROJECT_ROOT))
-    session = await client.call_tool(
-        "start_debugger_session", {
-            "project_path": str(PROJECT_ROOT), "python_path": sys.executable, "file_path": file_to_breakpoint,
-        },
-    )
-
-    session_id = session.structured_content["id"]
+    session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
 
     # create two breakpoints
     await client.call_tool(
-        "set_breakpoint", {"session_id": session_id, "file_path": file_to_breakpoint, "line": 7},
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 7},
     )
     await client.call_tool(
-        "set_breakpoint", {"session_id": session_id, "file_path": file_to_breakpoint, "line": 13},
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 13},
     )
 
     # mute all breakpoints
@@ -39,14 +29,7 @@ async def test_mute_breakpoints(client: Client) -> None:
 
 
 async def test_unmute_breakpoints(client: Client) -> None:
-    file_to_breakpoint = str(Path(fake_main.__file__).relative_to(PROJECT_ROOT))
-    session = await client.call_tool(
-        "start_debugger_session", {
-            "project_path": str(PROJECT_ROOT), "python_path": sys.executable, "file_path": file_to_breakpoint,
-        },
-    )
-
-    session_id = session.structured_content["id"]
+    session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
 
     # mute all breakpoints
     muted = await client.call_tool("set_breakpoints_muted", {"session_id": session_id, "breakpoints_muted": True})
@@ -55,10 +38,10 @@ async def test_unmute_breakpoints(client: Client) -> None:
 
     # create two breakpoints
     await client.call_tool(
-        "set_breakpoint", {"session_id": session_id, "file_path": file_to_breakpoint, "line": 7},
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 7},
     )
     await client.call_tool(
-        "set_breakpoint", {"session_id": session_id, "file_path": file_to_breakpoint, "line": 13},
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 13},
     )
 
     # unmute all breakpoints

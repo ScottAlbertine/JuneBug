@@ -1,38 +1,18 @@
-from pathlib import Path
-import sys
-
 from fastmcp import Client
 
-from tests.conftest import PROJECT_ROOT
-import tests.fakes.fake_main as fake_main
-import tests.fakes.fake_main_multi_thread as fake_main_multi_thread
-from tests.utils import MAIN_THREAD
+from tests.constants import FAKE_MAIN, FAKE_MAIN_MULTI_THREAD, MAIN_THREAD
+from tests.utils import create_session
 
 
 async def test_simple(client: Client) -> None:
-    create_result = await client.call_tool(
-        "start_debugger_session", {
-            "project_path": str(PROJECT_ROOT),
-            "python_path": sys.executable,
-            "file_path": str(Path(fake_main.__file__).relative_to(PROJECT_ROOT)),
-        },
-    )
-    session_id = create_result.structured_content["id"]
+    session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
 
     threads = await client.call_tool("list_threads", {"session_id": session_id})
     assert threads.structured_content == {"threads": [MAIN_THREAD], "total_count": 1}
 
 
 async def test_multi_threaded(client: Client) -> None:
-    file_to_breakpoint = str(Path(fake_main_multi_thread.__file__).relative_to(PROJECT_ROOT))
-    create_result = await client.call_tool(
-        "start_debugger_session", {
-            "project_path": str(PROJECT_ROOT),
-            "python_path": sys.executable,
-            "file_path": file_to_breakpoint,
-        },
-    )
-    session_id = create_result.structured_content["id"]
+    session_id = (await create_session(client, file_path=FAKE_MAIN_MULTI_THREAD))["id"]
 
     # check that, until you resume the process, there's only the one thread.
     starting_threads = await client.call_tool("list_threads", {"session_id": session_id})
@@ -40,18 +20,18 @@ async def test_multi_threaded(client: Client) -> None:
 
     # wait until all the threads are spawned
     await client.call_tool(
-        "set_breakpoint", {"session_id": session_id, "file_path": file_to_breakpoint, "line": 38},
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_MULTI_THREAD, "line": 38},
     )
     await client.call_tool("control_session", {"session_id": session_id, "action": "wait_for_pause"})
 
     # unbreakpoint that breakpoint
     await client.call_tool(
-        "remove_breakpoint", {"session_id": session_id, "file_path": file_to_breakpoint, "line": 38},
+        "remove_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_MULTI_THREAD, "line": 38},
     )
 
     # add a breakpoint in the BusyWorker thread
     await client.call_tool(
-        "set_breakpoint", {"session_id": session_id, "file_path": file_to_breakpoint, "line": 14},
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_MULTI_THREAD, "line": 14},
     )
     # wait until it's hit
     await client.call_tool("control_session", {"session_id": session_id, "action": "wait_for_pause"})

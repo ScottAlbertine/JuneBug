@@ -1,30 +1,16 @@
 import os
-from pathlib import Path
-import sys
 
 from fastmcp import Client
 
 from constants import TEMP_DIR
-from tests.conftest import PROJECT_ROOT
-import tests.fakes.fake_main as fake_main
-from tests.utils import MatchAny
+from tests.constants import FAKE_MAIN, PROJECT_ROOT
+from tests.utils import MatchAny, create_session
 
 
 async def test_get_real_sessions(client: Client, clear_sessions: None) -> None:
     """Create 2 real sessions, check that they show up under the appropriate project path, but not under a different path."""
-    file_to_breakpoint = str(Path(fake_main.__file__).relative_to(PROJECT_ROOT))
-    session_0 = await client.call_tool(
-        "start_debugger_session", {
-            "project_path": str(PROJECT_ROOT), "python_path": sys.executable, "file_path": file_to_breakpoint,
-        },
-    )
-    session_1 = await client.call_tool(
-        "start_debugger_session", {
-            "project_path": str(PROJECT_ROOT), "python_path": sys.executable, "file_path": file_to_breakpoint,
-        },
-    )
-    session_id_0 = session_0.structured_content["id"]
-    session_id_1 = session_1.structured_content["id"]
+    session_id_0 = (await create_session(client, file_path=FAKE_MAIN))["id"]
+    session_id_1 = (await create_session(client, file_path=FAKE_MAIN))["id"]
 
     result_1 = await client.call_tool("list_debugger_sessions", {"project_path": str(PROJECT_ROOT)})
     assert result_1.structured_content == {
@@ -54,7 +40,7 @@ async def test_get_real_sessions(client: Client, clear_sessions: None) -> None:
 
     # set a breakpoint in one of the sessions, to see that `current_position` is populated
     await client.call_tool(
-        "set_breakpoint", {"session_id": session_id_0, "file_path": file_to_breakpoint, "line": 13},
+        "set_breakpoint", {"session_id": session_id_0, "file_path": FAKE_MAIN, "line": 13},
     )
     # hit that breakpoint
     await client.call_tool("control_session", {"session_id": session_id_0, "action": "wait_for_pause"})

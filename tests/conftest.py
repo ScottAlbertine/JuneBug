@@ -1,6 +1,5 @@
 """Shared test configuration and fixtures."""
 
-from pathlib import Path
 import pkgutil
 from typing import AsyncGenerator, Generator
 
@@ -11,8 +10,6 @@ import pytest_asyncio
 from main import mcp
 import session_service
 from tests.utils import kill_processes_by_module
-
-PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 
 # Module names whose running processes should be killed at session teardown.
 CLEANUP_MODULES = [

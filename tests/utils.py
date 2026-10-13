@@ -1,10 +1,12 @@
 import re
 import signal
+import sys
+from typing import Any
 
+from fastmcp import Client
 import psutil
 
-# What the main thread should look like, before you start the process running
-MAIN_THREAD = {"id": 1, "is_current": True, "name": "MainThread", "state": "paused"}
+from tests.constants import PROJECT_ROOT
 
 
 class MatchAny:
@@ -46,3 +48,13 @@ def kill_processes_by_module(module_names: list[str]) -> None:
                 proc.send_signal(signal.SIGTERM)
             except psutil.NoSuchProcess:
                 pass
+
+
+async def create_session(client: Client, file_path: str) -> dict[str, Any]:
+    """Start a debugger session and return the full structured_content dict."""
+    session_start = await client.call_tool(
+        "start_debugger_session", {
+            "project_path": str(PROJECT_ROOT), "python_path": sys.executable, "file_path": file_path,
+        },
+    )
+    return session_start.structured_content

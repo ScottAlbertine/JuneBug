@@ -8,8 +8,7 @@ import psutil
 import pytest
 
 from constants import TEMP_DIR
-from tests.conftest import PROJECT_ROOT
-import tests.fakes.fake_main as fake_main
+from tests.constants import FAKE_MAIN, PROJECT_ROOT
 from tests.utils import MatchAny, MatchRegex
 
 
@@ -18,7 +17,7 @@ async def test_simple(client: Client, clear_sessions: None) -> None:
         "start_debugger_session", {
             "project_path": str(PROJECT_ROOT),
             "python_path": sys.executable,
-            "file_path": str(Path(fake_main.__file__).relative_to(PROJECT_ROOT)),
+            "file_path": FAKE_MAIN,
         },
     )
 
@@ -57,7 +56,7 @@ async def test_fancy(client: Client, clear_sessions: None) -> None:
         "start_debugger_session", {
             "project_path": str(PROJECT_ROOT),
             "python_path": sys.executable,
-            "file_path": str(Path(fake_main.__file__).relative_to(PROJECT_ROOT)),
+            "file_path": FAKE_MAIN,
             "program_arguments": ["a", "b", "c"],
             "working_directory": TEMP_DIR,
             "env": {"some": "body", "once": "told me"},
@@ -90,7 +89,7 @@ async def test_bad_python_path(client: Client, clear_sessions: None) -> None:
             "start_debugger_session", {
                 "project_path": str(PROJECT_ROOT),
                 "python_path": "/not/a/real/path",
-                "file_path": str(Path(fake_main.__file__).relative_to(PROJECT_ROOT)),
+                "file_path": FAKE_MAIN,
             },
         )
 
@@ -104,6 +103,6 @@ async def test_debugpy_install_failure(client: Client, clear_sessions: None) -> 
             "start_debugger_session", {
                 "project_path": str(PROJECT_ROOT),
                 "python_path": str(Path(__file__).parent / "fakes" / "python_that_cant_install_debugpy.sh"),
-                "file_path": str(Path(fake_main.__file__).relative_to(PROJECT_ROOT)),
+                "file_path": FAKE_MAIN,
             },
         )
