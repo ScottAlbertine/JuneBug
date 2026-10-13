@@ -11,9 +11,6 @@ import tests.fakes.fake_main as fake_main
 from tests.utils import create_session
 
 
-# TODO: try setting a breakpoint on every line in fake main, even on lines that don't exist, see what happens, handle all the edge cases
-# Try listing them too, to see how they show up after
-
 async def test_set_breakpoint(client: Client) -> None:
 
     start_response = await create_session(client, file_path=FAKE_MAIN)

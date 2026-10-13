@@ -102,12 +102,6 @@ class Breakpoints:
         In the future, we might need to add or remove breakpoints from our list of breakpoints in the file, as well, depending on what comes back.
         """
         for dap_breakpoint in dap_set_breakpoints_response.body["body"]["breakpoints"]:
-            if not dap_breakpoint.get("verified", True):
-                raise ValueError("Unverified breakpoint, figure out what's up with these.")
             bp = self.get_breakpoint(Path(dap_breakpoint["source"]["path"]), dap_breakpoint["line"])
-            if bp is None:
-                raise KeyError(
-                    "New breakpoint returned from debugger that we weren't already tracking, figure out what's up with that.",
-                )
             bp.id = dap_breakpoint["id"]
             self._breakpoints[bp.id] = bp
