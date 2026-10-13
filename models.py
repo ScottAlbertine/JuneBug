@@ -6,13 +6,10 @@ from pydantic import BaseModel, Field
 from enums import BreakpointType, DebuggerOutcome, DebuggerState, SuspendPolicy, ThreadState
 
 
-# TODO: I really really don't want these IDs being shown to the client
-# they are not stable, they all change when we mute vs unmute breakpoints
-# we don't want the client getting confused by these
 class Breakpoint(BaseModel):
     """A configured breakpoint."""
 
-    id: Annotated[int | None, Field(description="Breakpoint id.")]
+    id: Annotated[int | None, Field(description="Breakpoint id.", exclude=True)]
     type: Annotated[BreakpointType, Field(description="Breakpoint type (line/exception/other).")]
     file: Annotated[Path, Field(default=None, description="File path of the breakpoint.")]
     line: Annotated[int, Field(default=None, description="1-based breakpoint line number.")]

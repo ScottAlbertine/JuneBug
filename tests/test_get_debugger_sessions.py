@@ -66,7 +66,6 @@ async def test_get_real_sessions(client: Client, clear_sessions: None) -> None:
                 "breakpoints_muted": False,
                 "current_position": {
                     "type": "line",
-                    "id": 0,
                     "file": "/Users/scott/Repos/JuneBug/tests/fakes/fake_main.py",
                     "line": 13,
                     "line_text": None,
