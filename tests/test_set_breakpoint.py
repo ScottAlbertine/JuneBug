@@ -12,6 +12,9 @@ import tests.fakes.fake_main as fake_main
 from tests.utils import MAIN_THREAD
 
 
+# TODO: try setting a breakpoint on every line in fake main, even on lines that don't exist, see what happens, handle all the edge cases
+# Try listing them too, to see how they show up after
+
 async def test_set_breakpoint(client: Client) -> None:
     file_to_breakpoint = str(Path(fake_main.__file__).relative_to(PROJECT_ROOT))
 

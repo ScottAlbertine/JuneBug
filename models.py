@@ -113,8 +113,6 @@ class BreakpointsResponse(BaseModel):
     """List of configured breakpoints."""
 
     breakpoints: Annotated[list[Breakpoint], Field(description="List of currently configured breakpoints.")]
-    total_count: Annotated[int, Field(description="Total count.")]
-    enabled_count: Annotated[int, Field(description="Enabled count.")]
     breakpoints_muted: Annotated[
         bool,
         Field(default=False, description="Whether breakpoints are globally muted for the resolved debugger session."),

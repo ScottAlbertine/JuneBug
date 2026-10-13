@@ -109,6 +109,16 @@ class Session:
             current_position=self.current_position,
         )
 
+    def list_breakpoints(self, path: Path | None) -> list[Breakpoint]:
+        """
+        List all breakpoints, sorted by file, and then by line number.
+        Lists them only for the given file if one is specified, otherwise lists all of them.
+        """
+        if path is None:
+            return self.breakpoints.list_breakpoints()
+        else:
+            return self.breakpoints.list_breakpoints_for_file(path)
+
     def list_threads(self) -> list[Thread]:
         """Get all threads, sorted by id."""
         return self.threads.refresh(self._fetch_threads())
