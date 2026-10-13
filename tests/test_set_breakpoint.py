@@ -37,13 +37,13 @@ async def test_set_breakpoint(client: Client) -> None:
         "line_text": None,
         "condition": None,
         "temporary": False,
-        "suspend_policy": "ALL",
+        "suspend_policy": "all",
         "hit_count": 0,
     }
 
     # check that the breakpoint was set, by hitting it.
     wait_for_pause = await client.call_tool(
-        "control_session", {"session_id": session_id, "action": "WAIT_FOR_PAUSE"},
+        "control_session", {"session_id": session_id, "action": "wait_for_pause"},
     )
     assert wait_for_pause.structured_content["state"] == "paused"
 
@@ -55,7 +55,7 @@ async def test_set_breakpoint(client: Client) -> None:
 
     # resume again
     resume_2 = await client.call_tool(
-        "control_session", {"session_id": session_id, "action": "RESUME"},
+        "control_session", {"session_id": session_id, "action": "resume"},
     )
     assert resume_2.structured_content["state"] == "running"
 
@@ -100,6 +100,6 @@ async def test_set_breakpoint__odd_file_paths(client: Client, file_to_breakpoint
         "line_text": None,
         "condition": None,
         "temporary": False,
-        "suspend_policy": "ALL",
+        "suspend_policy": "all",
         "hit_count": 0,
     }

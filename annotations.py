@@ -50,6 +50,6 @@ FrameIndex = Annotated[
     "Stack frame index counted from the top of the stack, the same `index` `get_stack` reports: "
     "0 is the frame execution is in, 1 its caller, and so on. "
     "Obtain this from the current paused `get_stack` result; "
-    "do not reuse a cached frame index after `RESUME`, `STEP_*`, `run_to_line`, or any change in paused location. "
+    "do not reuse a cached frame index after `resume`, `step_*`, `run_to_line`, or any change in paused location. "
     "If null, uses the frame currently selected in the debugger, the one `get_stack` marks `is_current`. Default: null.",
 ]

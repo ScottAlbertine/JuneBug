@@ -26,7 +26,7 @@ def list_breakpoints(
     """Lists all breakpoints in the project or in a specific file.
 Use this tool to see all currently set breakpoints and their properties.
 
-Tip: Call this before RESUME to confirm there is at least one enabled breakpoint that is expected to be hit next.
+Tip: Call this before `resume` to confirm there is at least one enabled breakpoint that is expected to be hit next.
 
 Behavior:
 - If `file_path` is provided, returns only breakpoints in that file.
@@ -35,6 +35,6 @@ Behavior:
 
 Next call:
 - If no suitable breakpoint exists, call `set_breakpoint`.
-- Then continue execution with `control_session(action=RESUME)` and `control_session(action=WAIT_FOR_PAUSE)`."""
+- Then continue execution with `control_session(action=resume)` and `control_session(action=wait_for_pause)`."""
     print(session_id)
     print(file_path)

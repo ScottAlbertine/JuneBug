@@ -23,7 +23,7 @@ async def test_resume_and_pause(client: Client) -> None:
     assert starting_threads.structured_content == {"threads": [MAIN_THREAD], "total_count": 1}
 
     first_resume = await client.call_tool(
-        "control_session", {"session_id": session_id, "action": "RESUME"},
+        "control_session", {"session_id": session_id, "action": "resume"},
     )
     assert first_resume.structured_content["state"] == "running"
 
@@ -42,7 +42,7 @@ async def test_resume_and_pause(client: Client) -> None:
     }
 
     first_pause = await client.call_tool(
-        "control_session", {"session_id": session_id, "action": "PAUSE"},
+        "control_session", {"session_id": session_id, "action": "pause"},
     )
     assert first_pause.structured_content["state"] == "paused"
 
@@ -61,7 +61,7 @@ async def test_resume_and_pause(client: Client) -> None:
     }
 
     second_resume = await client.call_tool(
-        "control_session", {"session_id": session_id, "action": "RESUME"},
+        "control_session", {"session_id": session_id, "action": "resume"},
     )
     assert second_resume.structured_content["state"] == "running"
 

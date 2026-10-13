@@ -42,7 +42,7 @@ async def test_multi_threaded(client: Client) -> None:
     await client.call_tool(
         "set_breakpoint", {"session_id": session_id, "file_path": file_to_breakpoint, "line": 38},
     )
-    await client.call_tool("control_session", {"session_id": session_id, "action": "WAIT_FOR_PAUSE"})
+    await client.call_tool("control_session", {"session_id": session_id, "action": "wait_for_pause"})
 
     # unbreakpoint that breakpoint
     await client.call_tool(
@@ -54,7 +54,7 @@ async def test_multi_threaded(client: Client) -> None:
         "set_breakpoint", {"session_id": session_id, "file_path": file_to_breakpoint, "line": 14},
     )
     # wait until it's hit
-    await client.call_tool("control_session", {"session_id": session_id, "action": "WAIT_FOR_PAUSE"})
+    await client.call_tool("control_session", {"session_id": session_id, "action": "wait_for_pause"})
 
     # then we can check that a non-main thread is current, and that the main thread is not current.
     threads = await client.call_tool("get_threads", {"session_id": session_id})

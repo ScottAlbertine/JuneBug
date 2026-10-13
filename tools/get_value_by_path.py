@@ -34,7 +34,7 @@ For array/list indexers, pass the index token as a regular path element (child n
 items[0].name -> path = ["items", "[0]", "name"].
 Use exact child names from the current paused `get_frame_values` / previous `get_value_by_path` output
 because index node names may differ by language/debugger (for example, "[0]" vs "0").
-Refresh `path` tokens after `RESUME`, `STEP_*`, `run_to_line`, or any other change in paused location.
+Refresh `path` tokens after `resume`, `step_*`, `run_to_line`, or any other change in paused location.
 
 Next call:
 - Use another `get_value_by_path` call to continue drilling deeper.

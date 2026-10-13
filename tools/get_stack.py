@@ -32,7 +32,7 @@ Frame fields include: index, file, line, is_current, presentation.
 
 Next call:
 - Use frame index from the current paused result in `get_frame_values`, `get_value_by_path`, or `evaluate_expression`.
-- Do not reuse a cached `frame_index` after `RESUME`, `STEP_*`, `run_to_line`, or any change in paused location."""
+- Do not reuse a cached `frame_index` after `resume`, `step_*`, `run_to_line`, or any change in paused location."""
     print(session_id)
     print(thread_id)
     print(limit)

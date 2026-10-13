@@ -8,15 +8,13 @@ import session_service
 
 def control_session(
     action: Annotated[
-        Action,
-        "Action to perform: STEP_INTO, STEP_OVER, STEP_OUT, RESUME, PAUSE, STOP, WAIT_FOR_PAUSE, DRAIN_EVENTS. "
-        "Event draining is currently populated only by JVM-based debuggers (Java, Kotlin, etc.).",
+        Action, "Action to perform: step_into, step_over, step_out, resume, pause, stop, wait_for_pause.",
     ],
     session_id: SessionID = None,
     timeout: Annotated[
         int,
         "Timeout in milliseconds to wait for action completion. "
-        "Guidance: STEP_* / PAUSE usually 5000-15000; WAIT_FOR_PAUSE usually 30000-120000 depending on workload and breakpoints. "
+        "Guidance: step_* / pause usually 5000-15000; wait_for_pause usually 30000-120000 depending on workload and breakpoints. "
         "Default: 30000.",
     ] = 30000,
 ) -> SessionStatus:
@@ -25,26 +23,25 @@ Use this tool to step through code, resume execution, pause, or stop the debug s
 
 Preconditions:
 - A debug session must exist.
-- `STEP_*` requires a suspended session.
+- `step_*` actions require a suspended session.
 
 Actions:
-- STEP_INTO: Step into the next method call
-- STEP_OVER: Step over the current line
-- STEP_OUT: Step out of the current method
-- RESUME: Resume program execution until the next breakpoint
-- PAUSE: Pause program execution
-- STOP: Stop the debug session
-- WAIT_FOR_PAUSE: Wait until the session pauses (breakpoint hit or paused manually)
+- step_into: Step into the next method call
+- step_over: Step over the current line
+- step_out: Step out of the current method
+- resume: Resume program execution until the next breakpoint
+- pause: Pause program execution
+- stop: Stop the debug session
+- wait_for_pause: Wait until the session pauses (breakpoint hit or paused manually)
 
 Important notes:
-- If the program is running, use WAIT_FOR_PAUSE or PAUSE before STEP_* / RESUME.
+- If the program is running, use `wait_for_pause` or `pause` before `step_*` / `resume`.
 - Use a current `session_id` from `get_debugger_sessions` or `start_debugger_session`. If a session stops, times out, or disappears, refresh the session list before the next session-scoped call.
-- RESUME does NOT set breakpoints. If there are no enabled breakpoints (or none will be hit next), the program may run to completion and the session may stop without pausing.
-- After RESUME, call WAIT_FOR_PAUSE to confirm the next suspension. If WAIT_FOR_PAUSE times out, consider PAUSE and re-check breakpoints.
-- `DRAIN_EVENTS` also requires an existing session; do not reuse a stale `session_id` after the session has terminated.
+- `resume` does NOT set breakpoints. If there are no enabled breakpoints (or none will be hit next), the program may run to completion and the session may stop without pausing.
+- After `resume`, call `wait_for_pause` to confirm the next suspension. If `wait_for_pause` times out, consider `pause` and re-check breakpoints.
 
 Next call:
-- After `RESUME`, call `control_session(action=WAIT_FOR_PAUSE)`.
+- After `resume`, call `control_session(action=wait_for_pause)`.
 - After a paused result, call `get_stack` / `get_frame_values` / `evaluate_expression`.
 
 State values in the result:

@@ -1,17 +1,14 @@
 from enum import Enum
 
 
-# TODO: unify enum caseing
-
-
 class Action(Enum):
-    STEP_INTO = "STEP_INTO"
-    STEP_OVER = "STEP_OVER"
-    STEP_OUT = "STEP_OUT"
-    RESUME = "RESUME"
-    PAUSE = "PAUSE"
-    STOP = "STOP"
-    WAIT_FOR_PAUSE = "WAIT_FOR_PAUSE"
+    STEP_INTO = "step_into"
+    STEP_OVER = "step_over"
+    STEP_OUT = "step_out"
+    RESUME = "resume"
+    PAUSE = "pause"
+    STOP = "stop"
+    WAIT_FOR_PAUSE = "wait_for_pause"
 
 
 class BreakpointType(Enum):
@@ -33,9 +30,9 @@ class DebuggerState(Enum):
 
 
 class SuspendPolicy(Enum):
-    ALL = "ALL"
-    THREAD = "THREAD"
-    NONE = "NONE"
+    ALL = "all"
+    THREAD = "thread"
+    NONE = "none"
 
 
 class ThreadState(Enum):
