@@ -31,7 +31,7 @@ async def test_set_breakpoint(client: Client) -> None:
 
     assert breakpoint_response.structured_content == {
         "type": "line",
-        "file": "/Users/scott/Repos/JuneBug/tests/fakes/fake_main.py",
+        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
         "line": 13,
         "line_text": None,
         "condition": None,
@@ -93,7 +93,7 @@ async def test_set_breakpoint__odd_file_paths(client: Client, file_to_breakpoint
     )
     assert breakpoint_response.structured_content == {
         "type": "line",
-        "file": "/Users/scott/Repos/JuneBug/tests/fakes/fake_main.py",
+        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
         "line": 13,
         "line_text": None,
         "condition": None,

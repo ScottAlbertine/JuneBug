@@ -105,7 +105,7 @@ async def test_wait_for_pause(client: Client) -> None:
         "std_out_path": MatchAny(str),
         "current_position": {
             "type": "line",
-            "file": "/Users/scott/Repos/JuneBug/tests/fakes/fake_main.py",
+            "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
             "line": 13,
             "line_text": None,
             "condition": None,

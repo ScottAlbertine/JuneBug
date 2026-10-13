@@ -72,7 +72,7 @@ async def test_unmute_breakpoints(client: Client) -> None:
     assert updated_session.structured_content["state"] == "paused"
     assert updated_session.structured_content["current_position"] == {
         "type": "line",
-        "file": "/Users/scott/Repos/JuneBug/tests/fakes/fake_main.py",
+        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
         "line": 7,
         "line_text": None,
         "condition": None,
