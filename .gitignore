@@ -2,7 +2,6 @@
 __pycache__/
 
 .idea/
-.junie/
 
 .coverage
 CACHEDIR.TAG
