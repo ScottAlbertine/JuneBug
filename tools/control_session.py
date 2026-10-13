@@ -42,7 +42,7 @@ def control_session(
 
     Next call:
     - After `resume`, call `control_session(action=wait_for_pause)`.
-    - After a paused result, call `get_stack` / `get_frame_values` / `evaluate_expression`.
+    - After a paused result, call `get_stack` / `list_frame_values` / `evaluate_expression`.
 
     State values in the result:
     - running: Program is executing

@@ -4,12 +4,12 @@ from tools import (
     control_session,
     evaluate_expression,
     get_debugger_session,
-    get_frame_values,
     get_stack,
     get_threads,
     get_value_by_path,
     list_breakpoints,
     list_debugger_sessions,
+    list_frame_values,
     remove_breakpoint,
     run_to_line,
     set_breakpoint,
@@ -24,12 +24,12 @@ mcp = FastMCP("JuneBug MCP Server")
 mcp.tool(control_session)
 mcp.tool(evaluate_expression)
 mcp.tool(get_debugger_session)
-mcp.tool(get_frame_values)
 mcp.tool(get_stack)
 mcp.tool(get_threads)
 mcp.tool(get_value_by_path)
 mcp.tool(list_breakpoints)
 mcp.tool(list_debugger_sessions)
+mcp.tool(list_frame_values)
 mcp.tool(remove_breakpoint)
 mcp.tool(run_to_line)
 mcp.tool(set_breakpoint)

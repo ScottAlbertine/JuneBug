@@ -7,7 +7,7 @@ def get_value_by_path(
     path: Annotated[
         list[str],
         "List of child names to navigate through, e.g. ['myObject', 'field', 'subField'] or ['items', '[0]', 'name']. "
-        "Use exact node names from the current paused `get_frame_values` / `get_value_by_path` output "
+        "Use exact node names from the current paused `list_frame_values` / `get_value_by_path` output "
         "and refresh stale path tokens after the paused location changes.",
     ],
     session_id: SessionID = None,
@@ -32,7 +32,7 @@ The result is returned as:
 Example: To get the value of obj.field.subField, use path = ["obj", "field", "subField"].
 For array/list indexers, pass the index token as a regular path element (child name), e.g.
 items[0].name -> path = ["items", "[0]", "name"].
-Use exact child names from the current paused `get_frame_values` / previous `get_value_by_path` output
+Use exact child names from the current paused `list_frame_values` / previous `get_value_by_path` output
 because index node names may differ by language/debugger (for example, "[0]" vs "0").
 Refresh `path` tokens after `resume`, `step_*`, `run_to_line`, or any other change in paused location.
 
