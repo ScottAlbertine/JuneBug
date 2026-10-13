@@ -36,7 +36,7 @@ def control_session(
 
     Important notes:
     - If the program is running, use `wait_for_pause` or `pause` before `step_*` / `resume`.
-    - Use a current `session_id` from `get_debugger_sessions` or `start_debugger_session`. If a session stops, times out, or disappears, refresh the session list before the next session-scoped call.
+    - Use a current `session_id` from `list_debugger_sessions` or `start_debugger_session`. If a session stops, times out, or disappears, refresh the session list before the next session-scoped call.
     - `resume` does NOT set breakpoints. If there are no enabled breakpoints (or none will be hit next), the program may run to completion and the session may stop without pausing.
     - After `resume`, call `wait_for_pause` to confirm the next suspension. If `wait_for_pause` times out, consider `pause` and re-check breakpoints.
 

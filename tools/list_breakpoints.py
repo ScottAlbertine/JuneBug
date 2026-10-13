@@ -1,19 +1,11 @@
 from typing import Annotated
 
+from annotations import SessionID
 from models import BreakpointsResponse
 
 
 def list_breakpoints(
-    session_id: Annotated[
-        str | None,
-        "Debug session ID. Use the current ID returned by `get_debugger_sessions` or `start_debugger_session`. "
-        "If a session has stopped, timed out, or disappeared, refresh the session list before reusing an old ID. "
-        "Format: uses session name as ID by default; if multiple sessions share the same name, ID is `<sessionName>#<executionId>`. "
-        "If null and exactly one active session exists, it is selected automatically. "
-        "If multiple sessions are active and session_id is omitted, the call fails. "
-        "Default: null. "
-        "Optional; when omitted, `breakpoints_muted` is returned only if exactly one active session exists.",
-    ] = None,
+    session_id: SessionID = None,
     file_path: Annotated[
         str | None,
         "Optional file path to filter breakpoints. Path to the file. "

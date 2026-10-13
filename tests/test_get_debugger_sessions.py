@@ -26,7 +26,7 @@ async def test_get_real_sessions(client: Client, clear_sessions: None) -> None:
     session_id_0 = session_0.structured_content["id"]
     session_id_1 = session_1.structured_content["id"]
 
-    result_1 = await client.call_tool("get_debugger_sessions", {"project_path": str(PROJECT_ROOT)})
+    result_1 = await client.call_tool("list_debugger_sessions", {"project_path": str(PROJECT_ROOT)})
     assert result_1.structured_content == {
         "sessions": [
             {
@@ -59,7 +59,7 @@ async def test_get_real_sessions(client: Client, clear_sessions: None) -> None:
     # hit that breakpoint
     await client.call_tool("control_session", {"session_id": session_id_0, "action": "wait_for_pause"})
 
-    result_2 = await client.call_tool("get_debugger_sessions", {"project_path": str(PROJECT_ROOT)})
+    result_2 = await client.call_tool("list_debugger_sessions", {"project_path": str(PROJECT_ROOT)})
     assert result_2.structured_content == {
         "sessions": [
             {
@@ -92,5 +92,5 @@ async def test_get_real_sessions(client: Client, clear_sessions: None) -> None:
         ],
     }
 
-    empty_result = await client.call_tool("get_debugger_sessions", {"project_path": "fake"})
+    empty_result = await client.call_tool("list_debugger_sessions", {"project_path": "fake"})
     assert empty_result.structured_content == {"sessions": []}

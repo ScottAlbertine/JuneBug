@@ -21,7 +21,6 @@ async def test_simple(client: Client, clear_sessions: None) -> None:
             "file_path": str(Path(fake_main.__file__).relative_to(PROJECT_ROOT)),
         },
     )
-    get_result = await client.call_tool("get_debugger_sessions", {"project_path": str(PROJECT_ROOT)})
 
     session_id = create_result.structured_content["id"]
     expected_session = {
@@ -51,9 +50,6 @@ async def test_simple(client: Client, clear_sessions: None) -> None:
     # This proves that the files were opened, and that fake_main hasn't actually started yet.
     assert Path(create_result.structured_content["std_out_path"]).read_text() == ""
     assert Path(create_result.structured_content["std_err_path"]).read_text() == ""
-
-    # Check that the DB insert succeeded by using `get_debugger_sessions`
-    assert get_result.structured_content == {"sessions": [expected_session]}
 
 
 async def test_fancy(client: Client, clear_sessions: None) -> None:
