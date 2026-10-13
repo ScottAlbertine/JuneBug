@@ -17,7 +17,7 @@ class File:
     def add_breakpoint(self, breakpoint: Breakpoint) -> None:
         self._breakpoints[breakpoint.line] = breakpoint
 
-    def get_breakpoints(self) -> list[Breakpoint]:
+    def list_breakpoints(self) -> list[Breakpoint]:
         return list(self._breakpoints.values())
 
     def get_breakpoint(self, line: int) -> Breakpoint | None:
@@ -63,12 +63,15 @@ class Breakpoints:
         self.get_file(path).add_breakpoint(bp)
         return bp
 
+    def list_files(self) -> list[File]:
+        return list(self._files.values())
+
     def get_file(self, path: Path) -> File:
         """Gets the breakpointed file for the given path, creating a new one if needed."""
         return self._files.setdefault(path, File(path))
 
-    def get_breakpoints_for_file(self, path: Path) -> list[Breakpoint]:
-        return self.get_file(path).get_breakpoints()
+    def list_breakpoints_for_file(self, path: Path) -> list[Breakpoint]:
+        return self.get_file(path).list_breakpoints()
 
     def get_breakpoint(self, path: Path, line: int) -> Breakpoint | None:
         return self.get_file(path).get_breakpoint(line)

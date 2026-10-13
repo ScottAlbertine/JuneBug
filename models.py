@@ -6,6 +6,9 @@ from pydantic import BaseModel, Field
 from enums import BreakpointType, DebuggerOutcome, DebuggerState, SuspendPolicy, ThreadState
 
 
+# TODO: I really really don't want these IDs being shown to the client
+# they are not stable, they all change when we mute vs unmute breakpoints
+# we don't want the client getting confused by these
 class Breakpoint(BaseModel):
     """A configured breakpoint."""
 

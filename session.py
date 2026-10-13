@@ -116,6 +116,7 @@ class Session:
     def pause(self):
         """Pause this session."""
         self._pause(self.get_threads()[0].id)
+        # TODO: set current position somehow?
         self.state = DebuggerState.PAUSED
 
     def resume(self):
@@ -126,6 +127,7 @@ class Session:
             self.has_configuration_done = True
         else:
             self._continue_execution(self.get_threads()[0].id)
+        self.current_position = None  # TODO: test this
         self.state = DebuggerState.RUNNING
 
     def set_breakpoint(
@@ -139,12 +141,21 @@ class Session:
     def remove_breakpoint(self, path: Path, line: int) -> None:
         """Remove a breakpoint."""
         self.breakpoints.remove_breakpoint(path, line)
-        self._set_breakpoints(self.breakpoints.get_file(path))
+        self.breakpoints.refresh(self._set_breakpoints(self.breakpoints.get_file(path)))
 
     def set_breakpoints_muted(self, breakpoints_muted: bool):
         """Set all breakpoints to muted."""
         self.breakpoints_muted = breakpoints_muted
-        # TODO: actually remove all breakpoints from the process
+        # for every file we have
+        for file in self.breakpoints.list_files():
+            if breakpoints_muted:
+                # clear each file by sending a blank version of it
+                # DO NOT refresh our breakpoints internally
+                self._set_breakpoints(File(file.path))
+            else:
+                # re-send the real file to DAP if we're unmuting
+                # do refresh our breakpoints internally, this changes their IDs
+                self.breakpoints.refresh(self._set_breakpoints(file))
 
     def wait_for_pause(self):
         """Wait for the debugger to pause on a line on its own."""
@@ -215,7 +226,7 @@ class Session:
 
     def _set_breakpoints(self, file: File) -> Event:
         """Set breakpoints for a file."""
-        self.client.set_breakpoints({"path": str(file.path)}, [bp.to_dap() for bp in file.get_breakpoints()])
+        self.client.set_breakpoints({"path": str(file.path)}, [bp.to_dap() for bp in file.list_breakpoints()])
         self._send()
         return self._pull_until(lambda e: e.event == "response" and e.body["command"] == "setBreakpoints")
 

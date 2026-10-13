@@ -3,6 +3,8 @@ from models import SessionStatuses
 import session_service
 
 
+# TODO: rename the plural GET tools to be list_ instead of get_
+
 def get_debugger_sessions(project_path: ProjectPath) -> SessionStatuses:
     """Returns the status of all active debugger sessions.
 

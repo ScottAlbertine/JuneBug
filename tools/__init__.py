@@ -1,5 +1,6 @@
 from .control_session import control_session
 from .evaluate_expression import evaluate_expression
+from .get_debugger_session import get_debugger_session
 from .get_debugger_sessions import get_debugger_sessions
 from .get_frame_values import get_frame_values
 from .get_stack import get_stack
@@ -16,6 +17,7 @@ from .start_debugger_session import start_debugger_session
 __all__ = [
     "control_session",
     "evaluate_expression",
+    "get_debugger_session",
     "get_debugger_sessions",
     "get_frame_values",
     "get_stack",
