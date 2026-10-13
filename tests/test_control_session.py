@@ -5,6 +5,7 @@ from time import sleep
 from fastmcp import Client
 
 from tests.conftest import PROJECT_ROOT
+import tests.fakes.fake_main as fake_main
 import tests.fakes.fake_main_multi_thread as fake_main_multi_thread
 from tests.utils import MAIN_THREAD, MatchAny
 
@@ -76,4 +77,42 @@ async def test_resume_and_pause(client: Client) -> None:
         "total_count": 4,
     }
 
-# TODO: test WAIT_FOR_PAUSE
+
+async def test_wait_for_pause(client: Client) -> None:
+    file_to_breakpoint = str(Path(fake_main.__file__).relative_to(PROJECT_ROOT))
+
+    session = await client.call_tool(
+        "start_debugger_session", {
+            "project_path": str(PROJECT_ROOT), "python_path": sys.executable, "file_path": file_to_breakpoint,
+        },
+    )
+    session_id = session.structured_content["id"]
+
+    await client.call_tool(
+        "set_breakpoint", {"session_id": session_id, "file_path": file_to_breakpoint, "line": 13},
+    )
+
+    # check that the breakpoint was set, by hitting it.
+    wait_for_pause = await client.call_tool(
+        "control_session", {"session_id": session_id, "action": "wait_for_pause"},
+    )
+    assert wait_for_pause.structured_content == {
+        "id": session_id,
+        "debugee_pid": MatchAny(int),
+        "breakpoints_muted": False,
+        "state": "paused",
+        "std_err_path": MatchAny(str),
+        "std_out_path": MatchAny(str),
+        "current_position": {
+            "type": "line",
+            "file": "/Users/scott/Repos/JuneBug/tests/fakes/fake_main.py",
+            "line": 13,
+            "line_text": None,
+            "condition": None,
+            "temporary": False,
+            "hit_count": 0,
+            "suspend_policy": "all",
+        },
+    }
+
+

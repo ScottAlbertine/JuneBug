@@ -10,7 +10,7 @@ def main(args: list[str]) -> None:
             sleep(1)
             print("it looped")
 
-    print("it finished")
+    print("it finished", flush=True)
 
 
 if __name__ == "__main__":
