@@ -1,25 +1,21 @@
 # Junie Harness Bugs And Workarounds
 
-## Dead Turn — Non-Terminal `answer` with No Follow-Up Tool Calls
+## Dead Turn — Response with No Tool Calls
 
-The `answer` tool with `is_terminal=false` signals "I have more work to do" — the system expects additional tool calls in the **same response**. If the response contains only `answer` and no other tool calls, the turn ends immediately with no action taken, yielding control back to the user. This is a "dead turn".
+A "dead turn" happens when a response contains no tool calls at all — whether it's a non-terminal `answer`, a standalone `<UPDATE>` block, or any other text-only output. The system expects tool calls in the same response. If none are present, the turn ends immediately with no action taken, yielding control back to the user.
 
 ### How to Detect
 
-- The response contains only an `answer` (or `answer` + `ask_user`) call, with `is_terminal=false`
-- No file opens, searches, edits, or any other tool calls follow
-- The user sees a status message but nothing actually happens
+- The response contains only text output (`answer`, `<UPDATE>`, explanations, etc.) with no tool calls
+- No file opens, searches, edits, creates, or any other tool calls follow
+- The user sees a status message or plan but nothing actually happens
 
 ### How to Prevent
 
-- **Never use `answer` with `is_terminal=false` as the only tool call in a response**
-- If you want to give a status update and then continue working, include the actual tool calls (file opens, searches, edits, etc.) in the **same response** as the `answer`
-- If you only want to communicate with the user and don't have immediate actions, use `is_terminal=true` instead — this properly ends the turn
-
-### When `is_terminal=false` is Valid
-
-- Only when you have concrete tool calls to execute immediately after the `answer`
-- Example: `answer` ("I'll explore the models") + `open` (models.py) + `open` (conftest.py)
+- **Always include at least one tool call in every response** — whether it's `answer` with `is_terminal=true`, or `<UPDATE>` followed by concrete tool calls (file opens, searches, edits, creates, etc.) in the **same response**
+- In `[CODE]` mode, `<UPDATE>` must always be followed by tool calls in the same response — never output `<UPDATE>` alone
+- If you only want to communicate with the user and don't have immediate actions, use `answer` with `is_terminal=true` instead
+- If you want to give a status update and then continue working, include the actual tool calls in the **same response** as the `answer` (with `is_terminal=false`)
 
 ## PyCharm Attached File Truncation
 
