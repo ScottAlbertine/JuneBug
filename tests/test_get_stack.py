@@ -1,0 +1,242 @@
+from fastmcp import Client
+from fastmcp.exceptions import ToolError
+import pytest
+
+from tests.constants import FAKE_MAIN, FAKE_MAIN_MULTI_THREAD, FAKE_MAIN_WITH_IMPORT, PROJECT_ROOT
+from tests.utils import MatchAny, create_session, eventual_assert, move_to_next_breakpoint
+
+
+async def test_basic(client: Client) -> None:
+    """Test basic stack retrieval: create session, pause at breakpoint, get stack frames."""
+    session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
+
+    # Set a breakpoint inside the main function
+    await client.call_tool(
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 7},
+    )
+
+    # Resume and wait for pause at the breakpoint
+    await move_to_next_breakpoint(client, session_id)
+
+    # Get the stack
+    stack = await client.call_tool("get_stack", {"session_id": session_id})
+    assert stack.structured_content == {
+        "frames": [
+            {
+                "id": MatchAny(int),
+                "name": "main",
+                "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
+                "line": 7,
+                "column": 1,
+            },
+            {
+                "id": MatchAny(int),
+                "name": "<module>",
+                "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
+                "line": 17,
+                "column": 1,
+            },
+            # these bottom two stack frames are interpreter dependant, let them be whatever they are
+            MatchAny(dict),
+            MatchAny(dict),
+        ],
+        "thread_id": 1,
+        "total_frames": 4,
+    }
+
+
+async def test_deeper_stack_with_import(client: Client) -> None:
+    """Test stack retrieval with a deeper call stack (across module imports)."""
+    session_id = (await create_session(client, file_path=FAKE_MAIN_WITH_IMPORT))["id"]
+
+    # Set a breakpoint inside the add() function in fake_library (line 2: return a + b)
+    await client.call_tool(
+        "set_breakpoint", {"session_id": session_id, "file_path": "tests/fakes/fake_library.py", "line": 2},
+    )
+
+    # Resume and wait for pause at the breakpoint
+    await move_to_next_breakpoint(client, session_id)
+
+    # Get the stack
+    stack = await client.call_tool("get_stack", {"session_id": session_id})
+    expected_frame_1 = {
+        "id": MatchAny(int),
+        "name": "add",
+        "file": f"{PROJECT_ROOT}/tests/fakes/fake_library.py",
+        "line": 2,
+        "column": 1,
+    }
+    expected_frame_2 = {
+        "id": MatchAny(int),
+        "name": "main",
+        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_import.py",
+        "line": 9,
+        "column": 1,
+    }
+    expected_frame_3 = {
+        "id": MatchAny(int),
+        "name": "<module>",
+        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_import.py",
+        "line": 14,
+        "column": 1,
+    }
+    assert stack.structured_content == {
+        # the bottom two stack frames are interpreter dependant, let them be whatever they are
+        "frames": [expected_frame_1, expected_frame_2, expected_frame_3, MatchAny(dict), MatchAny(dict)],
+        "thread_id": 1,
+        "total_frames": 5,
+    }
+
+    # while we're in here, check pagination, it's the exact same setup as above
+    page_1 = await client.call_tool("get_stack", {"session_id": session_id, "limit": 2, "offset": 1})
+    assert page_1.structured_content == {
+        "frames": [expected_frame_2, expected_frame_3], "thread_id": 1, "total_frames": 5,
+    }
+
+
+async def test_specific_thread_id(client: Client) -> None:
+    """Test getting stack for a specific thread in a multi-threaded session."""
+    session_id = (await create_session(client, file_path=FAKE_MAIN_MULTI_THREAD))["id"]
+
+    # Set a breakpoint in the BusyWorker thread
+    await client.call_tool(
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_MULTI_THREAD, "line": 14},
+    )
+
+    # Hit that breakpoint
+    await move_to_next_breakpoint(client, session_id)
+
+    # Find the BusyWorker thread ID
+    thread_id: int | None = None
+    threads = await client.call_tool("list_threads", {"session_id": session_id})
+    for thread in threads.structured_content["threads"]:
+        if thread["name"] == "BusyWorker":
+            thread_id = thread["id"]
+    assert thread_id is not None, "BusyWorker thread not found."
+
+    # Get stack for the BusyWorker thread, by thread ID
+    # Only get the top frame, since that's the only one we care about
+    stack = await client.call_tool("get_stack", {"session_id": session_id, "thread_id": thread_id, "limit": 1})
+    assert stack.structured_content == {
+        "frames": [
+            {
+                "id": MatchAny(int),
+                "name": "worker_busy",
+                "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_multi_thread.py",
+                "line": 14,
+                "column": 1,
+            },
+        ],
+        "thread_id": 2,
+        "total_frames": 4,
+    }
+
+
+async def test_get_stack_while_running(client: Client) -> None:
+    """Test that you can, in fact, get a stack trace while running, not paused, and not at a breakpoint."""
+    session_id = (await create_session(client, file_path=FAKE_MAIN_MULTI_THREAD))["id"]
+
+    # The session starts in paused state. Resume it.
+    resume = await client.call_tool("control_session", {"session_id": session_id, "action": "resume"})
+    assert resume.structured_content["state"] == "running"
+
+    # threads take some time to start up, so poll every 0.1 seconds for up to 3 seconds until they're all good
+    async def all_threads_running() -> bool:
+        threads = await client.call_tool("list_threads", {"session_id": session_id})
+        return threads.structured_content == {
+            "threads": [
+                {"id": 1, "is_current": MatchAny(bool), "name": "MainThread", "state": "running"},
+                {"id": 2, "is_current": MatchAny(bool), "name": "BusyWorker", "state": "running"},
+                {"id": 4, "is_current": MatchAny(bool), "name": "DaemonOne", "state": "running"},
+                {"id": 5, "is_current": MatchAny(bool), "name": "DaemonTwo", "state": "running"},
+            ],
+            "total_count": 4,
+        }
+
+    await eventual_assert(
+        all_threads_running, otherwise="Threads did not reach expected running state within 3 seconds",
+    )
+
+    stack = await client.call_tool("get_stack", {"session_id": session_id, "thread_id": 1, "limit": 2})
+    assert stack.structured_content == {
+        "frames": [
+            {
+                "id": MatchAny(int),
+                "name": "main",
+                "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_multi_thread.py",
+                "line": 38,
+                "column": 1,
+            },
+            {
+                "id": MatchAny(int),
+                "name": "<module>",
+                "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_multi_thread.py",
+                "line": 43,
+                "column": 1,
+            },
+        ],
+        "thread_id": 1,
+        "total_frames": 4,
+    }
+
+    stack = await client.call_tool("get_stack", {"session_id": session_id, "thread_id": 2, "limit": 1})
+    assert stack.structured_content == {
+        "frames": [
+            {
+                "id": MatchAny(int),
+                "name": "worker_busy",
+                "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_multi_thread.py",
+                "line": 14,
+                "column": 1,
+            },
+        ],
+        "thread_id": 2,
+        "total_frames": 4,
+    }
+
+    stack = await client.call_tool("get_stack", {"session_id": session_id, "thread_id": 4, "limit": 1})
+    assert stack.structured_content == {
+        "frames": [
+            {
+                "id": MatchAny(int),
+                "name": "worker_daemon",
+                "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_multi_thread.py",
+                "line": 21,
+                "column": 1,
+            },
+        ],
+        "thread_id": 4,
+        "total_frames": 4,
+    }
+
+    stack = await client.call_tool("get_stack", {"session_id": session_id, "thread_id": 5, "limit": 1})
+    assert stack.structured_content == {
+        "frames": [
+            {
+                "id": MatchAny(int),
+                "name": "worker_daemon",
+                "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_multi_thread.py",
+                "line": 21,
+                "column": 1,
+            },
+        ],
+        "thread_id": 5,
+        "total_frames": 4,
+    }
+
+
+async def test_get_stack_for_nonexistent_thread(client: Client) -> None:
+    """Test that we get an error with a useful message when we try to get the stack for a nonexistent thread."""
+    session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
+
+    await client.call_tool(
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 7},
+    )
+
+    await move_to_next_breakpoint(client, session_id)
+
+    with pytest.raises(
+        ToolError,
+        match=r"Error calling tool 'get_stack': DAP Error from command stackTrace: Wrong ID sent from the client: 999",
+    ):
+        await client.call_tool("get_stack", {"session_id": session_id, "thread_id": 999})
