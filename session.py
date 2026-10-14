@@ -132,9 +132,7 @@ class Session:
 
     def list_stack_frames(self, thread_id: int | None) -> list[StackFrame]:
         if thread_id is None:
-            raise Exception(
-                "No thread ID specified, and there is no current thread listed. Are you sure the session is paused?",
-            )
+            raise Exception("No thread ID specified, and there is no current thread listed.")
         frames = self._stack_trace(thread_id).body["body"]["stackFrames"]
         return [StackFrame.from_dap(frame) for frame in frames]
 
