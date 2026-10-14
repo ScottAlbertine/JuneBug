@@ -1,3 +1,26 @@
+# Junie Harness Bugs And Workarounds
+
+## Dead Turn — Non-Terminal `answer` with No Follow-Up Tool Calls
+
+The `answer` tool with `is_terminal=false` signals "I have more work to do" — the system expects additional tool calls in the **same response**. If the response contains only `answer` and no other tool calls, the turn ends immediately with no action taken, yielding control back to the user. This is a "dead turn".
+
+### How to Detect
+
+- The response contains only an `answer` (or `answer` + `ask_user`) call, with `is_terminal=false`
+- No file opens, searches, edits, or any other tool calls follow
+- The user sees a status message but nothing actually happens
+
+### How to Prevent
+
+- **Never use `answer` with `is_terminal=false` as the only tool call in a response**
+- If you want to give a status update and then continue working, include the actual tool calls (file opens, searches, edits, etc.) in the **same response** as the `answer`
+- If you only want to communicate with the user and don't have immediate actions, use `is_terminal=true` instead — this properly ends the turn
+
+### When `is_terminal=false` is Valid
+
+- Only when you have concrete tool calls to execute immediately after the `answer`
+- Example: `answer` ("I'll explore the models") + `open` (models.py) + `open` (conftest.py)
+
 ## PyCharm Attached File Truncation
 
 When a file is attached to the issue from PyCharm (via `<attached_files_content>`), long lines exceeding **~2048 characters** are truncated with `... (truncated)` appended. This affects any file with very long lines, such as:
