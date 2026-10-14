@@ -9,11 +9,13 @@ class DebugpyInstallationFailed(Exception):
             f"Failed to install debugpy with {python_path}. \n\n Stderr: \n {stderr.decode('utf-8')} \n\n Stdout: \n {stdout.decode('utf-8')} \n",
         )
 
+
 class DAPError(Exception):
     """Generic exception representing an `ErrorResponse` from the DAP client."""
 
     def __init__(self, error: ErrorResponse):
         super().__init__(f"DAP Error from command {error.command}: {error.message}")
+
 
 class MissingSessionId(Exception):
     """Exception indicating that you need to specify a session ID."""
@@ -27,3 +29,10 @@ class SessionNotFound(Exception):
 
     def __init__(self, client_id: str):
         super().__init__(f"Session {client_id} was not found.")
+
+
+class ThreadNotFound(Exception):
+    """Exception indicating that the client's specified thread was not found."""
+
+    def __init__(self, thread_id: str):
+        super().__init__(f"Thread {thread_id} was not found.")

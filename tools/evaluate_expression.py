@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from annotations import FrameIndex, SessionID
+from annotations import FrameID, SessionID
 
 
 def evaluate_expression(
@@ -11,7 +11,7 @@ def evaluate_expression(
         "do not pass JSON-escaped payloads or literal backslash-escaped quoted text.",
     ],
     session_id: SessionID = None,
-    frame_index: FrameIndex = None,
+    frame_id: FrameID = None,
     depth: Annotated[
         int,
         "Maximum depth for expanding children of the evaluated result "
@@ -38,6 +38,6 @@ Next call:
 - If expression confirms hypothesis, continue with `control_session(step_*|resume)`.
 - If more detail is needed, inspect related values via `list_frame_values` / `get_value_by_path`."""
     print(session_id)
-    print(frame_index)
+    print(frame_id)
     print(expression)
     print(depth)

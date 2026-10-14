@@ -4,9 +4,9 @@ from pydantic import BeforeValidator, Field
 from pydantic_core import PydanticCustomError
 
 NO_PROJECT_PATH_ERROR = """
-You must specify the project path via `project_path` parameter when calling a tool.
+You must specify the project path via `project_path` parameter when calling this tool.
 If you're aware of the current working directory you may pass it as `project_path`.
-In the case when it's unobvious which project to use you have to ASK the USER about a project providing him a numbered list of the projects.
+In the case when it's unobvious which project to use you have to ASK the USER about which project to use.
 """
 
 
@@ -44,11 +44,9 @@ FilePath = Annotated[
 
 LineNum = Annotated[int, "1-based line number. The target location must be executable."]
 
-FrameIndex = Annotated[
+FrameID = Annotated[
     int | None,
-    "Stack frame index counted from the top of the stack, the same `index` `get_stack` reports: "
-    "0 is the frame execution is in, 1 its caller, and so on. "
-    "Obtain this from the current paused `get_stack` result; "
-    "do not reuse a cached frame index after `resume`, `step_*`, `run_to_line`, or any change in paused location. "
-    "If null, uses the frame currently selected in the debugger, the one `get_stack` marks `is_current`. Default: null.",
+    "Stack frame id. Obtain this from the current paused `get_stack` result; "
+    "do not reuse a cached frame id after `resume`, `step_*`, `run_to_line`, or any change in paused location. "
+    "If null, uses the frame currently selected in the debugger, the first one `get_stack` returns. Default: null.",
 ]

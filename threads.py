@@ -18,6 +18,8 @@ class Threads:
 
     def __init__(self):
         self._threads: dict[int, Thread] = {}
+        # Shortcut, to save on time
+        self._current_thread_id: int | None = None
 
     def refresh(self, dap_threads_response: Event) -> list[Thread]:
         """
@@ -41,7 +43,8 @@ class Threads:
             del self._threads[thread_id]
 
         if len(self._threads) == 1:
-            next(iter(self._threads.values())).is_current = True
+            self._current_thread_id = next(iter(self._threads.keys()))
+            self._threads[self._current_thread_id].is_current = True
 
         return [self._threads[id] for id in sorted(self._threads.keys())]
 
@@ -76,9 +79,14 @@ class Threads:
 
     def set_current(self, thread_id: int) -> None:
         """Set the thread with the given ID as the current thread, all others as not the current thread."""
+        self._current_thread_id = thread_id
         for thread in self._threads.values():
             thread.is_current = (thread.id == thread_id)
 
     def clear(self):
         """Clear all threads."""
         self._threads.clear()
+
+    def get_current_thread_id(self) -> int | None:
+        return self._current_thread_id
+

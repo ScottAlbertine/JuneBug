@@ -71,13 +71,28 @@ class SessionStatuses(BaseModel):
 class StackFrame(BaseModel):
     """A stack frame."""
 
-    presentation: Annotated[str, Field(description="Rendered function/method frame label from debugger UI.")]
-    index: Annotated[int, Field(description="0-based frame index to use as `frame_index` in other debugger tools.")]
+    id: Annotated[int, Field(description="Stack frame id.")]
+    name: Annotated[
+        str | None,
+        Field(
+            description="Name of the stack frame. Usually the function name, or <module> for lines outside a function.",
+        ),
+    ] = None
+    line: Annotated[int | None, Field(default=None, description="1-based source line when available.")] = None
+    column: Annotated[int | None, Field(default=None, description="1-based source column when available.")] = None
     file: Annotated[
         str | None, Field(default=None, description="Source file path as provided by the debugger when available."),
     ] = None
-    line: Annotated[int | None, Field(default=None, description="1-based source line when available.")] = None
-    is_current: Annotated[bool, Field(description="Whether this is the currently selected frame.")]
+
+    @classmethod
+    def from_dap(cls, dap_frame: dict[str, Any]) -> StackFrame:
+        return cls(
+            id=dap_frame["id"],
+            name=dap_frame.get("name"),
+            line=dap_frame.get("line"),
+            column=dap_frame.get("column"),
+            file=dap_frame.get("source", {}).get("path"),
+        )
 
 
 class Thread(BaseModel):

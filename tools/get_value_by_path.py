@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from annotations import FrameIndex, SessionID
+from annotations import FrameID, SessionID
 
 
 def get_value_by_path(
@@ -11,7 +11,7 @@ def get_value_by_path(
         "and refresh stale path tokens after the paused location changes.",
     ],
     session_id: SessionID = None,
-    frame_index: FrameIndex = None,
+    frame_id: FrameID = None,
     depth: Annotated[
         int,
         "Maximum depth for expanding children of the resolved value "
@@ -40,6 +40,6 @@ Next call:
 - Use another `get_value_by_path` call to continue drilling deeper.
 - Use `evaluate_expression` when direct name-path navigation is insufficient."""
     print(session_id)
-    print(frame_index)
+    print(frame_id)
     print(path)
     print(depth)

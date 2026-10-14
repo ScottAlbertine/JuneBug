@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from annotations import FrameIndex, SessionID
+from annotations import FrameID, SessionID
 from models import SetVariableResponse
 
 
@@ -19,7 +19,7 @@ def set_variable(
         "Do not pass JSON-escaped payloads or literal backslash-escaped quoted text.",
     ],
     session_id: SessionID = None,
-    frame_index: FrameIndex = None,
+    frame_id: FrameID = None,
 ) -> SetVariableResponse:
     """Mutates a variable value by path in the selected stack frame.
 Use this tool to change state during debugging.
@@ -40,6 +40,6 @@ Result:
 Next call:
 - Re-read value via `get_value_by_path` or `list_frame_values` to confirm."""
     print(session_id)
-    print(frame_index)
+    print(frame_id)
     print(path)
     print(new_value)

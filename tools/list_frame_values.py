@@ -1,11 +1,11 @@
 from typing import Annotated
 
-from annotations import FrameIndex, SessionID
+from annotations import FrameID, SessionID
 
 
 def list_frame_values(
     session_id: SessionID = None,
-    frame_index: FrameIndex = None,
+    frame_id: FrameID = None,
     depth: Annotated[
         int,
         "Maximum depth for expanding nested objects "
@@ -27,8 +27,8 @@ def list_frame_values(
     Next call:
     - Use `get_value_by_path` to drill into nested fields.
     - Use `evaluate_expression` for computed checks in the same frame.
-    - Do not reuse a cached `frame_index` after `resume`, `step_*`, `run_to_line`, or any change in paused location.
+    - Do not reuse a cached `frame_id` after `resume`, `step_*`, `run_to_line`, or any change in paused location.
     """
     print(session_id)
-    print(frame_index)
+    print(frame_id)
     print(depth)

@@ -9,7 +9,7 @@ from breakpoints import Breakpoints, File
 from constants import TEMP_DIR
 from enums import DebuggerState, SuspendPolicy
 from exceptions import DAPError
-from models import Breakpoint, SessionStatus, Thread
+from models import Breakpoint, SessionStatus, StackFrame, Thread
 from threads import Threads
 from utils import connect_to_port
 
@@ -102,6 +102,10 @@ class Session:
     def _send(self):
         self.sock.sendall(self.client.send())
 
+    def get_current_thread_id(self) -> int | None:
+        self.list_threads()
+        return self.threads.get_current_thread_id()
+
     def get_status(self) -> SessionStatus:
         """Get the status of this session."""
         if self.state != DebuggerState.STOPPED:  # don't try talking anymore if we're stopped
@@ -125,6 +129,14 @@ class Session:
             return self.breakpoints.list_breakpoints()
         else:
             return self.breakpoints.list_breakpoints_for_file(path)
+
+    def list_stack_frames(self, thread_id: int | None) -> list[StackFrame]:
+        if thread_id is None:
+            raise Exception(
+                "No thread ID specified, and there is no current thread listed. Are you sure the session is paused?",
+            )
+        frames = self._stack_trace(thread_id).body["body"]["stackFrames"]
+        return [StackFrame.from_dap(frame) for frame in frames]
 
     def list_threads(self) -> list[Thread]:
         """Get all threads, sorted by id."""
@@ -286,7 +298,7 @@ class Session:
         """Get the stack trace."""
         self.client.stack_trace(thread_id, **kwargs)
         self._send()
-        return self._pull_until(lambda e: True)
+        return self._pull_until(lambda e: e.event == "response" and e.body["command"] == "stackTrace")
 
     def _step_in(self, thread_id: int) -> Event:
         """Step into the current line."""
