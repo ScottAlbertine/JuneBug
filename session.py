@@ -166,9 +166,9 @@ class Session:
 
     def remove_breakpoint(self, path: Path, line: int) -> None:
         """Remove a breakpoint. Idempotent, no-op on nonexistent breakpoint."""
-        self.breakpoints.remove_breakpoint(path, line)
-        # TODO: don't bother doing this if we didn't remove a breakpoint, keeps IDs more stable
-        self.breakpoints.refresh(self._set_breakpoints(self.breakpoints.get_file(path)))
+        did_remove = self.breakpoints.remove_breakpoint(path, line)
+        if did_remove:
+            self.breakpoints.refresh(self._set_breakpoints(self.breakpoints.get_file(path)))
 
     def set_breakpoints_muted(self, breakpoints_muted: bool):
         """Set all breakpoints to muted."""
