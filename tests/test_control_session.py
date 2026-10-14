@@ -136,7 +136,7 @@ async def test_wait_for_pause(client: Client) -> None:
     assert wait_for_pause_2.structured_content == expected_status
 
 
-async def test_stop(client: Client) -> None:
+async def test_stop__paused_session(client: Client) -> None:
     session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
 
     await client.call_tool("set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 13})
@@ -160,7 +160,6 @@ async def test_stop(client: Client) -> None:
         return psutil.Process(debugee_pid).status() == psutil.STATUS_ZOMBIE
 
     await eventual_assert(process_exited, otherwise="Process did not exit within 3 seconds.")
-    await asyncio.sleep(1)
 
 # TODO: try stopping a session that hasn't started yet
 
