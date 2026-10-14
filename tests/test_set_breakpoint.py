@@ -1,5 +1,4 @@
 from pathlib import Path
-from time import sleep
 
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
@@ -8,7 +7,7 @@ import pytest
 
 from tests.constants import FAKE_MAIN, MAIN_THREAD, PROJECT_ROOT
 import tests.fakes.fake_main as fake_main
-from tests.utils import create_session
+from tests.utils import create_session, eventual_assert, move_to_next_breakpoint
 
 
 async def test_set_breakpoint(client: Client) -> None:
@@ -34,10 +33,8 @@ async def test_set_breakpoint(client: Client) -> None:
     }
 
     # check that the breakpoint was set, by hitting it.
-    wait_for_pause = await client.call_tool(
-        "control_session", {"session_id": session_id, "action": "wait_for_pause"},
-    )
-    assert wait_for_pause.structured_content["state"] == "paused"
+    wait_for_pause = await move_to_next_breakpoint(client, session_id)
+    assert wait_for_pause["state"] == "paused"
 
     # check that the breakpoint was hit, based on thread state, stdout, and pid existence
     threads = await client.call_tool("list_threads", {"session_id": session_id})
@@ -45,15 +42,11 @@ async def test_set_breakpoint(client: Client) -> None:
     assert Path(std_out_path).read_text() == "it started\n"
     assert psutil.Process(pid).is_running()
 
-    # resume again
-    resume_2 = await client.call_tool(
-        "control_session", {"session_id": session_id, "action": "resume"},
-    )
-    assert resume_2.structured_content["state"] == "running"
+    # resume again, wait until it stopped
+    wait_for_pause = await move_to_next_breakpoint(client, session_id)
+    assert wait_for_pause["state"] == "stopped"
 
-    sleep(1)
-
-    # Check that the program has run to completion, based on thread state, stdout, and pid existence
+    # Check that the program has run to completion, based on thread state, stdout, and process status
     with pytest.raises(
         ToolError,
         match=rf"Error calling tool 'list_threads': DAP Error from command threads: Server\[pid={pid}] disconnected unexpectedly",
@@ -61,7 +54,12 @@ async def test_set_breakpoint(client: Client) -> None:
         threads = await client.call_tool("list_threads", {"session_id": session_id})
         assert threads.structured_content == {'threads': [MAIN_THREAD], 'total_count': 1}
     assert Path(std_out_path).read_text() == "it started\nit finished\n"
-    assert psutil.Process(pid).status() == psutil.STATUS_ZOMBIE
+
+    # the process can take a while to change its status, give it 3 seconds to do so
+    async def process_exited() -> bool:
+        return psutil.Process(pid).status() == psutil.STATUS_ZOMBIE
+
+    await eventual_assert(process_exited, otherwise="Process did not exit within 3 seconds")
 
 
 @pytest.mark.parametrize(

@@ -90,6 +90,11 @@ class Session:
             self.state = DebuggerState.PAUSED
 
         if event.event == "terminated":
+            # Just in case the agent tries to re-use or inspect a closed session, clear all this out
+            self.current_position = None
+            self.threads.clear()
+            self.breakpoints.clear()
+            self.breakpoints_muted = False
             self.state = DebuggerState.STOPPED
 
         # TODO: handle other passive events that update our internal model of the debugger's state here
@@ -99,6 +104,8 @@ class Session:
 
     def get_status(self) -> SessionStatus:
         """Get the status of this session."""
+        if self.state != DebuggerState.STOPPED:  # don't try talking anymore if we're stopped
+            self.list_threads()  # do a list_threads to pull the most recent messages from the DAP server
         return SessionStatus(
             id=self.session_id,
             state=self.state,
@@ -130,14 +137,19 @@ class Session:
         self.state = DebuggerState.PAUSED
 
     def resume(self):
-        """Resume this session."""
+        """Resume this session. Does not block."""
+        # we're going to need to list threads anyway in most cases
+        # and listing threads pulls the latest events to update our state and current_position, which we then check
+        threads = self.list_threads()
+        if self.state == DebuggerState.RUNNING:
+            return  # Don't double run
         if not self.has_configuration_done:
             # this has to happen once per session, and only once, and it automatically resumes all threads
             self._configuration_done()
             self.has_configuration_done = True
         else:
-            self._continue_execution(self.list_threads()[0].id)
-        self.current_position = None  # TODO: test this
+            self._continue_execution(threads[0].id)
+        self.current_position = None
         self.state = DebuggerState.RUNNING
 
     def set_breakpoint(
@@ -148,9 +160,14 @@ class Session:
         self.breakpoints.refresh(self._set_breakpoints(self.breakpoints.get_file(path)))
         return bp
 
+    def stop(self) -> None:
+        """Stop this session."""
+        self._disconnect()
+
     def remove_breakpoint(self, path: Path, line: int) -> None:
         """Remove a breakpoint. Idempotent, no-op on nonexistent breakpoint."""
         self.breakpoints.remove_breakpoint(path, line)
+        # TODO: don't bother doing this if we didn't remove a breakpoint, keeps IDs more stable
         self.breakpoints.refresh(self._set_breakpoints(self.breakpoints.get_file(path)))
 
     def set_breakpoints_muted(self, breakpoints_muted: bool):
@@ -168,8 +185,9 @@ class Session:
                 self.breakpoints.refresh(self._set_breakpoints(file))
 
     def wait_for_pause(self):
-        """Wait for the debugger to pause on a line on its own."""
-        self.resume()
+        """Wait for the debugger to pause on a line on its own. Only blocks, does not send anything to DAP."""
+        if self.state == DebuggerState.PAUSED:
+            return  # we are already paused, don't just block forever
         self._pull_until(lambda e: e.event == "stopped" or e.event == "terminated")
 
     # DAP commands
@@ -194,7 +212,7 @@ class Session:
         # There are extra events returned after this, that we don't handle, the next command will see it
 
     def _continue_execution(self, thread_id: int) -> None:
-        """Continue execution."""
+        """Continue execution. Does not block."""
         self.client.continue_execution(thread_id)
         self._send()
 
@@ -202,7 +220,7 @@ class Session:
         """Disconnect from the debug adapter."""
         self.client.disconnect()
         self._send()
-        return self._pull_until(lambda e: True)
+        return self._pull_until(lambda e: e.event == "terminated")
 
     def _evaluate(self, expression: str, frame_id: int | None = None, **kwargs) -> Event:
         """Evaluate an expression."""

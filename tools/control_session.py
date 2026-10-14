@@ -26,22 +26,22 @@ def control_session(
     - `step_*` actions require a suspended session.
 
     Actions:
-    - step_into: Step into the next method call
-    - step_over: Step over the current line
-    - step_out: Step out of the current method
-    - resume: Resume program execution
-    - pause: Pause program execution
-    - stop: Stop the debug session
-    - wait_for_pause: Resume program execution and wait until the session pauses (breakpoint hit or paused manually)
+    - step_into: Step into the next method call. Blocks until step is done.
+    - step_over: Step over the current line. Blocks until step is done.
+    - step_out: Step out of the current method. Blocks until step is done.
+    - resume: Resume program execution. Does not block, program runs in the background after this tool call completes. Only use this when the program is paused.
+    - pause: Pause program execution. Blocks until program is paused.
+    - stop: Stop the debug session. Does not block. This attempts to terminate the debugee process, however, the debugee process may run to completion after this signal.
+    - wait_for_pause: Wait until the program pauses due to breakpoint hit or program completion. Blocks until program is paused. Idempotent, does nothing if the program is already paused.
 
     Important notes:
-    - If the program is running, use `wait_for_pause` or `pause` before `step_*` / `resume`.
     - Use a current `session_id` from `list_debugger_sessions` or `start_debugger_session`. If a session stops, times out, or disappears, refresh the session list before the next session-scoped call.
     - `resume` does NOT set breakpoints. If there are no enabled breakpoints (or none will be hit next), the program may run to completion and the session may stop without pausing.
-    - After `resume`, call `wait_for_pause` to confirm the next suspension. If `wait_for_pause` times out, consider `pause` and re-check breakpoints.
+    - If the program is running, use `wait_for_pause` or `pause` before `step_*` / `resume`.
+    - If `wait_for_pause` times out, consider `pause` and re-check breakpoints.
 
     Next call:
-    - After `resume`, call `control_session(action=wait_for_pause)`.
+    - After `resume`, call `control_session(action=wait_for_pause)` to confirm the next suspension.
     - After a paused result, call `get_stack` / `list_frame_values` / `evaluate_expression`.
 
     State values in the result:
@@ -62,7 +62,7 @@ def control_session(
     elif action == Action.PAUSE:
         session.pause()
     elif action == Action.STOP:
-        pass
+        session.stop()
     elif action == Action.WAIT_FOR_PAUSE:
         session.wait_for_pause()
 

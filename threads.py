@@ -78,3 +78,7 @@ class Threads:
         """Set the thread with the given ID as the current thread, all others as not the current thread."""
         for thread in self._threads.values():
             thread.is_current = (thread.id == thread_id)
+
+    def clear(self):
+        """Clear all threads."""
+        self._threads.clear()

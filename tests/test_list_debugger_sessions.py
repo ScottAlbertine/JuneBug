@@ -4,7 +4,7 @@ from fastmcp import Client
 
 from constants import TEMP_DIR
 from tests.constants import FAKE_MAIN, PROJECT_ROOT
-from tests.utils import MatchAny, create_session
+from tests.utils import MatchAny, create_session, move_to_next_breakpoint
 
 
 async def test_get_real_sessions(client: Client, clear_sessions: None) -> None:
@@ -43,7 +43,7 @@ async def test_get_real_sessions(client: Client, clear_sessions: None) -> None:
         "set_breakpoint", {"session_id": session_id_0, "file_path": FAKE_MAIN, "line": 13},
     )
     # hit that breakpoint
-    await client.call_tool("control_session", {"session_id": session_id_0, "action": "wait_for_pause"})
+    await move_to_next_breakpoint(client, session_id_0)
 
     result_2 = await client.call_tool("list_debugger_sessions", {"project_path": str(PROJECT_ROOT)})
     assert result_2.structured_content == {

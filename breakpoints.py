@@ -108,3 +108,8 @@ class Breakpoints:
             bp = self.get_breakpoint(Path(dap_breakpoint["source"]["path"]), dap_breakpoint["line"])
             bp.id = dap_breakpoint["id"]
             self._breakpoints[bp.id] = bp
+
+    def clear(self):
+        """Clear all tracked breakpoints."""
+        self._files.clear()
+        self._breakpoints.clear()
