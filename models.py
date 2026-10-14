@@ -82,16 +82,16 @@ class StackFrame(BaseModel):
         str | None, Field(default=None, description="Source file path as provided by the debugger when available."),
     ] = None
     line: Annotated[int | None, Field(default=None, description="1-based source line when available.")] = None
-    column: Annotated[int | None, Field(default=None, description="1-based source column when available.")] = None
+    library_code: Annotated[bool, Field(description="Whether this stack frame appears to be from library code or not.")]
 
     @classmethod
     def from_dap(cls, dap_frame: dict[str, Any]) -> StackFrame:
         return cls(
             id=dap_frame["id"],
             name=dap_frame.get("name"),
-            line=dap_frame.get("line"),
-            column=dap_frame.get("column"),
             file=dap_frame.get("source", {}).get("path"),
+            line=dap_frame.get("line"),
+            library_code=True if dap_frame.get("presentationHint") == "subtle" else False,
         )
 
 

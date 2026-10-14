@@ -27,7 +27,7 @@ def get_stack(
     Pagination:
     - `offset`/`limit` are applied after collecting the full stack.
 
-    Frame fields include: id, name, file, line, column.
+    Frame fields include: id, name, file, line, library_code.
     `file` is reported as provided by the debugger (no path normalization).
 
     Next call:
