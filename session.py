@@ -206,7 +206,8 @@ class Session:
 
     def _attach(self) -> Event:
         """Attach to a running program."""
-        self.client.attach(a="b")  # the underlying client errors if you don't specify kwargs here.
+        # this is a secret option that allows us to see stack frames from libraries
+        self.client.attach(justMyCode=False)
         self._send()
         return self._pull_until(lambda e: e.event == "initialized")
 
@@ -294,9 +295,9 @@ class Session:
         self._send()
         return self._pull_until(lambda e: True)
 
-    def _stack_trace(self, thread_id: int, **kwargs) -> Event:
+    def _stack_trace(self, thread_id: int) -> Event:
         """Get the stack trace."""
-        self.client.stack_trace(thread_id, **kwargs)
+        self.client.stack_trace(thread_id)
         self._send()
         return self._pull_until(lambda e: e.event == "response" and e.body["command"] == "stackTrace")
 
