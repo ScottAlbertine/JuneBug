@@ -13,7 +13,7 @@ This project uses `pytest` with `asyncio_mode = auto` (see `pytest.ini`), so all
 - Test files live in `tests/` and follow the naming convention `test_<tool_name>.py` (e.g., `test_set_breakpoint.py`).
 - Each test is an `async def` function that takes the `client: Client` fixture (from `conftest.py`) as its first argument.
 - Tests call MCP tools via `await client.call_tool("tool_name", {...})` and assert on `result.structured_content`.
-- Use the `create_session(client, file_path=...)` helper from `tests.utils` to start a debugger session — don't repeat the `start_debugger_session` boilerplate inline.
+- Read `tests.utils` before writing tests, it's short and you should use the functions in there to avoid repeating boilerplate.
 
 ### Fixtures
 
@@ -42,7 +42,7 @@ This project uses `pytest` with `asyncio_mode = auto` (see `pytest.ini`), so all
 
 - Use `psutil.Process(pid)` to check debugee process state: `proc.is_running()`, `proc.cmdline()`, `proc.cwd()`, `proc.environ()`, `proc.status()`.
 - Use `MatchRegex()` in `proc.cmdline()` assertions to handle symlink variations in the Python executable path.
-- Use `sleep(1)` (from `time`) when a race condition exists between an action and its observable effect (e.g., after `resume` before checking threads).
+- Use `await asyncio.sleep(1)` when a race condition exists between an action and its observable effect (e.g., after `resume` before checking threads).
 
 ### Parametrization
 
