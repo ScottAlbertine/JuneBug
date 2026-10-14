@@ -183,12 +183,10 @@ async def test_stop__unstarted_session(client: Client) -> None:
         "std_err_path": MatchAny(str),
     }
 
-    # TODO: this is a known issue, the process does not exit within 3 seconds under these conditions
+    async def process_exited() -> bool:
+        return psutil.Process(debugee_pid).status() == psutil.STATUS_ZOMBIE
 
-    # async def process_exited() -> bool:
-    #     return psutil.Process(debugee_pid).status() == psutil.STATUS_ZOMBIE
-    #
-    # await eventual_assert(process_exited, otherwise="Process did not exit within 3 seconds.")
+    await eventual_assert(process_exited, otherwise="Process did not exit within 3 seconds.")
 
 
 async def test_stop__running_process(client: Client) -> None:
@@ -226,9 +224,7 @@ async def test_stop__running_process(client: Client) -> None:
         "std_err_path": MatchAny(str),
     }
 
-    # TODO: this is a known issue, the process does not exit within 3 seconds under these conditions
+    async def process_exited() -> bool:
+        return psutil.Process(debugee_pid).status() == psutil.STATUS_ZOMBIE
 
-    # async def process_exited() -> bool:
-    #     return psutil.Process(debugee_pid).status() == psutil.STATUS_ZOMBIE
-    #
-    # await eventual_assert(process_exited, otherwise="Process did not exit within 3 seconds.")
+    await eventual_assert(process_exited, otherwise="Process did not exit within 3 seconds.")

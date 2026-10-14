@@ -1,9 +1,11 @@
 """A debug session, equivalent to a debugger instance like a `pdb` process or a PyCharm debugger tab."""
 from pathlib import Path
+from signal import SIGTERM
 from typing import Any, Callable, Iterator
 
 from dap import DAPClient, Event, InitializedEvent
 from dap.protocol import ErrorResponse
+import psutil
 
 from breakpoints import Breakpoints, File
 from constants import TEMP_DIR
@@ -40,6 +42,7 @@ class Session:
         self.std_out_path = str(TEMP_DIR / f"{session_id}.stdout.txt") if we_own else None
         self.std_err_path = str(TEMP_DIR / f"{session_id}.stderr.txt") if we_own else None
         self.threads = Threads()
+        self.we_own = we_own
 
         # set up the event iterator
         self._event_iterator = self._pull()
@@ -173,6 +176,8 @@ class Session:
     def stop(self) -> None:
         """Stop this session."""
         self._disconnect()
+        if self.we_own:
+            psutil.Process(self.debugee_pid).send_signal(SIGTERM)
 
     def remove_breakpoint(self, path: Path, line: int) -> None:
         """Remove a breakpoint. Idempotent, no-op on nonexistent breakpoint."""
