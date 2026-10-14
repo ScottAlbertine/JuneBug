@@ -78,11 +78,11 @@ class StackFrame(BaseModel):
             description="Name of the stack frame. Usually the function name, or <module> for lines outside a function.",
         ),
     ] = None
-    line: Annotated[int | None, Field(default=None, description="1-based source line when available.")] = None
-    column: Annotated[int | None, Field(default=None, description="1-based source column when available.")] = None
     file: Annotated[
         str | None, Field(default=None, description="Source file path as provided by the debugger when available."),
     ] = None
+    line: Annotated[int | None, Field(default=None, description="1-based source line when available.")] = None
+    column: Annotated[int | None, Field(default=None, description="1-based source column when available.")] = None
 
     @classmethod
     def from_dap(cls, dap_frame: dict[str, Any]) -> StackFrame:

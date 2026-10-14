@@ -24,8 +24,8 @@ def start_debugger_session(
     """
     Start a debugger session for a given Python program in the current project.
     Use this tool to start a debugger session.
-    The session will be started and you can then use other debugger tools to control execution.
-    This MCP server will wait for session creation to succeed, up to `timeout` milliseconds.
+    The session will be started and you can then use other tools on this MCP server to control execution.
+    This tool call will block until session creation to succeeds, up to `timeout` milliseconds.
     The program will be started in a paused state, before the first line of code has run.
     This allows you to set breakpoints that you expect to be hit during startup, before resuming the process.
 

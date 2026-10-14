@@ -22,12 +22,12 @@ def list_breakpoints(
 
     Behavior:
     - If `file_path` is provided, returns only breakpoints in that file.
-    - Returns rich attributes for each breakpoint (type, file, line, condition, temporary, suspend_policy, hit_count).
+    - Returns rich attributes for each breakpoint (type, file, line, line_text, condition, temporary, suspend_policy, hit_count).
     - `breakpoints_muted` reports the session-wide debugger mute flag.
 
     Next call:
     - If no suitable breakpoint exists, call `set_breakpoint`.
-    - Then continue execution with `control_session(action=resume)` or `control_session(action=wait_for_pause)`.
+    - Then continue execution with `control_session(action=resume)`.
     """
     session = session_service.get_session(session_id)
     path = normalize_file_path(session.project_path, file_path) if file_path else None
