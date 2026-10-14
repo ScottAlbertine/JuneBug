@@ -89,9 +89,12 @@ class Breakpoints:
     def get_breakpoint_by_id(self, breakpoint_id: int) -> Breakpoint | None:
         return self._breakpoints.get(breakpoint_id)
 
-    def remove_breakpoint(self, path: Path, line: int):
+    def remove_breakpoint(self, path: Path, line: int) -> None:
+        """Remove a breakpoint. Idempotent, no-op on nonexistent breakpoint."""
         file = self.get_file(path)
         bp = file.get_breakpoint(line)
+        if bp is None:
+            return
         file.remove_breakpoint(line)
         self._breakpoints.pop(bp.id, None)
 

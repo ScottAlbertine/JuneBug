@@ -149,7 +149,7 @@ class Session:
         return bp
 
     def remove_breakpoint(self, path: Path, line: int) -> None:
-        """Remove a breakpoint."""
+        """Remove a breakpoint. Idempotent, no-op on nonexistent breakpoint."""
         self.breakpoints.remove_breakpoint(path, line)
         self.breakpoints.refresh(self._set_breakpoints(self.breakpoints.get_file(path)))
 
