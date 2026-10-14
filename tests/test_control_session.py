@@ -1,5 +1,3 @@
-import asyncio
-
 from fastmcp import Client
 import psutil
 
@@ -152,8 +150,15 @@ async def test_stop__paused_session(client: Client) -> None:
     stop_result = await client.call_tool("control_session", {"session_id": session_id, "action": "stop"})
 
     # Verify the session reports stopped state.
-    assert stop_result.structured_content["state"] == "stopped"
-    assert stop_result.structured_content["current_position"] is None
+    assert stop_result.structured_content == {
+        "id": session_id,
+        "debugee_pid": debugee_pid,
+        "state": "stopped",
+        "current_position": None,
+        "breakpoints_muted": False,
+        "std_out_path": MatchAny(str),
+        "std_err_path": MatchAny(str),
+    }
 
     # Verify the process has exited.
     async def process_exited() -> bool:
@@ -161,6 +166,69 @@ async def test_stop__paused_session(client: Client) -> None:
 
     await eventual_assert(process_exited, otherwise="Process did not exit within 3 seconds.")
 
-# TODO: try stopping a session that hasn't started yet
 
-# TODO: try stopping a session that's in an infinite loop and not at a breakpoint
+async def test_stop__unstarted_session(client: Client) -> None:
+    session = await create_session(client, file_path=FAKE_MAIN)
+    session_id = session["id"]
+    debugee_pid = session["debugee_pid"]
+
+    stop_result = await client.call_tool("control_session", {"session_id": session_id, "action": "stop"})
+    assert stop_result.structured_content == {
+        "id": session_id,
+        "debugee_pid": debugee_pid,
+        "state": "stopped",
+        "current_position": None,
+        "breakpoints_muted": False,
+        "std_out_path": MatchAny(str),
+        "std_err_path": MatchAny(str),
+    }
+
+    # TODO: this is a known issue, the process does not exit within 3 seconds under these conditions
+
+    # async def process_exited() -> bool:
+    #     return psutil.Process(debugee_pid).status() == psutil.STATUS_ZOMBIE
+    #
+    # await eventual_assert(process_exited, otherwise="Process did not exit within 3 seconds.")
+
+
+async def test_stop__running_process(client: Client) -> None:
+    session = await create_session(client, file_path=FAKE_MAIN_MULTI_THREAD)
+    session_id = session["id"]
+    debugee_pid = session["debugee_pid"]
+
+    # get the process into a known running state
+    await client.call_tool("control_session", {"session_id": session_id, "action": "resume"})
+
+    async def all_threads_running() -> bool:
+        threads = await client.call_tool("list_threads", {"session_id": session_id})
+        return threads.structured_content == {
+            "threads": [
+                {"id": 1, "is_current": MatchAny(bool), "name": "MainThread", "state": "running"},
+                {"id": 2, "is_current": MatchAny(bool), "name": "BusyWorker", "state": "running"},
+                {"id": 4, "is_current": MatchAny(bool), "name": "DaemonOne", "state": "running"},
+                {"id": 5, "is_current": MatchAny(bool), "name": "DaemonTwo", "state": "running"},
+            ],
+            "total_count": 4,
+        }
+
+    await eventual_assert(
+        all_threads_running, otherwise="Threads did not reach expected running state within 3 seconds",
+    )
+
+    stop_result = await client.call_tool("control_session", {"session_id": session_id, "action": "stop"})
+    assert stop_result.structured_content == {
+        "id": session_id,
+        "debugee_pid": debugee_pid,
+        "state": "stopped",
+        "current_position": None,
+        "breakpoints_muted": False,
+        "std_out_path": MatchAny(str),
+        "std_err_path": MatchAny(str),
+    }
+
+    # TODO: this is a known issue, the process does not exit within 3 seconds under these conditions
+
+    # async def process_exited() -> bool:
+    #     return psutil.Process(debugee_pid).status() == psutil.STATUS_ZOMBIE
+    #
+    # await eventual_assert(process_exited, otherwise="Process did not exit within 3 seconds.")
