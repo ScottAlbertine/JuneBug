@@ -46,7 +46,7 @@ class Threads:
             self._current_thread_id = next(iter(self._threads.keys()))
             self._threads[self._current_thread_id].is_current = True
 
-        return [self._threads[id] for id in sorted(self._threads.keys())]
+        return [self._threads[thread_id] for thread_id in sorted(self._threads.keys())]
 
     def update(self, dap_thread_event: Event) -> None:
         """Update a single thread based on a 'thread' event from DAP."""
