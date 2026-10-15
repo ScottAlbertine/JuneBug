@@ -13,7 +13,7 @@ from enums import DebuggerState, SuspendPolicy
 from exceptions import DAPError
 from models import Breakpoint, SessionStatus, StackFrame, Thread
 from threads import Threads
-from utils import connect_to_port
+from utils import connect_to_port, fetch_line_text
 
 
 class Session:
@@ -169,7 +169,8 @@ class Session:
         self, path: Path, line: int, condition: str | None, temporary: bool, suspend_policy: SuspendPolicy,
     ) -> Breakpoint:
         """Set a new breakpoint. See the docstring on the `Breakpoints` class to understand why this is so complex."""
-        bp = self.breakpoints.add_breakpoint(path, line, condition, temporary, suspend_policy)
+        line_text = fetch_line_text(path, line)[:120]
+        bp = self.breakpoints.add_breakpoint(path, line, line_text, condition, temporary, suspend_policy)
         self.breakpoints.refresh(self._set_breakpoints(self.breakpoints.get_file(path)))
         return bp
 

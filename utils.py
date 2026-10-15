@@ -1,9 +1,10 @@
+from itertools import islice
 from pathlib import Path
 from socket import AF_INET, SOCK_STREAM, socket
 import subprocess
 from time import sleep, time
 
-from exceptions import DebugpyInstallationFailed
+from exceptions import DebugpyInstallationFailed, FileNotFound, LineNotFound
 
 
 def install_debugpy(python_path: str) -> None:
@@ -62,3 +63,17 @@ def normalize_file_path(base_path: str, file_path: str) -> Path:
     if not p.is_absolute():
         p = Path(base_path) / p
     return p.resolve()
+
+
+def fetch_line_text(path: Path, line_num: int) -> str:
+    """
+    Fetch the text of the given line number from the file at the given path.
+    Raises our custom exceptions if the file isn't found, or doesn't have that line number.
+    """
+    try:
+        with path.open() as f:
+            return next(islice(f, line_num - 1, line_num))
+    except FileNotFoundError:
+        raise FileNotFound(path)
+    except StopIteration:
+        raise LineNotFound(path, line_num)

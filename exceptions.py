@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from dap.protocol import ErrorResponse
 
 
@@ -16,6 +18,17 @@ class DAPError(Exception):
     def __init__(self, error: ErrorResponse):
         super().__init__(f"DAP Error from command {error.command}: {error.message}")
 
+class FileNotFound(Exception):
+    """Exception indicating that the client's specified file was not found."""
+
+    def __init__(self, path: Path):
+        super().__init__(f"File {path.resolve()} was not found.")
+
+class LineNotFound(Exception):
+    """Exception indicating that the client's specified line was not found."""
+
+    def __init__(self, path: Path, line: int):
+        super().__init__(f"Line {line} was not found in {path.resolve()}")
 
 class MissingSessionId(Exception):
     """Exception indicating that you need to specify a session ID."""

@@ -54,7 +54,7 @@ async def test_get_real_sessions(client: Client, clear_sessions: None) -> None:
                     "type": "line",
                     "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
                     "line": 13,
-                    "line_text": None,
+                    "line_text": '    print("it finished", flush=True)\n',
                     "condition": None,
                     "hit_count": 0,
                     "temporary": False,

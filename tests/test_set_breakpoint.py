@@ -11,7 +11,6 @@ from tests.utils import create_session, eventual_assert, move_to_next_breakpoint
 
 
 async def test_set_breakpoint(client: Client) -> None:
-
     start_response = await create_session(client, file_path=FAKE_MAIN)
     session_id = start_response["id"]
     pid = start_response["debugee_pid"]
@@ -25,7 +24,7 @@ async def test_set_breakpoint(client: Client) -> None:
         "type": "line",
         "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
         "line": 13,
-        "line_text": None,
+        "line_text": '    print("it finished", flush=True)\n',
         "condition": None,
         "temporary": False,
         "suspend_policy": "all",
@@ -81,9 +80,27 @@ async def test_set_breakpoint__odd_file_paths(client: Client, file_to_breakpoint
         "type": "line",
         "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
         "line": 13,
-        "line_text": None,
+        "line_text": '    print("it finished", flush=True)\n',
         "condition": None,
         "temporary": False,
         "suspend_policy": "all",
         "hit_count": 0,
     }
+
+
+async def test_set_breakpoint__nonexistent(client: Client) -> None:
+    session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
+
+    with pytest.raises(
+        ToolError,
+        match=rf"Line 999 was not found in {PROJECT_ROOT}/tests/fakes/fake_main\.py",
+    ):
+        await client.call_tool("set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 999})
+
+    with pytest.raises(
+        ToolError,
+        match=r"File /definitely/not/a/real/file\.py was not found\.",
+    ):
+        await client.call_tool(
+            "set_breakpoint", {"session_id": session_id, "file_path": "/definitely/not/a/real/file.py", "line": 1},
+        )

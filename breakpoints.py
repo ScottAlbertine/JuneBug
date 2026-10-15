@@ -52,13 +52,14 @@ class Breakpoints:
         self._breakpoints: dict[int, Breakpoint] = {}
 
     def add_breakpoint(
-        self, path: Path, line: int, condition: str | None, temporary: bool, suspend_policy: SuspendPolicy,
+        self, path: Path, line: int, line_text: str, condition: str | None, temporary: bool, suspend_policy: SuspendPolicy,
     ) -> Breakpoint:
         bp = Breakpoint(
             id=None,  # for now
             type=BreakpointType.LINE,
             file=path,
             line=line,
+            line_text=line_text,
             condition=condition,
             temporary=temporary,
             suspend_policy=suspend_policy,
