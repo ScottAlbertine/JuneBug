@@ -8,7 +8,7 @@ import session_service
 from utils import normalize_file_path
 
 
-def start_debugger_session(
+def launch_debugger_session(
     project_path: ProjectPath,
     python_path: Annotated[str, "Absolute path to the Python executable to use when running the program."],
     file_path: Annotated[str, "File path of the Python program to debug, relative to `project_path`."],

@@ -35,7 +35,7 @@ def control_debugger_session(
     - wait_for_pause: Wait until the program pauses due to breakpoint hit or program completion. Blocks until program is paused. Idempotent, does nothing if the program is already paused.
 
     Important notes:
-    - Use a current `session_id` from `list_debugger_sessions` or `start_debugger_session`. If a session stops, times out, or disappears, refresh the session list before the next session-scoped call.
+    - Use a current `session_id` from one of the other debugger_session tools. If a session stops, times out, or disappears, refresh the session list before the next session-scoped call.
     - `resume` does NOT set breakpoints. If there are no enabled breakpoints (or none will be hit next), the program may run to completion and the session may stop without pausing.
     - If the program is running, use `wait_for_pause` or `pause` before `step_*` / `resume`.
     - If `wait_for_pause` times out, consider `pause` and re-check breakpoints.

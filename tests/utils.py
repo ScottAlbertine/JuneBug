@@ -73,7 +73,7 @@ async def eventual_assert(
 async def create_session(client: Client, file_path: str, **kwargs) -> dict[str, Any]:
     """Start a debugger session and return the full structured_content dict."""
     session_start = await client.call_tool(
-        "start_debugger_session", {
+        "launch_debugger_session", {
             "project_path": str(PROJECT_ROOT), "python_path": sys.executable, "file_path": file_path, **kwargs,
         },
     )

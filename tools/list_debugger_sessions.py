@@ -7,7 +7,7 @@ def list_debugger_sessions(project_path: ProjectPath) -> SessionStatuses:
     """Returns all active debugger sessions.
 
     Next call:
-    - If no sessions are running, call `start_debugger_session`.
+    - If no sessions are running, call `launch_debugger_session` or `attach_debugger_session`.
     - If multiple sessions are active, use returned `id` as `session_id` in subsequent calls.
     """
     sessions = session_service.get_sessions(project_path)

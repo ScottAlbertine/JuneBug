@@ -12,28 +12,28 @@ from tests.constants import FAKE_MAIN, PROJECT_ROOT
 from tests.utils import MatchAny, MatchRegex
 
 
-async def test_start_debugger_session__invalid(client: Client) -> None:
+async def test_launch_debugger_session__invalid(client: Client) -> None:
 
     with pytest.raises(ToolError, match=r"project_path\n.+Missing required argument.+"):
-        await client.call_tool("start_debugger_session", {"python_path": sys.executable, "file_path": FAKE_MAIN})
+        await client.call_tool("launch_debugger_session", {"python_path": sys.executable, "file_path": FAKE_MAIN})
 
     with pytest.raises(ToolError, match=r"No such file or directory: '/not/a/real/path'"):
         await client.call_tool(
-            "start_debugger_session", {
+            "launch_debugger_session", {
                 "project_path": str(PROJECT_ROOT), "python_path": "/not/a/real/path", "file_path": FAKE_MAIN,
             },
         )
 
     with pytest.raises(ToolError, match=r"File /not/a/real/path was not found\."):
         await client.call_tool(
-            "start_debugger_session", {
+            "launch_debugger_session", {
                 "project_path": str(PROJECT_ROOT), "python_path": sys.executable, "file_path": "/not/a/real/path",
             },
         )
 
     with pytest.raises(ToolError, match=r"timeout\n.+Input should be greater than or equal to 0"):
         await client.call_tool(
-            "start_debugger_session", {
+            "launch_debugger_session", {
                 "project_path": str(PROJECT_ROOT),
                 "python_path": sys.executable,
                 "file_path": FAKE_MAIN,
@@ -43,7 +43,7 @@ async def test_start_debugger_session__invalid(client: Client) -> None:
 
     with pytest.raises(ToolError, match=r"No such file or directory: '/not/a/real/path'"):
         await client.call_tool(
-            "start_debugger_session", {
+            "launch_debugger_session", {
                 "project_path": str(PROJECT_ROOT),
                 "python_path": sys.executable,
                 "file_path": FAKE_MAIN,
@@ -56,7 +56,7 @@ async def test_start_debugger_session__invalid(client: Client) -> None:
         match=r"Failed to install debugpy with .+?\. \n\n Stderr: \n sample stderr \n\n Stdout: \n sample stdout \n",
     ):
         await client.call_tool(
-            "start_debugger_session", {
+            "launch_debugger_session", {
                 "project_path": str(PROJECT_ROOT),
                 "python_path": str(Path(__file__).parent / "fakes" / "python_that_cant_install_debugpy.sh"),
                 "file_path": FAKE_MAIN,
@@ -66,7 +66,7 @@ async def test_start_debugger_session__invalid(client: Client) -> None:
 
 async def test_simple(client: Client) -> None:
     create_result = await client.call_tool(
-        "start_debugger_session", {
+        "launch_debugger_session", {
             "project_path": str(PROJECT_ROOT),
             "python_path": sys.executable,
             "file_path": FAKE_MAIN,
@@ -105,7 +105,7 @@ async def test_simple(client: Client) -> None:
 
 async def test_fancy(client: Client) -> None:
     result = await client.call_tool(
-        "start_debugger_session", {
+        "launch_debugger_session", {
             "project_path": str(PROJECT_ROOT),
             "python_path": sys.executable,
             "file_path": FAKE_MAIN,
