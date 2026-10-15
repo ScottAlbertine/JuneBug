@@ -8,8 +8,8 @@ from tools import (
     get_value_by_path,
     list_breakpoints,
     list_debugger_sessions,
-    list_frame_values,
     list_threads,
+    list_variables,
     remove_breakpoint,
     run_to_line,
     set_breakpoint,
@@ -28,8 +28,8 @@ mcp.tool(get_stack)
 mcp.tool(get_value_by_path)
 mcp.tool(list_breakpoints)
 mcp.tool(list_debugger_sessions)
-mcp.tool(list_frame_values)
 mcp.tool(list_threads)
+mcp.tool(list_variables)
 mcp.tool(remove_breakpoint)
 mcp.tool(run_to_line)
 mcp.tool(set_breakpoint)

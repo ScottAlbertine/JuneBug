@@ -2,6 +2,8 @@ from pathlib import Path
 
 from dap.protocol import ErrorResponse
 
+from enums import DebuggerState
+
 
 class DebugpyInstallationFailed(Exception):
     """Special exception to inform the client that we couldn't install debugpy."""
@@ -18,17 +20,20 @@ class DAPError(Exception):
     def __init__(self, error: ErrorResponse):
         super().__init__(f"DAP Error from command {error.command}: {error.message}")
 
+
 class FileNotFound(Exception):
     """Exception indicating that the client's specified file was not found."""
 
     def __init__(self, path: Path):
         super().__init__(f"File {path.resolve()} was not found.")
 
+
 class LineNotFound(Exception):
     """Exception indicating that the client's specified line was not found."""
 
     def __init__(self, path: Path, line: int):
         super().__init__(f"Line {line} was not found in {path.resolve()}")
+
 
 class MissingSessionId(Exception):
     """Exception indicating that you need to specify a session ID."""
@@ -42,6 +47,15 @@ class SessionNotFound(Exception):
 
     def __init__(self, client_id: str):
         super().__init__(f"Session {client_id} was not found.")
+
+
+class SessionStateError(Exception):
+    """Exception indicating that the specified debug session is in the wrong state for what you're trying to do."""
+
+    def __init__(self, expected_state: DebuggerState, actual_state: DebuggerState):
+        super().__init__(
+            f"Session must be {expected_state.value} to call that tool. Session is currently {actual_state.value}.",
+        )
 
 
 class ThreadNotFound(Exception):

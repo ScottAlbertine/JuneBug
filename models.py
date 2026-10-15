@@ -6,6 +6,8 @@ from pydantic import BaseModel, Field
 from enums import BreakpointType, DebuggerOutcome, DebuggerState, SuspendPolicy, ThreadState
 
 
+# TODO: add `exclude_if=lambda v: v is None` to a whole bunch of fields that are bulky and often null
+
 class Breakpoint(BaseModel):
     """A configured breakpoint."""
 
@@ -31,6 +33,42 @@ class Breakpoint(BaseModel):
     def to_dap(self) -> dict[str, Any]:
         """Turn this breakpoint into a dictionary that can be sent to DAP. Matches the "SourceBreakpoint" DAP schema."""
         return {"line": self.line, "condition": self.condition}
+
+
+class Variable(BaseModel):
+    """A variable."""
+    id: Annotated[int, Field(description="Variable id. Very often 0, if the variable has no children.", exclude=True)]
+    name: Annotated[str, Field(description="Name of the variable.")]
+    value: Annotated[str, Field(description="Current value of the variable.")]
+    type: Annotated[str, Field(description="Type of the variable.")]
+    evaluate_name: Annotated[
+        str | None,
+        Field(description="Name of the variable if you want to evaluate it.", exclude_if=lambda v: v is None),
+    ] = None
+    presentation_hint: Annotated[Any, Field(description="Presentation hint.", exclude_if=lambda v: v is None)]
+    children: Annotated[list[Variable] | None, Field(description="Children of this variable.")]
+
+    @classmethod
+    def from_dap(cls, dap_variable: dict[str, Any]) -> Variable:
+        variable_id = dap_variable["variablesReference"]
+        variable_type = dap_variable["type"]
+        # This is a python specific quirk, we get variables with evaluation names that don't actually work
+        # Every single one I've seen has "type": "", so to not mislead the LLM, we remove those bad eval names
+        evaluate_name = dap_variable.get("evaluateName") if variable_type else None
+        return cls(
+            id=variable_id,
+            name=dap_variable["name"],
+            value=dap_variable["value"],
+            type=variable_type,
+            evaluate_name=evaluate_name,
+            presentation_hint=dap_variable.get("presentationHint"),
+            children=None if variable_id == 0 else [],
+        )
+
+
+class Variables(BaseModel):
+    """A list of variables."""
+    variables: Annotated[list[Variable], Field(description="A list of variables.")]
 
 
 class SessionStatus(BaseModel):

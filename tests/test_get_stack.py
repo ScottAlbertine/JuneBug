@@ -83,14 +83,14 @@ async def test_deeper_stack_with_import(client: Client) -> None:
         "id": MatchAny(int),
         "name": "main",
         "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_import.py",
-        "line": 9,
+        "line": 12,
         "library_code": False,
     }
     expected_frame_3 = {
         "id": MatchAny(int),
         "name": "<module>",
         "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_import.py",
-        "line": 14,
+        "line": 17,
         "library_code": False,
     }
     assert stack.structured_content == {

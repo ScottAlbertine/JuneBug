@@ -29,7 +29,7 @@ Outcome:
 - timeout: no pause/stop within timeout window.
 
 Next call:
-- If paused, call `get_stack` / `list_frame_values` / `evaluate_expression`.
+- If paused, call `get_stack` / `list_variables` / `evaluate_expression`.
 - If the session stopped or disappeared, refresh `session_id` via `list_debugger_sessions` before issuing another session-scoped call."""
     print(session_id)
     print(file_path)

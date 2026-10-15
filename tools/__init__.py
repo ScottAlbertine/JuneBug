@@ -5,8 +5,8 @@ from .get_stack import get_stack
 from .get_value_by_path import get_value_by_path
 from .list_breakpoints import list_breakpoints
 from .list_debugger_sessions import list_debugger_sessions
-from .list_frame_values import list_frame_values
 from .list_threads import list_threads
+from .list_variables import list_variables
 from .remove_breakpoint import remove_breakpoint
 from .run_to_line import run_to_line
 from .set_breakpoint import set_breakpoint
@@ -22,8 +22,8 @@ __all__ = [
     "get_value_by_path",
     "list_breakpoints",
     "list_debugger_sessions",
-    "list_frame_values",
     "list_threads",
+    "list_variables",
     "remove_breakpoint",
     "run_to_line",
     "set_breakpoint",

@@ -13,10 +13,10 @@ async def test_list_breakpoints(client: Client) -> None:
 
     # Set two breakpoints on different lines, in the wrong order on purpose to test sorting
     await client.call_tool(
-        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_WITH_IMPORT, "line": 10},
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_WITH_IMPORT, "line": 13},
     )
     await client.call_tool(
-        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_WITH_IMPORT, "line": 7},
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_WITH_IMPORT, "line": 8},
     )
 
     # set another breakpoint in a different file, doing it against alphabetical order to test file sorting
@@ -37,7 +37,7 @@ async def test_list_breakpoints(client: Client) -> None:
     breakpoint_2 = {
         "type": "line",
         "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_import.py",
-        "line": 7,
+        "line": 8,
         "line_text": '    print("it started", flush=True)\n',
         "condition": None,
         "temporary": False,
@@ -47,7 +47,7 @@ async def test_list_breakpoints(client: Client) -> None:
     breakpoint_3 = {
         "type": "line",
         "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_import.py",
-        "line": 10,
+        "line": 13,
         "line_text": '    print("it finished", flush=True)\n',
         "condition": None,
         "temporary": False,

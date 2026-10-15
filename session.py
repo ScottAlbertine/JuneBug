@@ -10,8 +10,8 @@ import psutil
 from breakpoints import Breakpoints, File
 from constants import TEMP_DIR
 from enums import DebuggerState, SuspendPolicy
-from exceptions import DAPError
-from models import Breakpoint, SessionStatus, StackFrame, Thread
+from exceptions import DAPError, SessionStateError
+from models import Breakpoint, SessionStatus, StackFrame, Thread, Variable
 from threads import Threads
 from utils import connect_to_port, fetch_line_text
 
@@ -105,6 +105,11 @@ class Session:
     def _send(self):
         self.sock.sendall(self.client.send())
 
+    def assert_state(self, expected_state: DebuggerState) -> None:
+        """Assert that this session is in the given state. Raises a `SessionStateError` if not."""
+        if self.state != expected_state:
+            raise SessionStateError(expected_state, self.state)
+
     def get_current_thread_id(self) -> int | None:
         self.list_threads()
         return self.threads.get_current_thread_id()
@@ -133,7 +138,22 @@ class Session:
         else:
             return self.breakpoints.list_breakpoints_for_file(path)
 
+    def list_variables(self, frame_id: int, show_hidden: bool, depth: int) -> list[Variable]:
+        """List all variables of a given frame ID, down to a given depth, showing hidden ones if requested."""
+
+        self.assert_state(DebuggerState.PAUSED)
+        scope_ids: list[int] = [
+            dap_scope["variablesReference"] for dap_scope in self._scopes(frame_id).body["body"]["scopes"]
+        ]
+
+        variables: list[Variable] = []
+        for scope_id in scope_ids:
+            self._fetch_variable_children(scope_id, variables, show_hidden, depth + 1)
+
+        return variables
+
     def list_stack_frames(self, thread_id: int | None) -> list[StackFrame]:
+        """List all stack frames of a given thread ID. Errors appropriately if no thread ID is given."""
         if thread_id is None:
             raise Exception("No thread ID specified, and there is no current thread listed.")
         frames = self._stack_trace(thread_id).body["body"]["stackFrames"]
@@ -206,6 +226,20 @@ class Session:
             return  # we are already paused, don't just block forever
         self._pull_until(lambda e: e.event == "stopped" or e.event == "terminated")
 
+    def _fetch_variable_children(
+        self, variable_id: int, output: list[Variable] | None, show_hidden: bool, depth: int,
+    ) -> None:
+        """Fetch the children of a variable, into the given output array, recursively, down to the given depth."""
+        if depth == 0 or variable_id == 0 or output is None:
+            return
+
+        for dap_variable in self._variables(variable_id).body["body"]["variables"]:
+            child = Variable.from_dap(dap_variable)
+            # All the variables we want to hide by default, in python, luckily, do not have a type
+            if child.type or show_hidden:
+                output.append(child)
+                self._fetch_variable_children(child.id, child.children, show_hidden, depth - 1)
+
     # DAP commands
 
     def _attach(self) -> Event:
@@ -267,7 +301,7 @@ class Session:
         """Get the scopes for a stack frame."""
         self.client.scopes(frame_id)
         self._send()
-        return self._pull_until(lambda e: True)
+        return self._pull_until(lambda e: e.event == "response" and e.body["command"] == "scopes")
 
     def _set_breakpoints(self, file: File) -> Event:
         """Set breakpoints for a file."""
@@ -323,8 +357,8 @@ class Session:
         self._send()
         return self._pull_until(lambda e: e.event == "response" and e.body["command"] == "threads")
 
-    def _variables(self, variables_reference: int, **kwargs) -> Event:
+    def _variables(self, variables_reference: int) -> Event:
         """Get variables in a scope."""
-        self.client.variables(variables_reference, **kwargs)
+        self.client.variables(variables_reference)
         self._send()
-        return self._pull_until(lambda e: True)
+        return self._pull_until(lambda e: e.event == "response" and e.body["command"] == "variables")

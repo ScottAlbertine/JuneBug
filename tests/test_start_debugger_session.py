@@ -93,6 +93,8 @@ async def test_bad_python_path(client: Client) -> None:
             },
         )
 
+# TODO: test bad file path
+
 
 async def test_debugpy_install_failure(client: Client) -> None:
     with pytest.raises(
