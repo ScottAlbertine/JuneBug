@@ -1,5 +1,7 @@
 from typing import Annotated
 
+from pydantic import Field
+
 from annotations import SessionID
 from models import ThreadsResponse
 import session_service
@@ -7,8 +9,8 @@ import session_service
 
 def list_threads(
     session_id: SessionID = None,
-    limit: Annotated[int, "Page size. Default: 50, max: 200."] = 50,
-    offset: Annotated[int, "Page offset. Default: 0."] = 0,
+    limit: Annotated[int, Field(description="Page size. Default: 50, max: 200.", ge=1)] = 50,
+    offset: Annotated[int, Field(description="Page offset. Default: 0.", ge=0)] = 0,
 ) -> ThreadsResponse:
     """
     Returns the list of threads in the debug session.

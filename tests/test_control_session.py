@@ -1,8 +1,20 @@
 from fastmcp import Client
+from fastmcp.exceptions import ToolError
 import psutil
+import pytest
 
 from tests.constants import FAKE_MAIN, FAKE_MAIN_MULTI_THREAD, PROJECT_ROOT
 from tests.utils import MatchAny, create_session, eventual_assert, move_to_next_breakpoint
+
+
+async def test_control_session__invalid(client: Client) -> None:
+    session_id = (await create_session(client, file_path=FAKE_MAIN_MULTI_THREAD))["id"]
+
+    with pytest.raises(
+        ToolError,
+        match=r"action\n.+Input should be 'step_into', 'step_over', 'step_out', 'resume', 'pause', 'stop' or 'wait_for_pause' \[type=enum, input_value='definitely_not_valid', input_type=str\]\n.+",
+    ):
+        await client.call_tool("control_session", {"session_id": session_id, "action": "definitely_not_valid"})
 
 
 async def test_resume_and_pause(client: Client) -> None:

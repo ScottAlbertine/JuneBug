@@ -12,6 +12,58 @@ from tests.constants import FAKE_MAIN, PROJECT_ROOT
 from tests.utils import MatchAny, MatchRegex
 
 
+async def test_start_debugger_session__invalid(client: Client) -> None:
+
+    with pytest.raises(ToolError, match=r"project_path\n.+Missing required argument.+"):
+        await client.call_tool("start_debugger_session", {"python_path": sys.executable, "file_path": FAKE_MAIN})
+
+    with pytest.raises(ToolError, match=r"No such file or directory: '/not/a/real/path'"):
+        await client.call_tool(
+            "start_debugger_session", {
+                "project_path": str(PROJECT_ROOT), "python_path": "/not/a/real/path", "file_path": FAKE_MAIN,
+            },
+        )
+
+    with pytest.raises(ToolError, match=r"File /not/a/real/path was not found\."):
+        await client.call_tool(
+            "start_debugger_session", {
+                "project_path": str(PROJECT_ROOT), "python_path": sys.executable, "file_path": "/not/a/real/path",
+            },
+        )
+
+    with pytest.raises(ToolError, match=r"timeout\n.+Input should be greater than or equal to 0"):
+        await client.call_tool(
+            "start_debugger_session", {
+                "project_path": str(PROJECT_ROOT),
+                "python_path": sys.executable,
+                "file_path": FAKE_MAIN,
+                "timeout": -1,
+            },
+        )
+
+    with pytest.raises(ToolError, match=r"No such file or directory: '/not/a/real/path'"):
+        await client.call_tool(
+            "start_debugger_session", {
+                "project_path": str(PROJECT_ROOT),
+                "python_path": sys.executable,
+                "file_path": FAKE_MAIN,
+                "working_directory": "/not/a/real/path",
+            },
+        )
+
+    with pytest.raises(
+        ToolError,
+        match=r"Failed to install debugpy with .+?\. \n\n Stderr: \n sample stderr \n\n Stdout: \n sample stdout \n",
+    ):
+        await client.call_tool(
+            "start_debugger_session", {
+                "project_path": str(PROJECT_ROOT),
+                "python_path": str(Path(__file__).parent / "fakes" / "python_that_cant_install_debugpy.sh"),
+                "file_path": FAKE_MAIN,
+            },
+        )
+
+
 async def test_simple(client: Client) -> None:
     create_result = await client.call_tool(
         "start_debugger_session", {
@@ -41,7 +93,7 @@ async def test_simple(client: Client) -> None:
         "-m", "debugpy",
         "--listen", MatchRegex(r"\d{4,5}"),
         "--wait-for-client",
-        "tests/fakes/fake_main.py",
+        f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
     ]
     assert proc.cwd() == str(PROJECT_ROOT)
 
@@ -71,40 +123,10 @@ async def test_fancy(client: Client) -> None:
         "-m", "debugpy",
         "--listen", MatchRegex(r"\d{4,5}"),
         "--wait-for-client",
-        "tests/fakes/fake_main.py",
+        f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
         "a", "b", "c",
     ]
     assert proc.cwd().endswith(str(TEMP_DIR))  # more symlink weirdness
     env = proc.environ()
     assert env["some"] == "body"
     assert env["once"] == "told me"
-
-
-async def test_bad_python_path(client: Client) -> None:
-    with pytest.raises(
-        ToolError,
-        match=r"Error calling tool 'start_debugger_session': \[Errno 2] No such file or directory: '/not/a/real/path'",
-    ):
-        await client.call_tool(
-            "start_debugger_session", {
-                "project_path": str(PROJECT_ROOT),
-                "python_path": "/not/a/real/path",
-                "file_path": FAKE_MAIN,
-            },
-        )
-
-# TODO: test bad file path
-
-
-async def test_debugpy_install_failure(client: Client) -> None:
-    with pytest.raises(
-        ToolError,
-        match=r"Failed to install debugpy with .+?\. \n\n Stderr: \n sample stderr \n\n Stdout: \n sample stdout \n",
-    ):
-        await client.call_tool(
-            "start_debugger_session", {
-                "project_path": str(PROJECT_ROOT),
-                "python_path": str(Path(__file__).parent / "fakes" / "python_that_cant_install_debugpy.sh"),
-                "file_path": FAKE_MAIN,
-            },
-        )

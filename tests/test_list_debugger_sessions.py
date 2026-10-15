@@ -1,10 +1,20 @@
 import os
 
 from fastmcp import Client
+from fastmcp.exceptions import ToolError
+import pytest
 
 from constants import TEMP_DIR
 from tests.constants import FAKE_MAIN, PROJECT_ROOT
 from tests.utils import MatchAny, create_session, move_to_next_breakpoint
+
+
+async def test_list_debugger_sessions__invalid(client: Client) -> None:
+    empty_result = await client.call_tool("list_debugger_sessions", {"project_path": "fake"})
+    assert empty_result.structured_content == {"sessions": []}
+
+    with pytest.raises(ToolError, match=r"project_path\n.+Missing required argument.+"):
+        await client.call_tool("list_debugger_sessions")
 
 
 async def test_get_real_sessions(client: Client, clear_sessions: None) -> None:
@@ -77,6 +87,3 @@ async def test_get_real_sessions(client: Client, clear_sessions: None) -> None:
             },
         ],
     }
-
-    empty_result = await client.call_tool("list_debugger_sessions", {"project_path": "fake"})
-    assert empty_result.structured_content == {"sessions": []}

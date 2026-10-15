@@ -75,5 +75,5 @@ def fetch_line_text(path: Path, line_num: int) -> str:
             return next(islice(f, line_num - 1, line_num))
     except FileNotFoundError:
         raise FileNotFound(path)
-    except StopIteration:
+    except (StopIteration, ValueError):
         raise LineNotFound(path, line_num)

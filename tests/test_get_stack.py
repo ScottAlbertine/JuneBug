@@ -6,6 +6,25 @@ from tests.constants import FAKE_MAIN, FAKE_MAIN_MULTI_THREAD, FAKE_MAIN_WITH_IM
 from tests.utils import MatchAny, create_session, eventual_assert, move_to_next_breakpoint
 
 
+async def test_get_stack__invalid(client: Client) -> None:
+    session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
+
+    await client.call_tool(
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 7},
+    )
+
+    await move_to_next_breakpoint(client, session_id)
+
+    with pytest.raises(ToolError, match=r"Error calling tool 'get_stack': Thread 999 was not found."):
+        await client.call_tool("get_stack", {"session_id": session_id, "thread_id": 999})
+
+    with pytest.raises(ToolError, match=r"limit\n.+Input should be greater than or equal to 1.+"):
+        await client.call_tool("get_stack", {"session_id": session_id, "limit": 0})
+
+    with pytest.raises(ToolError, match=r"offset\n.+Input should be greater than or equal to 0.+"):
+        await client.call_tool("get_stack", {"session_id": session_id, "offset": -1})
+
+
 async def test_basic(client: Client) -> None:
     """Test basic stack retrieval: create session, pause at breakpoint, get stack frames."""
     session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
@@ -236,20 +255,3 @@ async def test_get_stack_while_running(client: Client) -> None:
         "thread_id": 5,
         "total_frames": 4,
     }
-
-
-async def test_get_stack_for_nonexistent_thread(client: Client) -> None:
-    """Test that we get an error with a useful message when we try to get the stack for a nonexistent thread."""
-    session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
-
-    await client.call_tool(
-        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 7},
-    )
-
-    await move_to_next_breakpoint(client, session_id)
-
-    with pytest.raises(
-        ToolError,
-        match=r"Error calling tool 'get_stack': DAP Error from command stackTrace: Wrong ID sent from the client: 999",
-    ):
-        await client.call_tool("get_stack", {"session_id": session_id, "thread_id": 999})

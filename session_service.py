@@ -3,11 +3,12 @@ Service module that manages a global index of sessions.
 This is shared in-memory across threads, since it represents a single, universal, external state.
 It can create, find, and eventually delete sessions.
 """
+from pathlib import Path
 import subprocess
 import uuid
 
 from constants import TEMP_DIR
-from exceptions import MissingSessionId, SessionNotFound
+from exceptions import FileNotFound, MissingSessionId, SessionNotFound
 from session import Session
 from utils import find_free_port, install_debugpy
 
@@ -39,7 +40,7 @@ def get_sessions(project_path: str) -> list[Session]:
 
 
 def attach_session(
-    session_id: str, project_path: str, port: int, timeout: int, we_own: bool = False, pid: int | None = None
+    session_id: str, project_path: str, port: int, timeout: int, we_own: bool = False, pid: int | None = None,
 ) -> Session:
     """Attach a new session to an existing python process, via DAP, on the given port."""
     session = Session(session_id, project_path, port, timeout, we_own, pid)
@@ -50,7 +51,7 @@ def attach_session(
 def launch_session(
     project_path: str,
     python_path: str,
-    file_path: str,
+    file_path: Path,
     timeout: int,
     program_arguments: list[str],
     working_directory: str | None,
@@ -58,6 +59,9 @@ def launch_session(
 ) -> Session:
     """Launch a new python process in debug mode, and attach a new session to it."""
     install_debugpy(python_path)
+
+    if not file_path.exists():
+        raise FileNotFound(file_path)
 
     session_id = str(uuid.uuid4())
     port = find_free_port()
@@ -69,7 +73,7 @@ def launch_session(
             "-m", "debugpy",
             "--listen", f"{port}",
             "--wait-for-client",
-            file_path,
+            str(file_path),
             *program_arguments,
         ],
         stdout=open(TEMP_DIR / f"{session_id}.stdout.txt", "w"),

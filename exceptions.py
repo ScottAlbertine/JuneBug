@@ -17,8 +17,9 @@ class DebugpyInstallationFailed(Exception):
 class DAPError(Exception):
     """Generic exception representing an `ErrorResponse` from the DAP client."""
 
-    def __init__(self, error: ErrorResponse):
-        super().__init__(f"DAP Error from command {error.command}: {error.message}")
+    def __init__(self, event: ErrorResponse):
+        self.event = event
+        super().__init__(f"DAP Error from command {event.command}: {event.message}")
 
 
 class FileNotFound(Exception):
@@ -26,6 +27,13 @@ class FileNotFound(Exception):
 
     def __init__(self, path: Path):
         super().__init__(f"File {path.resolve()} was not found.")
+
+
+class FrameNotFound(Exception):
+    """Exception indicating that the client's specified frame was not found."""
+
+    def __init__(self, frame_id: int):
+        super().__init__(f"Stack frame {frame_id} was not found.")
 
 
 class LineNotFound(Exception):
@@ -61,5 +69,5 @@ class SessionStateError(Exception):
 class ThreadNotFound(Exception):
     """Exception indicating that the client's specified thread was not found."""
 
-    def __init__(self, thread_id: str):
+    def __init__(self, thread_id: int):
         super().__init__(f"Thread {thread_id} was not found.")

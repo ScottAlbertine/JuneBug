@@ -1,5 +1,7 @@
 from typing import Annotated
 
+from pydantic import Field
+
 from annotations import SessionID
 from models import StackResponse
 import session_service
@@ -12,8 +14,8 @@ def get_stack(
         "Thread ID to get stack for. This value should come from `list_threads`. "
         "If not specified, uses the current/active thread. Default: null.",
     ] = None,
-    limit: Annotated[int, "Max frames to return. Default: 200."] = 200,
-    offset: Annotated[int, "Page offset. Default: 0."] = 0,
+    limit: Annotated[int, Field(description="Max frames to return. Default: 200.", ge=1)] = 200,
+    offset: Annotated[int, Field(description="Page offset. Default: 0.", ge=0)] = 0,
 ) -> StackResponse:
     """
     Returns the current function stack for a thread in the debug session.

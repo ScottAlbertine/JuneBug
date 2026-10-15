@@ -10,7 +10,7 @@ import psutil
 from breakpoints import Breakpoints, File
 from constants import TEMP_DIR
 from enums import DebuggerState, SuspendPolicy
-from exceptions import DAPError, SessionStateError
+from exceptions import DAPError, FrameNotFound, SessionStateError, ThreadNotFound
 from models import Breakpoint, SessionStatus, StackFrame, Thread, Variable
 from threads import Threads
 from utils import connect_to_port, fetch_line_text
@@ -70,6 +70,7 @@ class Session:
     def _pull_until(self, matcher: Callable[[Event], bool]) -> Event:
         """Pull events from the DAP client until the given matcher function returns true on an event, then return that event."""
         for event in self._event_iterator:
+            print(event.model_dump_json(indent=2))  # for easy logging
             if isinstance(event, ErrorResponse):
                 # yes, the typing says this is impossible, but trust me, it happens
                 raise DAPError(event)
@@ -82,7 +83,6 @@ class Session:
         Handle any state updates that need to happen when we see certain events.
         This gets passed every event that we pull.
         """
-        print(event.model_dump_json(indent=2))  # for easy logging
         if event.body is not None and "threadId" in event.body:
             self.threads.update(event)
 
@@ -301,7 +301,13 @@ class Session:
         """Get the scopes for a stack frame."""
         self.client.scopes(frame_id)
         self._send()
-        return self._pull_until(lambda e: e.event == "response" and e.body["command"] == "scopes")
+        try:
+            return self._pull_until(lambda e: e.event == "response" and e.body["command"] == "scopes")
+        except DAPError as dap_error:
+            e = dap_error.event
+            if e.command == "scopes" and e.message.startswith("Wrong ID sent from the client"):
+                raise FrameNotFound(frame_id)
+            raise
 
     def _set_breakpoints(self, file: File) -> Event:
         """Set breakpoints for a file."""
@@ -337,7 +343,13 @@ class Session:
         """Get the stack trace."""
         self.client.stack_trace(thread_id)
         self._send()
-        return self._pull_until(lambda e: e.event == "response" and e.body["command"] == "stackTrace")
+        try:
+            return self._pull_until(lambda e: e.event == "response" and e.body["command"] == "stackTrace")
+        except DAPError as dap_error:
+            e = dap_error.event
+            if e.command == "stackTrace" and e.message.startswith("Wrong ID sent from the client"):
+                raise ThreadNotFound(thread_id)
+            raise
 
     def _step_in(self, thread_id: int) -> Event:
         """Step into the current line."""

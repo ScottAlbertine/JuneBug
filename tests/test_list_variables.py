@@ -10,6 +10,17 @@ from tests.constants import FAKE_MAIN, FAKE_MAIN_WITH_IMPORT, FAKE_MAIN_WITH_VAR
 from tests.utils import MatchAny, MatchRegex, create_session, move_to_next_breakpoint
 
 
+async def test_list_variables__invalid(client: Client, session_id_with_variables: str) -> None:
+    with pytest.raises(ToolError, match=r"Stack frame 999999 was not found\."):
+        await client.call_tool("list_variables", {"session_id": session_id_with_variables, "frame_id": 999999})
+
+    with pytest.raises(ToolError, match=r"depth\n.+Input should be greater than or equal to 0.+"):
+        await client.call_tool("list_variables", {"session_id": session_id_with_variables, "depth": -1})
+
+    with pytest.raises(ToolError, match=r"depth\n.+Input should be less than or equal to 4.+"):
+        await client.call_tool("list_variables", {"session_id": session_id_with_variables, "depth": 5})
+
+
 async def test_list_variables__not_top_frame(client: Client) -> None:
     """Test that we can specify a frame that's not the top of the stack, and get variables for it."""
     session_id = (await create_session(client, file_path=FAKE_MAIN_WITH_IMPORT))["id"]
@@ -490,30 +501,3 @@ async def test_list_variables__hidden(client: Client, session_id_with_variables:
     }
 
 
-async def test_invalid_frame_id(client: Client, session_id_with_variables: str) -> None:
-    # TODO: this error message sucks, catch this error and return a friendlier one, this is going to happen in a lot of places, we want it to be clean and LLM friendly
-    with pytest.raises(
-        ToolError,
-        match=r"Error calling tool 'list_variables': DAP Error from command scopes: Wrong ID sent from the client: -1",
-    ):
-        await client.call_tool("list_variables", {"session_id": session_id_with_variables, "frame_id": -1})
-
-    with pytest.raises(
-        ToolError,
-        match=r"Error calling tool 'list_variables': DAP Error from command scopes: Wrong ID sent from the client: 999999",
-    ):
-        await client.call_tool("list_variables", {"session_id": session_id_with_variables, "frame_id": 999999})
-
-
-async def test_invalid_depths(client: Client, session_id_with_variables: str) -> None:
-    with pytest.raises(
-        ToolError,
-        match=r"1 validation error for call\[list_variables\]\ndepth\n  Input should be greater than or equal to 0 \[type=greater_than_equal, input_value=-1, input_type=int\]\n.+",
-    ):
-        await client.call_tool("list_variables", {"session_id": session_id_with_variables, "depth": -1})
-
-    with pytest.raises(
-        ToolError,
-        match=r"1 validation error for call\[list_variables\]\ndepth\n  Input should be less than or equal to 4 \[type=less_than_equal, input_value=5, input_type=int\]\n.+",
-    ):
-        await client.call_tool("list_variables", {"session_id": session_id_with_variables, "depth": 5})

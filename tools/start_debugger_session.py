@@ -1,15 +1,20 @@
 from typing import Annotated
 
+from pydantic import Field
+
 from annotations import ProjectPath
 from models import SessionStatus
 import session_service
+from utils import normalize_file_path
 
 
 def start_debugger_session(
     project_path: ProjectPath,
     python_path: Annotated[str, "Absolute path to the Python executable to use when running the program."],
-    file_path: Annotated[str, "File path of the Python program to debug, relative to the project root."],
-    timeout: Annotated[int, "Timeout in milliseconds to wait for the debug session to start. Default: 60000."] = 60000,
+    file_path: Annotated[str, "File path of the Python program to debug, relative to `project_path`."],
+    timeout: Annotated[
+        int, Field(description="Timeout in milliseconds to wait for the debug session to start. Default: 60000.", ge=0),
+    ] = 60000,
     program_arguments: Annotated[list[str] | None, "Optional command-line arguments given to the program."] = None,
     working_directory: Annotated[
         str | None,
@@ -41,7 +46,9 @@ def start_debugger_session(
     if env is None:
         env = {}
 
+    normal_file_path = normalize_file_path(project_path, file_path)
+
     session = session_service.launch_session(
-        project_path, python_path, file_path, timeout, program_arguments, working_directory, env,
+        project_path, python_path, normal_file_path, timeout, program_arguments, working_directory, env,
     )
     return session.get_status()

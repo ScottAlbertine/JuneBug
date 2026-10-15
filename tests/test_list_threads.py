@@ -1,7 +1,19 @@
 from fastmcp import Client
+from fastmcp.exceptions import ToolError
+import pytest
 
 from tests.constants import FAKE_MAIN, FAKE_MAIN_MULTI_THREAD, MAIN_THREAD
 from tests.utils import create_session, eventual_assert, move_to_next_breakpoint
+
+
+async def test_list_threads__invalid(client: Client) -> None:
+    session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
+
+    with pytest.raises(ToolError, match=r"limit\n.+Input should be greater than or equal to 1.+"):
+        await client.call_tool("list_threads", {"session_id": session_id, "limit": 0})
+
+    with pytest.raises(ToolError, match=r"offset\n.+Input should be greater than or equal to 0.+"):
+        await client.call_tool("list_threads", {"session_id": session_id, "offset": -1})
 
 
 async def test_simple(client: Client) -> None:
