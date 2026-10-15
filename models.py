@@ -6,8 +6,6 @@ from pydantic import BaseModel, Field
 from enums import BreakpointType, DebuggerOutcome, DebuggerState, SuspendPolicy, ThreadState
 
 
-# TODO: add `exclude_if=lambda v: v is None` to a whole bunch of fields that are bulky and often null
-
 class Breakpoint(BaseModel):
     """A configured breakpoint."""
 
@@ -21,10 +19,16 @@ class Breakpoint(BaseModel):
         Field(
             default=None,
             description="Short excerpt of the actual source line where the breakpoint resides, truncated when needed. Present for line breakpoints only.",
+            exclude_if=lambda v: v is None,
         ),
     ] = None
     condition: Annotated[
-        str | None, Field(default=None, description="Conditional expression for triggering breakpoint, if set."),
+        str | None,
+        Field(
+            default=None,
+            description="Conditional expression for triggering breakpoint, if set.",
+            exclude_if=lambda v: v is None,
+        ),
     ] = None
     temporary: Annotated[bool, Field(description="Whether breakpoint is temporary.")]
     suspend_policy: Annotated[SuspendPolicy, Field(description="Breakpoint suspend policy (all/thread/none).")]
@@ -76,12 +80,19 @@ class SessionStatus(BaseModel):
 
     id: Annotated[str, Field(description="Session identifier to use as `session_id` in subsequent debugger calls.")]
     state: Annotated[DebuggerState, Field(description="Current session state.")]
-    debugee_pid: Annotated[int | None, "Pid of the process being debugged, if this MCP server knows it."]
+    debugee_pid: Annotated[
+        int | None,
+        Field(
+            description="Pid of the process being debugged, if this MCP server knows it.",
+            exclude_if=lambda v: v is None,
+        ),
+    ] = None
     std_out_path: Annotated[
         str | None,
         Field(
             default=None,
             description="Path to a temp file where the debugee process puts its stdout. The file will continue growing while the process is still running and remains available after session termination.",
+            exclude_if=lambda v: v is None,
         ),
     ] = None
     std_err_path: Annotated[
@@ -89,6 +100,7 @@ class SessionStatus(BaseModel):
         Field(
             default=None,
             description="Path to a temp file where the debugee process puts its stdout. The file will continue growing while the process is still running and remains available after session termination.",
+            exclude_if=lambda v: v is None,
         ),
     ] = None
     breakpoints_muted: Annotated[
@@ -149,9 +161,7 @@ class StackResponse(BaseModel):
         list[StackFrame],
         Field(description="Stack frames for the selected thread, ordered from top (index 0) to older frames."),
     ]
-    thread_id: Annotated[
-        int | None, Field(default=None, description="Thread identifier used to fetch this stack."),
-    ] = None
+    thread_id: Annotated[int, Field(description="Thread identifier used to fetch this stack.")]
     total_frames: Annotated[int, Field(description="Total frame count for the stack.")]
 
 

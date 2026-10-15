@@ -59,7 +59,6 @@ async def test_unmute_breakpoints(client: Client) -> None:
         "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
         "line": 7,
         "line_text": '    print("it started", flush=True)\n',
-        "condition": None,
         "temporary": False,
         "hit_count": 0,
         "suspend_policy": "all",
