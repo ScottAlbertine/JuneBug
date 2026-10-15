@@ -77,7 +77,7 @@ async def test_running_threads(client: Client) -> None:
     session_id = (await create_session(client, file_path=FAKE_MAIN_MULTI_THREAD))["id"]
 
     first_resume = await client.call_tool(
-        "control_session", {"session_id": session_id, "action": "resume"},
+        "control_debugger_session", {"session_id": session_id, "action": "resume"},
     )
     assert first_resume.structured_content["state"] == "running"
     assert first_resume.structured_content["current_position"] is None

@@ -7,21 +7,21 @@ from tests.constants import FAKE_MAIN, FAKE_MAIN_MULTI_THREAD, PROJECT_ROOT
 from tests.utils import MatchAny, create_session, eventual_assert, move_to_next_breakpoint
 
 
-async def test_control_session__invalid(client: Client) -> None:
+async def test_control_debugger_session__invalid(client: Client) -> None:
     session_id = (await create_session(client, file_path=FAKE_MAIN_MULTI_THREAD))["id"]
 
     with pytest.raises(
         ToolError,
         match=r"action\n.+Input should be 'step_into', 'step_over', 'step_out', 'resume', 'pause', 'stop' or 'wait_for_pause' \[type=enum, input_value='definitely_not_valid', input_type=str\]\n.+",
     ):
-        await client.call_tool("control_session", {"session_id": session_id, "action": "definitely_not_valid"})
+        await client.call_tool("control_debugger_session", {"session_id": session_id, "action": "definitely_not_valid"})
 
 
 async def test_resume_and_pause(client: Client) -> None:
     session_id = (await create_session(client, file_path=FAKE_MAIN_MULTI_THREAD))["id"]
 
     first_resume = await client.call_tool(
-        "control_session", {"session_id": session_id, "action": "resume"},
+        "control_debugger_session", {"session_id": session_id, "action": "resume"},
     )
     assert first_resume.structured_content["state"] == "running"
     assert first_resume.structured_content["current_position"] is None
@@ -44,7 +44,7 @@ async def test_resume_and_pause(client: Client) -> None:
     )
 
     first_pause = await client.call_tool(
-        "control_session", {"session_id": session_id, "action": "pause"},
+        "control_debugger_session", {"session_id": session_id, "action": "pause"},
     )
     assert first_pause.structured_content["state"] == "paused"
 
@@ -67,7 +67,7 @@ async def test_resume_and_pause(client: Client) -> None:
 
     # our second resume works differently than the first, test that code path too.
     second_resume = await client.call_tool(
-        "control_session", {"session_id": session_id, "action": "resume"},
+        "control_debugger_session", {"session_id": session_id, "action": "resume"},
     )
     assert second_resume.structured_content["state"] == "running"
 
@@ -84,9 +84,9 @@ async def test_wait_for_pause(client: Client) -> None:
     )
 
     # check that the breakpoint was set, by hitting it.
-    await client.call_tool("control_session", {"session_id": session_id, "action": "resume"})
+    await client.call_tool("control_debugger_session", {"session_id": session_id, "action": "resume"})
     wait_for_pause_1 = await client.call_tool(
-        "control_session", {"session_id": session_id, "action": "wait_for_pause"},
+        "control_debugger_session", {"session_id": session_id, "action": "wait_for_pause"},
     )
     assert wait_for_pause_1.structured_content == {
         "id": session_id,
@@ -110,7 +110,7 @@ async def test_wait_for_pause(client: Client) -> None:
     await client.call_tool(
         "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 13},
     )
-    await client.call_tool("control_session", {"session_id": session_id, "action": "resume"})
+    await client.call_tool("control_debugger_session", {"session_id": session_id, "action": "resume"})
 
     expected_status = {
         "id": session_id,
@@ -139,7 +139,7 @@ async def test_wait_for_pause(client: Client) -> None:
 
     # check that waiting for pause at that naturally hit breakpoint doesn't advance us past it
     wait_for_pause_2 = await client.call_tool(
-        "control_session", {"session_id": session_id, "action": "wait_for_pause"},
+        "control_debugger_session", {"session_id": session_id, "action": "wait_for_pause"},
     )
     assert wait_for_pause_2.structured_content == expected_status
 
@@ -157,7 +157,7 @@ async def test_stop__paused_session(client: Client) -> None:
     debugee_pid = wait_for_pause["debugee_pid"]
 
     # Stop the session.
-    stop_result = await client.call_tool("control_session", {"session_id": session_id, "action": "stop"})
+    stop_result = await client.call_tool("control_debugger_session", {"session_id": session_id, "action": "stop"})
 
     # Verify the session reports stopped state.
     assert stop_result.structured_content == {
@@ -182,7 +182,7 @@ async def test_stop__unstarted_session(client: Client) -> None:
     session_id = session["id"]
     debugee_pid = session["debugee_pid"]
 
-    stop_result = await client.call_tool("control_session", {"session_id": session_id, "action": "stop"})
+    stop_result = await client.call_tool("control_debugger_session", {"session_id": session_id, "action": "stop"})
     assert stop_result.structured_content == {
         "id": session_id,
         "debugee_pid": debugee_pid,
@@ -205,7 +205,7 @@ async def test_stop__running_process(client: Client) -> None:
     debugee_pid = session["debugee_pid"]
 
     # get the process into a known running state
-    await client.call_tool("control_session", {"session_id": session_id, "action": "resume"})
+    await client.call_tool("control_debugger_session", {"session_id": session_id, "action": "resume"})
 
     async def all_threads_running() -> bool:
         threads = await client.call_tool("list_threads", {"session_id": session_id})
@@ -223,7 +223,7 @@ async def test_stop__running_process(client: Client) -> None:
         all_threads_running, otherwise="Threads did not reach expected running state within 3 seconds",
     )
 
-    stop_result = await client.call_tool("control_session", {"session_id": session_id, "action": "stop"})
+    stop_result = await client.call_tool("control_debugger_session", {"session_id": session_id, "action": "stop"})
     assert stop_result.structured_content == {
         "id": session_id,
         "debugee_pid": debugee_pid,

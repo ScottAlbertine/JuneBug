@@ -169,7 +169,7 @@ async def test_get_stack_while_running(client: Client) -> None:
     session_id = (await create_session(client, file_path=FAKE_MAIN_MULTI_THREAD))["id"]
 
     # The session starts in paused state. Resume it.
-    resume = await client.call_tool("control_session", {"session_id": session_id, "action": "resume"})
+    resume = await client.call_tool("control_debugger_session", {"session_id": session_id, "action": "resume"})
     assert resume.structured_content["state"] == "running"
 
     # threads take some time to start up, so poll every 0.1 seconds for up to 3 seconds until they're all good

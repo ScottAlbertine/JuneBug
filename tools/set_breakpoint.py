@@ -30,7 +30,7 @@ def set_breakpoint(
 
     Next call:
     - Use returned `line_text` and/or `list_breakpoints` to verify placement.
-    - Continue execution via `control_session(action=resume)`.
+    - Continue execution via `control_debugger_session(action=resume)`.
     """
     session = session_service.get_session(session_id)
     path = normalize_file_path(session.project_path, file_path)

@@ -82,11 +82,13 @@ async def create_session(client: Client, file_path: str, **kwargs) -> dict[str, 
 
 async def move_to_next_breakpoint(client: Client, session_id: str) -> dict[str, Any]:
     """
-    Call control_session(resume) and control_session(wait_for_pause), back to back, to move from one breakpoint to the next.
+    Call control_debugger_session(resume) and control_debugger_session(wait_for_pause), back to back, to move from one breakpoint to the next.
     Only call this when you know the session is guaranteed to be paused.
     Blocks until the session is paused at the next breakpoint, or stopped.
     Returns the structured content of the `wait_for_pause` command response.
     """
-    await client.call_tool("control_session", {"session_id": session_id, "action": "resume"})
-    wait_for_pause = await client.call_tool("control_session", {"session_id": session_id, "action": "wait_for_pause"})
+    await client.call_tool("control_debugger_session", {"session_id": session_id, "action": "resume"})
+    wait_for_pause = await client.call_tool(
+        "control_debugger_session", {"session_id": session_id, "action": "wait_for_pause"},
+    )
     return wait_for_pause.structured_content

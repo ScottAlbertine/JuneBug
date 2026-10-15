@@ -6,7 +6,7 @@ from models import SessionStatus
 import session_service
 
 
-def control_session(
+def control_debugger_session(
     action: Annotated[
         Action, "Action to perform: step_into, step_over, step_out, resume, pause, stop, wait_for_pause.",
     ],
@@ -41,7 +41,7 @@ def control_session(
     - If `wait_for_pause` times out, consider `pause` and re-check breakpoints.
 
     Next call:
-    - After `resume`, call `control_session(action=wait_for_pause)` to confirm the next suspension.
+    - After `resume`, call `control_debugger_session(action=wait_for_pause)` to confirm the next suspension.
     - After a paused result, call `get_stack` / `list_variables` / `evaluate_expression`.
 
     State values in the result:

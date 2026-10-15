@@ -79,7 +79,7 @@ async def test_list_variables__not_paused(client: Client) -> None:
     """Test that you get an appropriate error if you try to list variables when you're not paused"""
     session_id = (await create_session(client, file_path=FAKE_MAIN, program_arguments=["--loop-forever"]))["id"]
 
-    await client.call_tool("control_session", {"session_id": session_id, "action": "resume"})
+    await client.call_tool("control_debugger_session", {"session_id": session_id, "action": "resume"})
 
     with pytest.raises(ToolError, match=r"Session must be paused to call that tool. Session is currently running."):
         await client.call_tool("list_variables", {"session_id": session_id})
@@ -499,5 +499,3 @@ async def test_list_variables__hidden(client: Client, session_id_with_variables:
         "type": "EnumType",
         "children": [{"name": "special variables", "value": "", "type": "", "children": []}],
     }
-
-

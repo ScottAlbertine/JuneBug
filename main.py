@@ -1,7 +1,7 @@
 from fastmcp import FastMCP
 
 from tools import (
-    control_session,
+    control_debugger_session,
     evaluate_expression,
     get_debugger_session,
     get_stack,
@@ -21,7 +21,7 @@ from tools import (
 # TODO: update the server description, and any other params that the intellij original specifies on this call
 mcp = FastMCP("JuneBug MCP Server")
 
-mcp.tool(control_session)
+mcp.tool(control_debugger_session)
 mcp.tool(evaluate_expression)
 mcp.tool(get_debugger_session)
 mcp.tool(get_stack)

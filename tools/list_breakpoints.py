@@ -27,7 +27,7 @@ def list_breakpoints(
 
     Next call:
     - If no suitable breakpoint exists, call `set_breakpoint`.
-    - Then continue execution with `control_session(action=resume)`.
+    - Then continue execution with `control_debugger_session(action=resume)`.
     """
     session = session_service.get_session(session_id)
     path = normalize_file_path(session.project_path, file_path) if file_path else None

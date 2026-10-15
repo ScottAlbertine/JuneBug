@@ -35,7 +35,7 @@ Input rules:
 - Do not pass JSON-escaped payloads or literal escape sequences such as `\\"text\\"`.
 
 Next call:
-- If expression confirms hypothesis, continue with `control_session(step_*|resume)`.
+- If expression confirms hypothesis, continue with `control_debugger_session(step_*|resume)`.
 - If more detail is needed, inspect related values via `list_variables` / `get_value_by_path`."""
     print(session_id)
     print(frame_id)

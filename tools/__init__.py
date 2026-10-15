@@ -1,4 +1,4 @@
-from .control_session import control_session
+from .control_debugger_session import control_debugger_session
 from .evaluate_expression import evaluate_expression
 from .get_debugger_session import get_debugger_session
 from .get_stack import get_stack
@@ -15,7 +15,7 @@ from .set_variable import set_variable
 from .start_debugger_session import start_debugger_session
 
 __all__ = [
-    "control_session",
+    "control_debugger_session",
     "evaluate_expression",
     "get_debugger_session",
     "get_stack",
