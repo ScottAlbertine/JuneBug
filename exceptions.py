@@ -66,6 +66,13 @@ class SessionStateError(Exception):
         )
 
 
+class SessionStoppedError(Exception):
+    """Exception indicating that the client tried to interact with a debug session that has terminated."""
+
+    def __init__(self):
+        super().__init__(f"Session has stopped, no more tool calls can be made to its id. Start a new session instead.")
+
+
 class ThreadNotFound(Exception):
     """Exception indicating that the client's specified thread was not found."""
 

@@ -61,8 +61,7 @@ async def test_set_breakpoint(client: Client) -> None:
 
     # Check that the program has run to completion, based on thread state, stdout, and process status
     with pytest.raises(
-        ToolError,
-        match=rf"Error calling tool 'list_threads': DAP Error from command threads: Server\[pid={pid}] disconnected unexpectedly",
+        ToolError, match=r"Session has stopped, no more tool calls can be made to its id. Start a new session instead.",
     ):
         threads = await client.call_tool("list_threads", {"session_id": session_id})
         assert threads.structured_content == {'threads': [MAIN_THREAD], 'total_count': 1}

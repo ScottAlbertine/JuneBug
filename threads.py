@@ -83,10 +83,6 @@ class Threads:
         for thread in self._threads.values():
             thread.is_current = (thread.id == thread_id)
 
-    def clear(self):
-        """Clear all threads."""
-        self._threads.clear()
-
     def get_current_thread_id(self) -> int | None:
         return self._current_thread_id
 

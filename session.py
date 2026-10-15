@@ -10,7 +10,7 @@ import psutil
 from breakpoints import Breakpoints, File
 from constants import TEMP_DIR
 from enums import DebuggerState, SuspendPolicy
-from exceptions import DAPError, FrameNotFound, SessionStateError, ThreadNotFound
+from exceptions import DAPError, FrameNotFound, SessionStateError, SessionStoppedError, ThreadNotFound
 from models import Breakpoint, SessionStatus, StackFrame, Thread, Variable
 from threads import Threads
 from utils import connect_to_port, fetch_line_text
@@ -71,6 +71,10 @@ class Session:
         """Pull events from the DAP client until the given matcher function returns true on an event, then return that event."""
         for event in self._event_iterator:
             print(event.model_dump_json(indent=2))  # for easy logging
+
+            if self.state == DebuggerState.STOPPED:
+                raise SessionStoppedError()
+
             if isinstance(event, ErrorResponse):
                 # yes, the typing says this is impossible, but trust me, it happens
                 raise DAPError(event)
@@ -93,12 +97,9 @@ class Session:
             self.state = DebuggerState.PAUSED
 
         if event.event == "terminated":
-            # Just in case the agent tries to re-use or inspect a closed session, clear all this out
-            self.current_position = None
-            self.threads.clear()
-            self.breakpoints.clear()
-            self.breakpoints_muted = False
             self.state = DebuggerState.STOPPED
+            # don't report bad data from a stopped session
+            self.current_position = None
 
         # TODO: handle other passive events that update our internal model of the debugger's state here
 
@@ -211,7 +212,7 @@ class Session:
         self.breakpoints_muted = breakpoints_muted
         # for every file we have
         for file in self.breakpoints.list_files():
-            if breakpoints_muted:
+            if self.breakpoints_muted:
                 # clear each file by sending a blank version of it
                 # DO NOT refresh our breakpoints internally
                 self._set_breakpoints(File(file.path))

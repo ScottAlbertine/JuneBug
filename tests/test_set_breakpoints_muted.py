@@ -1,7 +1,7 @@
 from fastmcp import Client
 
 from tests.constants import FAKE_MAIN, PROJECT_ROOT
-from tests.utils import create_session, move_to_next_breakpoint
+from tests.utils import MatchAny, create_session, move_to_next_breakpoint
 
 
 async def test_mute_breakpoints(client: Client) -> None:
@@ -21,12 +21,15 @@ async def test_mute_breakpoints(client: Client) -> None:
     assert muted.structured_content["breakpoints_muted"]
 
     # resume, wait until pause, see that the program ran to completion and the session ended despite the breakpoints
-    # ending a session unmutes the breakpoints on it, in case an agent tries to re-use a session.
-    ended_session = await move_to_next_breakpoint(client, session_id)
-    assert ended_session["id"] == session_id
-    assert ended_session["state"] == "stopped"
-    assert ended_session["current_position"] is None
-    assert ended_session["breakpoints_muted"] == False
+    assert await move_to_next_breakpoint(client, session_id) == {
+        'id': session_id,
+        'state': 'stopped',
+        'debugee_pid': MatchAny(int),
+        'std_out_path': MatchAny(str),
+        'std_err_path': MatchAny(str),
+        'breakpoints_muted': True,
+        'current_position': None,
+    }
 
 
 async def test_unmute_breakpoints(client: Client) -> None:

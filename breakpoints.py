@@ -52,7 +52,13 @@ class Breakpoints:
         self._breakpoints: dict[int, Breakpoint] = {}
 
     def add_breakpoint(
-        self, path: Path, line: int, line_text: str, condition: str | None, temporary: bool, suspend_policy: SuspendPolicy,
+        self,
+        path: Path,
+        line: int,
+        line_text: str,
+        condition: str | None,
+        temporary: bool,
+        suspend_policy: SuspendPolicy,
     ) -> Breakpoint:
         bp = Breakpoint(
             id=None,  # for now
@@ -113,8 +119,3 @@ class Breakpoints:
             bp = self.get_breakpoint(Path(dap_breakpoint["source"]["path"]), dap_breakpoint["line"])
             bp.id = dap_breakpoint["id"]
             self._breakpoints[bp.id] = bp
-
-    def clear(self):
-        """Clear all tracked breakpoints."""
-        self._files.clear()
-        self._breakpoints.clear()
