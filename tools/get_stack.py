@@ -36,7 +36,7 @@ def get_stack(
     """
 
     session = session_service.get_session(session_id)
-    if not thread_id:
+    if thread_id is None:
         thread_id = session.get_current_thread_id()
     frames = session.list_stack_frames(thread_id)
     return StackResponse(frames=frames[offset:offset + limit], thread_id=thread_id, total_frames=len(frames))
