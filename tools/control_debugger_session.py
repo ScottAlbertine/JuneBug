@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from annotations import SessionID
-from enums import Action
+from enums import Action, StepDirection
 from models import SessionStatus
 import session_service
 
@@ -52,11 +52,11 @@ def control_debugger_session(
     session = session_service.get_session(session_id)
 
     if action == Action.STEP_INTO:
-        pass
+        session.step(StepDirection.INTO)
     elif action == Action.STEP_OVER:
-        pass
+        session.step(StepDirection.OVER)
     elif action == Action.STEP_OUT:
-        pass
+        session.step(StepDirection.OUT)
     elif action == Action.RESUME:
         session.resume()
     elif action == Action.PAUSE:

@@ -9,7 +9,7 @@ import psutil
 
 from breakpoints import Breakpoints, File
 from constants import TEMP_DIR
-from enums import SessionState, SuspendPolicy
+from enums import SessionState, StepDirection, SuspendPolicy
 from exceptions import DAPError, FrameNotFound, SessionStateError, SessionStoppedError, ThreadNotFound
 from models import Breakpoint, SessionStatus, StackFrame, StackFrames, Thread, Variable
 from threads import Threads
@@ -225,6 +225,18 @@ class Session:
         self.breakpoints.refresh(self._set_breakpoints(self.breakpoints.get_file(path)))
         return bp
 
+    def step(self, direction: StepDirection) -> None:
+        """Step into, over, or out of the current thread."""
+        self.assert_state(SessionState.PAUSED)
+        thread_id = self.threads.get_current_thread_id()
+        if direction == StepDirection.INTO:
+            self._step_in(thread_id)
+        elif direction == StepDirection.OVER:
+            self._next(thread_id)
+        elif direction == StepDirection.OUT:
+            self._step_out(thread_id)
+        self.current_position = self.fetch_current_position(thread_id)
+
     def stop(self) -> None:
         """Stop this session."""
         self._disconnect()
@@ -320,7 +332,7 @@ class Session:
         """Step to the next line."""
         self.client.next(thread_id)
         self._send()
-        return self._pull_until(lambda e: True)
+        return self._pull_until(lambda e: e.event == "response" and e.body["command"] == "next")
 
     def _pause(self, thread_id: int) -> Event:
         """Pause execution."""
@@ -395,13 +407,13 @@ class Session:
         """Step into the current line."""
         self.client.step_in(thread_id)
         self._send()
-        return self._pull_until(lambda e: True)
+        return self._pull_until(lambda e: e.event == "response" and e.body["command"] == "stepIn")
 
     def _step_out(self, thread_id: int) -> Event:
         """Step out of the current function."""
         self.client.step_out(thread_id)
         self._send()
-        return self._pull_until(lambda e: True)
+        return self._pull_until(lambda e: e.event == "response" and e.body["command"] == "stepOut")
 
     def _fetch_threads(self) -> Event:
         """Get all threads."""

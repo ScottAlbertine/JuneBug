@@ -30,6 +30,12 @@ class SessionState(Enum):
     UNKNOWN = "unknown"
 
 
+class StepDirection(Enum):
+    INTO = "into"
+    OVER = "over"
+    OUT = "out"
+
+
 class SuspendPolicy(Enum):
     ALL = "all"
     THREAD = "thread"

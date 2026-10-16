@@ -3,7 +3,7 @@ from fastmcp.exceptions import ToolError
 import psutil
 import pytest
 
-from tests.constants import FAKE_MAIN, FAKE_MAIN_MULTI_THREAD, PROJECT_ROOT
+from tests.constants import FAKE_MAIN, FAKE_MAIN_MULTI_THREAD, FAKE_MAIN_WITH_VARIABLES, PROJECT_ROOT
 from tests.utils import MatchAny, create_session, eventual_assert, move_to_next_breakpoint
 
 # we use this in a couple places, cut down on code bulk
@@ -52,7 +52,7 @@ async def test_resume_and_pause(client: Client) -> None:
     assert first_pause.structured_content["state"] == "paused"
     assert first_pause.structured_content["current_position"] == {
         "type": "line",
-        "file": "/Users/scott/Repos/JuneBug/tests/fakes/fake_main_multi_thread.py",
+        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_multi_thread.py",
         "line": 38,
         "line_text": "        sleep(1)\n",
         "temporary": True,
@@ -242,3 +242,76 @@ async def test_stop__running_process(client: Client) -> None:
         return psutil.Process(debugee_pid).status() == psutil.STATUS_ZOMBIE
 
     await eventual_assert(process_exited, otherwise="Process did not exit within 3 seconds.")
+
+
+async def test_stepping(client: Client) -> None:
+    session_id = (await create_session(client, file_path=FAKE_MAIN_WITH_VARIABLES))["id"]
+
+    await client.call_tool(
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_WITH_VARIABLES, "line": 35},
+    )
+
+    initial_status = await move_to_next_breakpoint(client, session_id)
+    assert initial_status["state"] == "paused"
+    assert initial_status["current_position"] == {
+        "type": "line",
+        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_variables.py",
+        "line": 35,
+        "line_text": "    some_object = Car()\n",
+        "temporary": False,
+        "suspend_policy": "all",
+        "hit_count": 0,
+    }
+
+    # --- step_into: enter Car.__init__() ---
+    step_into = await client.call_tool("control_debugger_session", {"session_id": session_id, "action": "step_into"})
+    assert step_into.structured_content["state"] == "paused"
+    assert step_into.structured_content["current_position"] == {
+        "type": "line",
+        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_variables.py",
+        "line": 22,
+        "line_text": "        self.color = Color.RED\n",
+        "temporary": True,
+        "suspend_policy": "all",
+        "hit_count": 1,
+    }
+
+    # --- step_over: advance within Car.__init__() to next line ---
+    step_over = await client.call_tool(
+        "control_debugger_session", {"session_id": session_id, "action": "step_over"},
+    )
+    assert step_over.structured_content["state"] == "paused"
+    assert step_over.structured_content["current_position"] == {
+        "type": "line",
+        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_variables.py",
+        "line": 23,
+        "line_text": '        self.name = "Greased Lightning"\n',
+        "temporary": True,
+        "suspend_policy": "all",
+        "hit_count": 1,
+    }
+
+    # --- step_out: return to main() ---
+    step_out = await client.call_tool(
+        "control_debugger_session", {"session_id": session_id, "action": "step_out"},
+    )
+    assert step_out.structured_content["state"] == "paused"
+    assert step_out.structured_content["current_position"] == {
+        "type": "line",
+        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_variables.py",
+        "line": 35,
+        "line_text": "    some_object = Car()\n",
+        "temporary": True,
+        "suspend_policy": "all",
+        "hit_count": 1,
+    }
+
+
+async def test_stepping__must_be_paused(client: Client) -> None:
+    session_id = (await create_session(client, file_path=FAKE_MAIN, program_arguments=["--loop-forever"]))["id"]
+
+    await client.call_tool("control_debugger_session", {"session_id": session_id, "action": "resume"})
+
+    for action in ["step_into", "step_over", "step_out"]:
+        with pytest.raises(ToolError, match=r"Session must be paused to call that tool. Session is currently running."):
+            await client.call_tool("control_debugger_session", {"session_id": session_id, "action": action})
