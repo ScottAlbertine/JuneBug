@@ -159,7 +159,7 @@ async def test_specific_thread_id(client: Client) -> None:
                 "library_code": False,
             },
         ],
-        "thread_id": 2,
+        "thread_id": thread_id,
         "total_frames": 4,
     }
 
@@ -177,10 +177,10 @@ async def test_get_stack_while_running(client: Client) -> None:
         threads = await client.call_tool("list_threads", {"session_id": session_id})
         return threads.structured_content == {
             "threads": [
-                {"id": 1, "is_current": MatchAny(bool), "name": "MainThread", "state": "running"},
-                {"id": 2, "is_current": MatchAny(bool), "name": "BusyWorker", "state": "running"},
-                {"id": 4, "is_current": MatchAny(bool), "name": "DaemonOne", "state": "running"},
-                {"id": 5, "is_current": MatchAny(bool), "name": "DaemonTwo", "state": "running"},
+                {"id": MatchAny(int), "is_current": MatchAny(bool), "name": "MainThread", "state": "running"},
+                {"id": MatchAny(int), "is_current": MatchAny(bool), "name": "BusyWorker", "state": "running"},
+                {"id": MatchAny(int), "is_current": MatchAny(bool), "name": "DaemonOne", "state": "running"},
+                {"id": MatchAny(int), "is_current": MatchAny(bool), "name": "DaemonTwo", "state": "running"},
             ],
             "total_count": 4,
         }
@@ -189,7 +189,12 @@ async def test_get_stack_while_running(client: Client) -> None:
         all_threads_running, otherwise="Threads did not reach expected running state within 3 seconds",
     )
 
-    stack = await client.call_tool("get_stack", {"session_id": session_id, "thread_id": 1, "limit": 2})
+    threads = await client.call_tool("list_threads", {"session_id": session_id})
+    thread_ids = {thread["name"]: thread["id"] for thread in threads.structured_content["threads"]}
+
+    stack = await client.call_tool(
+        "get_stack", {"session_id": session_id, "thread_id": thread_ids["MainThread"], "limit": 2},
+    )
     assert stack.structured_content == {
         "frames": [
             {
@@ -207,11 +212,13 @@ async def test_get_stack_while_running(client: Client) -> None:
                 "library_code": False,
             },
         ],
-        "thread_id": 1,
+        "thread_id": thread_ids["MainThread"],
         "total_frames": 4,
     }
 
-    stack = await client.call_tool("get_stack", {"session_id": session_id, "thread_id": 2, "limit": 1})
+    stack = await client.call_tool(
+        "get_stack", {"session_id": session_id, "thread_id": thread_ids["BusyWorker"], "limit": 1},
+    )
     assert stack.structured_content == {
         "frames": [
             {
@@ -222,11 +229,13 @@ async def test_get_stack_while_running(client: Client) -> None:
                 "library_code": False,
             },
         ],
-        "thread_id": 2,
+        "thread_id": thread_ids["BusyWorker"],
         "total_frames": 4,
     }
 
-    stack = await client.call_tool("get_stack", {"session_id": session_id, "thread_id": 4, "limit": 1})
+    stack = await client.call_tool(
+        "get_stack", {"session_id": session_id, "thread_id": thread_ids["DaemonOne"], "limit": 1},
+    )
     assert stack.structured_content == {
         "frames": [
             {
@@ -237,11 +246,13 @@ async def test_get_stack_while_running(client: Client) -> None:
                 "library_code": False,
             },
         ],
-        "thread_id": 4,
+        "thread_id": thread_ids["DaemonOne"],
         "total_frames": 4,
     }
 
-    stack = await client.call_tool("get_stack", {"session_id": session_id, "thread_id": 5, "limit": 1})
+    stack = await client.call_tool(
+        "get_stack", {"session_id": session_id, "thread_id": thread_ids["DaemonTwo"], "limit": 1},
+    )
     assert stack.structured_content == {
         "frames": [
             {
@@ -252,6 +263,6 @@ async def test_get_stack_while_running(client: Client) -> None:
                 "library_code": False,
             },
         ],
-        "thread_id": 5,
+        "thread_id": thread_ids["DaemonTwo"],
         "total_frames": 4,
     }
