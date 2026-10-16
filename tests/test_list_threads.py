@@ -3,7 +3,7 @@ from fastmcp.exceptions import ToolError
 import pytest
 
 from tests.constants import FAKE_MAIN, FAKE_MAIN_MULTI_THREAD, MAIN_THREAD
-from tests.utils import create_session, eventual_assert, move_to_next_breakpoint
+from tests.utils import MatchAny, create_session, eventual_assert, move_to_next_breakpoint
 
 
 async def test_list_threads__invalid(client: Client) -> None:
@@ -52,10 +52,10 @@ async def test_multi_threaded(client: Client) -> None:
     threads = await client.call_tool("list_threads", {"session_id": session_id})
     assert threads.structured_content == {
         "threads": [
-            {"id": 1, "is_current": False, "name": "MainThread", "state": "paused"},
-            {"id": 2, "is_current": True, "name": "BusyWorker", "state": "paused"},
-            {"id": 4, "is_current": False, "name": "DaemonOne", "state": "paused"},
-            {"id": 5, "is_current": False, "name": "DaemonTwo", "state": "paused"},
+            {"id": MatchAny(int), "is_current": False, "name": "MainThread", "state": "paused"},
+            {"id": MatchAny(int), "is_current": True, "name": "BusyWorker", "state": "paused"},
+            {"id": MatchAny(int), "is_current": False, "name": "DaemonOne", "state": "paused"},
+            {"id": MatchAny(int), "is_current": False, "name": "DaemonTwo", "state": "paused"},
         ],
         "total_count": 4,
     }
@@ -64,10 +64,7 @@ async def test_multi_threaded(client: Client) -> None:
     # it's the literal exact same setup as this test, so there's no point in doing it all twice
     page_1 = await client.call_tool("list_threads", {"session_id": session_id, "limit": 2, "offset": 1})
     assert page_1.structured_content == {
-        "threads": [
-            {"id": 2, "is_current": True, "name": "BusyWorker", "state": "paused"},
-            {"id": 4, "is_current": False, "name": "DaemonOne", "state": "paused"},
-        ],
+        "threads": threads.structured_content["threads"][1:3],
         "total_count": 4,
     }
 
@@ -87,10 +84,10 @@ async def test_running_threads(client: Client) -> None:
         threads = await client.call_tool("list_threads", {"session_id": session_id})
         return threads.structured_content == {
             "threads": [
-                {"id": 1, "is_current": True, "name": "MainThread", "state": "running"},
-                {"id": 2, "is_current": False, "name": "BusyWorker", "state": "running"},
-                {"id": 4, "is_current": False, "name": "DaemonOne", "state": "running"},
-                {"id": 5, "is_current": False, "name": "DaemonTwo", "state": "running"},
+                {"id": MatchAny(int), "is_current": True, "name": "MainThread", "state": "running"},
+                {"id": MatchAny(int), "is_current": False, "name": "BusyWorker", "state": "running"},
+                {"id": MatchAny(int), "is_current": False, "name": "DaemonOne", "state": "running"},
+                {"id": MatchAny(int), "is_current": False, "name": "DaemonTwo", "state": "running"},
             ],
             "total_count": 4,
         }

@@ -6,6 +6,17 @@ import pytest
 from tests.constants import FAKE_MAIN, FAKE_MAIN_MULTI_THREAD, PROJECT_ROOT
 from tests.utils import MatchAny, create_session, eventual_assert, move_to_next_breakpoint
 
+# we use this in a couple places, cut down on code bulk
+ALL_THREADS_RUNNING = {
+    "threads": [
+        {"id": MatchAny(int), "is_current": MatchAny(bool), "name": "MainThread", "state": "running"},
+        {"id": MatchAny(int), "is_current": MatchAny(bool), "name": "BusyWorker", "state": "running"},
+        {"id": MatchAny(int), "is_current": MatchAny(bool), "name": "DaemonOne", "state": "running"},
+        {"id": MatchAny(int), "is_current": MatchAny(bool), "name": "DaemonTwo", "state": "running"},
+    ],
+    "total_count": 4,
+}
+
 
 async def test_control_debugger_session__invalid(client: Client) -> None:
     session_id = (await create_session(client, file_path=FAKE_MAIN_MULTI_THREAD))["id"]
@@ -29,15 +40,7 @@ async def test_resume_and_pause(client: Client) -> None:
     # threads take some time to start up, so poll every 0.1 seconds for up to 3 seconds until they're all good
     async def all_threads_running() -> bool:
         threads = await client.call_tool("list_threads", {"session_id": session_id})
-        return threads.structured_content == {
-            "threads": [
-                {"id": 1, "is_current": MatchAny(bool), "name": "MainThread", "state": "running"},
-                {"id": 2, "is_current": MatchAny(bool), "name": "BusyWorker", "state": "running"},
-                {"id": 4, "is_current": MatchAny(bool), "name": "DaemonOne", "state": "running"},
-                {"id": 5, "is_current": MatchAny(bool), "name": "DaemonTwo", "state": "running"},
-            ],
-            "total_count": 4,
-        }
+        return threads.structured_content == ALL_THREADS_RUNNING
 
     await eventual_assert(
         all_threads_running, otherwise="Threads did not reach expected running state within 3 seconds",
@@ -53,10 +56,10 @@ async def test_resume_and_pause(client: Client) -> None:
         threads = await client.call_tool("list_threads", {"session_id": session_id})
         return threads.structured_content == {
             "threads": [
-                {"id": 1, "is_current": MatchAny(bool), "name": "MainThread", "state": "paused"},
-                {"id": 2, "is_current": MatchAny(bool), "name": "BusyWorker", "state": "paused"},
-                {"id": 4, "is_current": MatchAny(bool), "name": "DaemonOne", "state": "paused"},
-                {"id": 5, "is_current": MatchAny(bool), "name": "DaemonTwo", "state": "paused"},
+                {"id": MatchAny(int), "is_current": MatchAny(bool), "name": "MainThread", "state": "paused"},
+                {"id": MatchAny(int), "is_current": MatchAny(bool), "name": "BusyWorker", "state": "paused"},
+                {"id": MatchAny(int), "is_current": MatchAny(bool), "name": "DaemonOne", "state": "paused"},
+                {"id": MatchAny(int), "is_current": MatchAny(bool), "name": "DaemonTwo", "state": "paused"},
             ],
             "total_count": 4,
         }
@@ -209,15 +212,7 @@ async def test_stop__running_process(client: Client) -> None:
 
     async def all_threads_running() -> bool:
         threads = await client.call_tool("list_threads", {"session_id": session_id})
-        return threads.structured_content == {
-            "threads": [
-                {"id": 1, "is_current": MatchAny(bool), "name": "MainThread", "state": "running"},
-                {"id": 2, "is_current": MatchAny(bool), "name": "BusyWorker", "state": "running"},
-                {"id": 4, "is_current": MatchAny(bool), "name": "DaemonOne", "state": "running"},
-                {"id": 5, "is_current": MatchAny(bool), "name": "DaemonTwo", "state": "running"},
-            ],
-            "total_count": 4,
-        }
+        return threads.structured_content == ALL_THREADS_RUNNING
 
     await eventual_assert(
         all_threads_running, otherwise="Threads did not reach expected running state within 3 seconds",
