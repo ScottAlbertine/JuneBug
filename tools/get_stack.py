@@ -3,7 +3,7 @@ from typing import Annotated
 from pydantic import Field
 
 from annotations import SessionID
-from models import StackResponse
+from models import StackFrames
 import session_service
 
 
@@ -16,7 +16,7 @@ def get_stack(
     ] = None,
     limit: Annotated[int, Field(description="Max frames to return. Default: 200.", ge=1)] = 200,
     offset: Annotated[int, Field(description="Page offset. Default: 0.", ge=0)] = 0,
-) -> StackResponse:
+) -> StackFrames:
     """
     Returns the current function stack for a thread in the debug session.
     Use this tool to see the sequence of function calls that led to the current execution point.
@@ -40,5 +40,4 @@ def get_stack(
     session = session_service.get_session(session_id)
     if thread_id is None:
         thread_id = session.get_current_thread_id()
-    frames = session.list_stack_frames(thread_id)
-    return StackResponse(frames=frames[offset:offset + limit], thread_id=thread_id, total_frames=len(frames))
+    return session.get_stack_trace(thread_id, limit, offset)

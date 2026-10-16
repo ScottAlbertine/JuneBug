@@ -50,6 +50,15 @@ async def test_resume_and_pause(client: Client) -> None:
         "control_debugger_session", {"session_id": session_id, "action": "pause"},
     )
     assert first_pause.structured_content["state"] == "paused"
+    assert first_pause.structured_content["current_position"] == {
+        "type": "line",
+        "file": "/Users/scott/Repos/JuneBug/tests/fakes/fake_main_multi_thread.py",
+        "line": 38,
+        "line_text": "        sleep(1)\n",
+        "temporary": True,
+        "suspend_policy": "all",
+        "hit_count": 1,
+    }
 
     # threads also take some time to pause
     async def all_threads_paused() -> bool:

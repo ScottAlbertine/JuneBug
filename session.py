@@ -9,9 +9,9 @@ import psutil
 
 from breakpoints import Breakpoints, File
 from constants import TEMP_DIR
-from enums import DebuggerState, SuspendPolicy
+from enums import SessionState, SuspendPolicy
 from exceptions import DAPError, FrameNotFound, SessionStateError, SessionStoppedError, ThreadNotFound
-from models import Breakpoint, SessionStatus, StackFrame, Thread, Variable
+from models import Breakpoint, SessionStatus, StackFrame, StackFrames, Thread, Variable
 from threads import Threads
 from utils import connect_socket, fetch_line_text
 
@@ -40,7 +40,7 @@ class Session:
         self.project_path = project_path
         self.session_id = session_id
         self.sock = connect_socket(host, port, timeout / 1000.0)
-        self.state: DebuggerState = DebuggerState.PAUSED
+        self.state: SessionState = SessionState.UNKNOWN
         self.std_out_path = str(TEMP_DIR / f"{session_id}.stdout.txt") if we_own else None
         self.std_err_path = str(TEMP_DIR / f"{session_id}.stderr.txt") if we_own else None
         self.threads = Threads()
@@ -57,8 +57,18 @@ class Session:
         self._attach()
         # always get the initial registry of threads at this point, because we can.
         self.list_threads()
-        # the first thread always starts paused
-        self.threads.pause_at_start()
+        # if we own it, we always launch with `--wait-for-client`, so all threads are paused on start
+        if self.we_own:
+            self.state: SessionState = SessionState.PAUSED
+            self.threads.pause_at_start()
+        else:
+            # TODO: figure out how to get the state here, when we attach to an existing process that may or may not have `--wait-for-client` set on its launch
+            # TODO: probably do that instead of hard setting paused above
+            # self.state = something
+            pass
+
+        # Technically, we could get the current position here, however, in many cases that takes 600ms, or is misleading, or both.
+        # self.current_position = self.fetch_current_position(self.threads.get_current_thread_id())
 
     def _pull(self) -> Iterator[Event]:
         """
@@ -74,7 +84,7 @@ class Session:
         for event in self._event_iterator:
             print(event.model_dump_json(indent=2))  # for easy logging
 
-            if self.state == DebuggerState.STOPPED:
+            if self.state == SessionState.STOPPED:
                 raise SessionStoppedError()
 
             if isinstance(event, ErrorResponse):
@@ -96,10 +106,10 @@ class Session:
             self.threads.set_current(event.body["threadId"])
             if hit_breakpoint_ids := event.body.get("hitBreakpointIds"):
                 self.current_position = self.breakpoints.get_breakpoint_by_id(hit_breakpoint_ids[0])
-            self.state = DebuggerState.PAUSED
+            self.state = SessionState.PAUSED
 
         if event.event == "terminated":
-            self.state = DebuggerState.STOPPED
+            self.state = SessionState.STOPPED
             self.current_position = None  # don't report bad data from a stopped session
             # TODO: this is what we want to do, but it breaks test, figure that out next
             # self.sock.close()  # and finally, stop the socket
@@ -109,18 +119,42 @@ class Session:
     def _send(self):
         self.sock.sendall(self.client.send())
 
-    def assert_state(self, expected_state: DebuggerState) -> None:
+    def assert_state(self, expected_state: SessionState) -> None:
         """Assert that this session is in the given state. Raises a `SessionStateError` if not."""
         if self.state != expected_state:
             raise SessionStateError(expected_state, self.state)
+
+    def fetch_current_position(self, thread_id: int | None) -> Breakpoint | None:
+        """
+        Get a floating breakpoint that represents the current position of the thread with the given ID.
+        IMPORTANT: On a paused thread, this takes 20ms. On a running thread, it takes 600ms.
+        This can be done while running but don't do that unless you have to, it's super slow.
+        """
+        if thread_id is None:
+            return None
+        top_frame = self.get_stack_trace(thread_id, limit=1).frames[0]
+        return Breakpoint.floating(Path(top_frame.file), top_frame.line)
 
     def get_current_thread_id(self) -> int | None:
         self.list_threads()
         return self.threads.get_current_thread_id()
 
+    def get_stack_trace(
+        self, thread_id: int | None, limit: int | None = None, offset: int | None = None,
+    ) -> StackFrames:
+        """
+        List all stack frames of a given thread ID. Errors appropriately if no thread ID is given.
+        IMPORTANT: On a paused thread, this takes 20ms. On a running thread, it takes 600ms.
+        """
+        if thread_id is None:
+            raise Exception("No thread ID specified, and there is no current thread listed.")
+        dap_stack_trace = self._stack_trace(thread_id, limit, offset).body["body"]
+        frames = [StackFrame.from_dap(frame) for frame in dap_stack_trace["stackFrames"]]
+        return StackFrames(frames=frames, thread_id=thread_id, total_frames=dap_stack_trace["totalFrames"])
+
     def get_status(self) -> SessionStatus:
         """Get the status of this session."""
-        if self.state != DebuggerState.STOPPED:  # don't try talking anymore if we're stopped
+        if self.state != SessionState.STOPPED:  # don't try talking anymore if we're stopped
             self.list_threads()  # do a list_threads to pull the most recent messages from the DAP server
         return SessionStatus(
             id=self.session_id,
@@ -145,7 +179,7 @@ class Session:
     def list_variables(self, frame_id: int, show_hidden: bool, depth: int) -> list[Variable]:
         """List all variables of a given frame ID, down to a given depth, showing hidden ones if requested."""
 
-        self.assert_state(DebuggerState.PAUSED)
+        self.assert_state(SessionState.PAUSED)
         scope_ids: list[int] = [
             dap_scope["variablesReference"] for dap_scope in self._scopes(frame_id).body["body"]["scopes"]
         ]
@@ -156,13 +190,6 @@ class Session:
 
         return variables
 
-    def list_stack_frames(self, thread_id: int | None) -> list[StackFrame]:
-        """List all stack frames of a given thread ID. Errors appropriately if no thread ID is given."""
-        if thread_id is None:
-            raise Exception("No thread ID specified, and there is no current thread listed.")
-        frames = self._stack_trace(thread_id).body["body"]["stackFrames"]
-        return [StackFrame.from_dap(frame) for frame in frames]
-
     def list_threads(self) -> list[Thread]:
         """Get all threads, sorted by id."""
         return self.threads.refresh(self._fetch_threads())
@@ -170,15 +197,15 @@ class Session:
     def pause(self):
         """Pause this session."""
         self._pause(self.list_threads()[0].id)
-        # TODO: set current position somehow?
-        self.state = DebuggerState.PAUSED
+        self.current_position = self.fetch_current_position(self.get_current_thread_id())
+        self.state = SessionState.PAUSED
 
     def resume(self):
         """Resume this session. Does not block."""
         # we're going to need to list threads anyway in most cases
         # and listing threads pulls the latest events to update our state and current_position, which we then check
         threads = self.list_threads()
-        if self.state == DebuggerState.RUNNING:
+        if self.state == SessionState.RUNNING:
             return  # Don't double run
         if not self.has_configuration_done:
             # this has to happen once per session, and only once, and it automatically resumes all threads
@@ -187,7 +214,7 @@ class Session:
         else:
             self._continue_execution(threads[0].id)
         self.current_position = None
-        self.state = DebuggerState.RUNNING
+        self.state = SessionState.RUNNING
 
     def set_breakpoint(
         self, path: Path, line: int, condition: str | None, temporary: bool, suspend_policy: SuspendPolicy,
@@ -226,7 +253,7 @@ class Session:
 
     def wait_for_pause(self):
         """Wait for the debugger to pause on a line on its own. Only blocks, does not send anything to DAP."""
-        if self.state == DebuggerState.PAUSED:
+        if self.state == SessionState.PAUSED:
             return  # we are already paused, don't just block forever
         self._pull_until(lambda e: e.event == "stopped" or e.event == "terminated")
 
@@ -343,9 +370,18 @@ class Session:
         self._send()
         return self._pull_until(lambda e: True)
 
-    def _stack_trace(self, thread_id: int) -> Event:
-        """Get the stack trace."""
-        self.client.stack_trace(thread_id)
+    def _stack_trace(self, thread_id: int, limit: int | None = None, offset: int | None = None) -> Event:
+        """
+        Get the stack trace.
+        IMPORTANT: On a paused thread, this takes 20ms. On a running thread, it takes 600ms.
+        """
+        kwargs = {}
+        if limit is not None:
+            kwargs["levels"] = limit
+        if offset is not None:
+            kwargs["startFrame"] = offset
+
+        self.client.stack_trace(thread_id, **kwargs)
         self._send()
         try:
             return self._pull_until(lambda e: e.event == "response" and e.body["command"] == "stackTrace")

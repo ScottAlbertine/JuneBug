@@ -23,10 +23,11 @@ class DebuggerOutcome(Enum):
     TIMEOUT = "timeout"
 
 
-class DebuggerState(Enum):
+class SessionState(Enum):
     RUNNING = "running"
     PAUSED = "paused"
     STOPPED = "stopped"
+    UNKNOWN = "unknown"
 
 
 class SuspendPolicy(Enum):

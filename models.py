@@ -3,7 +3,8 @@ from typing import Annotated, Any
 
 from pydantic import BaseModel, Field
 
-from enums import BreakpointType, DebuggerOutcome, DebuggerState, SuspendPolicy, ThreadState
+from enums import BreakpointType, DebuggerOutcome, SessionState, SuspendPolicy, ThreadState
+from utils import fetch_line_text
 
 
 class Breakpoint(BaseModel):
@@ -37,6 +38,25 @@ class Breakpoint(BaseModel):
     def to_dap(self) -> dict[str, Any]:
         """Turn this breakpoint into a dictionary that can be sent to DAP. Matches the "SourceBreakpoint" DAP schema."""
         return {"line": self.line, "condition": self.condition}
+
+    @classmethod
+    def floating(cls, path: Path, line: int) -> Breakpoint:
+        """
+        Create a floating breakpoint, on the given line of a given file.
+        This happens when hitting the hard pause button, or stepping over/into/out of methods.
+        It's equivalent to the "you are here" indicator in a traditional debugger UI.
+        """
+        return cls(
+            id=None,
+            type=BreakpointType.LINE,
+            file=path,
+            line=line,
+            line_text=fetch_line_text(path, line),
+            condition=None,
+            temporary=True,
+            suspend_policy=SuspendPolicy.ALL,
+            hit_count=1,
+        )
 
 
 class Variable(BaseModel):
@@ -79,7 +99,7 @@ class SessionStatus(BaseModel):
     """Status of a debug session."""
 
     id: Annotated[str, Field(description="Session identifier to use as `session_id` in subsequent debugger calls.")]
-    state: Annotated[DebuggerState, Field(description="Current session state.")]
+    state: Annotated[SessionState, Field(description="Current session state.")]
     debugee_pid: Annotated[
         int | None,
         Field(
@@ -154,7 +174,7 @@ class Thread(BaseModel):
     is_current: Annotated[bool, Field(description="Whether this thread is currently selected.")]
 
 
-class StackResponse(BaseModel):
+class StackFrames(BaseModel):
     """Call stack for a debugged thread."""
 
     frames: Annotated[

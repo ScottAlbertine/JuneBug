@@ -73,9 +73,12 @@ class Threads:
                 thread.state = ThreadState.RUNNING
 
     def pause_at_start(self) -> None:
-        """Pause the only thread upon startup. Should only ever be called once per session."""
-        if len(self._threads) == 1:
-            next(iter(self._threads.values())).state = ThreadState.PAUSED
+        """
+        For sessions we own, we expect all threads to be paused at startup, even though DAP doesn't tell us this.
+        Should only ever be called once per session.
+        """
+        for thread in self._threads.values():
+            thread.state = ThreadState.PAUSED
 
     def set_current(self, thread_id: int) -> None:
         """Set the thread with the given ID as the current thread, all others as not the current thread."""

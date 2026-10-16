@@ -50,6 +50,6 @@ def list_variables(
     session = session_service.get_session(session_id)
     if frame_id is None:
         thread_id = session.get_current_thread_id()  # update state before asserting it, should save some calls sometimes
-        frame_id = session.list_stack_frames(thread_id)[0].id
+        frame_id = session.get_stack_trace(thread_id, limit=1).frames[0].id
     variables = session.list_variables(frame_id, show_hidden, depth)
     return Variables(variables=variables)

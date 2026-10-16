@@ -49,7 +49,7 @@ async def test_attach_debugger_session(client: Client) -> None:
     )
 
     assert create_result.structured_content == {
-        "id": MatchAny(str), "state": "paused", "breakpoints_muted": False, "current_position": None,
+        "id": MatchAny(str), "state": "unknown", "breakpoints_muted": False, "current_position": None,
     }
 
     proc = psutil.Process(debugee.pid)

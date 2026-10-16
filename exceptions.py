@@ -2,7 +2,7 @@ from pathlib import Path
 
 from dap.protocol import ErrorResponse
 
-from enums import DebuggerState
+from enums import SessionState
 
 
 class DebugpyInstallationFailed(Exception):
@@ -60,7 +60,7 @@ class SessionNotFound(Exception):
 class SessionStateError(Exception):
     """Exception indicating that the specified debug session is in the wrong state for what you're trying to do."""
 
-    def __init__(self, expected_state: DebuggerState, actual_state: DebuggerState):
+    def __init__(self, expected_state: SessionState, actual_state: SessionState):
         super().__init__(
             f"Session must be {expected_state.value} to call that tool. Session is currently {actual_state.value}.",
         )
