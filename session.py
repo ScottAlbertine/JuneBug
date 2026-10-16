@@ -13,20 +13,22 @@ from enums import DebuggerState, SuspendPolicy
 from exceptions import DAPError, FrameNotFound, SessionStateError, SessionStoppedError, ThreadNotFound
 from models import Breakpoint, SessionStatus, StackFrame, Thread, Variable
 from threads import Threads
-from utils import connect_to_port, fetch_line_text
+from utils import connect_socket, fetch_line_text
 
 
 class Session:
     """A debug session, equivalent to a debugger instance like a `pdb` process or a PyCharm debugger tab."""
     CHUNK_SIZE = 65536
 
-    # TODO: handle closing the socket when we need to, not sure when that is, figure it out
-
-    # def __exit__(self, exc_type, exc_val, traceback) -> None:
-    #     self.sock.__exit__(exc_type, exc_val, traceback)
-
     def __init__(
-        self, session_id: str, project_path: str, port: int, timeout: int, we_own: bool, pid: int | None = None,
+        self,
+        session_id: str,
+        project_path: str,
+        host: str,
+        port: int,
+        timeout: int,
+        we_own: bool,
+        pid: int | None = None,
     ):
         """Timeout is in milliseconds."""
         self.breakpoints = Breakpoints()
@@ -37,7 +39,7 @@ class Session:
         self.has_configuration_done = False
         self.project_path = project_path
         self.session_id = session_id
-        self.sock = connect_to_port(port, timeout / 1000.0)
+        self.sock = connect_socket(host, port, timeout / 1000.0)
         self.state: DebuggerState = DebuggerState.PAUSED
         self.std_out_path = str(TEMP_DIR / f"{session_id}.stdout.txt") if we_own else None
         self.std_err_path = str(TEMP_DIR / f"{session_id}.stderr.txt") if we_own else None
@@ -98,8 +100,9 @@ class Session:
 
         if event.event == "terminated":
             self.state = DebuggerState.STOPPED
-            # don't report bad data from a stopped session
-            self.current_position = None
+            self.current_position = None  # don't report bad data from a stopped session
+            # TODO: this is what we want to do, but it breaks test, figure that out next
+            # self.sock.close()  # and finally, stop the socket
 
         # TODO: handle other passive events that update our internal model of the debugger's state here
 

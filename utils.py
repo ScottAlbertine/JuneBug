@@ -26,7 +26,7 @@ def find_free_port() -> int:
         return s.getsockname()[1]
 
 
-def connect_to_port(port: int, timeout: float) -> socket:
+def connect_socket(host: str, port: int, timeout: float) -> socket:
     """
     Try to connect a socket to the given port, every 100ms for up to `timeout` seconds total.
     Returns the connected socket if successful.
@@ -39,7 +39,7 @@ def connect_to_port(port: int, timeout: float) -> socket:
     while time() - start_time < timeout:
         try:
             sock = socket(AF_INET, SOCK_STREAM)
-            sock.connect(("127.0.0.1", port))
+            sock.connect((host, port))
             return sock
         except ConnectionRefusedError:
             sleep(0.1)

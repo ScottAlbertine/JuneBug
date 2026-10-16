@@ -1,3 +1,4 @@
+from .attach_debugger_session import attach_debugger_session
 from .control_debugger_session import control_debugger_session
 from .evaluate_expression import evaluate_expression
 from .get_debugger_session import get_debugger_session
@@ -15,6 +16,7 @@ from .set_breakpoints_muted import set_breakpoints_muted
 from .set_variable import set_variable
 
 __all__ = [
+    "attach_debugger_session",
     "control_debugger_session",
     "evaluate_expression",
     "get_debugger_session",

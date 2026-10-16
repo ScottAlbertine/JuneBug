@@ -40,10 +40,16 @@ def get_sessions(project_path: str) -> list[Session]:
 
 
 def attach_session(
-    session_id: str, project_path: str, port: int, timeout: int, we_own: bool = False, pid: int | None = None,
+    session_id: str,
+    project_path: str,
+    host: str,
+    port: int,
+    timeout: int,
+    we_own: bool = False,
+    pid: int | None = None,
 ) -> Session:
     """Attach a new session to an existing python process, via DAP, on the given port."""
-    session = Session(session_id, project_path, port, timeout, we_own, pid)
+    session = Session(session_id, project_path, host, port, timeout, we_own, pid)
     SESSIONS[session_id] = session
     return session
 
@@ -82,4 +88,4 @@ def launch_session(
         env=env,
     )
 
-    return attach_session(session_id, project_path, port, timeout, we_own=True, pid=debugee.pid)
+    return attach_session(session_id, project_path, "127.0.0.1", port, timeout, we_own=True, pid=debugee.pid)
