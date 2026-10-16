@@ -64,7 +64,7 @@ async def test_set_breakpoint(client: Client) -> None:
         ToolError, match=r"Session has stopped, no more tool calls can be made to its id. Start a new session instead.",
     ):
         threads = await client.call_tool("list_threads", {"session_id": session_id})
-        assert threads.structured_content == {'threads': [MAIN_THREAD], 'total_count': 1}
+    assert threads.structured_content == {'threads': [MAIN_THREAD], 'total_count': 1}
     assert Path(std_out_path).read_text() == "it started\nit finished\n"
 
     # the process can take a while to change its status, give it 3 seconds to do so
