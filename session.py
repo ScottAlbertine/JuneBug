@@ -70,70 +70,7 @@ class Session:
         # Technically, we could get the current position here, however, in many cases that takes 600ms, or is misleading, or both.
         # self.current_position = self.fetch_current_position(self.threads.get_current_thread_id())
 
-    def _pull(self) -> Iterator[Event]:
-        """
-        An unbounded iterator that returns every event sent by the DAP server.
-        This should only ever be called once, in the constructor of the session.
-        After that, you should use `self._event_iterator`.
-        """
-        while True:
-            yield from self.client.recv(self.sock.recv(self.CHUNK_SIZE))
-
-    def _pull_until(self, matcher: Callable[[Event], bool]) -> Event:
-        """Pull events from the DAP client until the given matcher function returns true on an event, then return that event."""
-        for event in self._event_iterator:
-            print(event.model_dump_json(indent=2))  # for easy logging
-
-            if self.state == SessionState.STOPPED:
-                raise SessionStoppedError()
-
-            if isinstance(event, ErrorResponse):
-                # yes, the typing says this is impossible, but trust me, it happens
-                raise DAPError(event)
-            self._handle_event(event)
-            if matcher(event):
-                return event
-
-    def _handle_event(self, event: Event) -> None:
-        """
-        Handle any state updates that need to happen when we see certain events.
-        This gets passed every event that we pull.
-        """
-        if event.body is not None and "threadId" in event.body:
-            self.threads.update(event)
-
-        if event.event == "stopped":
-            self.threads.set_current(event.body["threadId"])
-            if hit_breakpoint_ids := event.body.get("hitBreakpointIds"):
-                self.current_position = self.breakpoints.get_breakpoint_by_id(hit_breakpoint_ids[0])
-            self.state = SessionState.PAUSED
-
-        if event.event == "terminated":
-            self.state = SessionState.STOPPED
-            self.current_position = None  # don't report bad data from a stopped session
-            # TODO: this is what we want to do, but it breaks test, figure that out next
-            # self.sock.close()  # and finally, stop the socket
-
-        # TODO: handle other passive events that update our internal model of the debugger's state here
-
-    def _send(self):
-        self.sock.sendall(self.client.send())
-
-    def assert_state(self, expected_state: SessionState) -> None:
-        """Assert that this session is in the given state. Raises a `SessionStateError` if not."""
-        if self.state != expected_state:
-            raise SessionStateError(expected_state, self.state)
-
-    def fetch_current_position(self, thread_id: int | None) -> Breakpoint | None:
-        """
-        Get a floating breakpoint that represents the current position of the thread with the given ID.
-        IMPORTANT: On a paused thread, this takes 20ms. On a running thread, it takes 600ms.
-        This can be done while running but don't do that unless you have to, it's super slow.
-        """
-        if thread_id is None:
-            return None
-        top_frame = self.get_stack_trace(thread_id, limit=1).frames[0]
-        return Breakpoint.floating(Path(top_frame.file), top_frame.line)
+    # session commands
 
     def get_current_thread_id(self) -> int | None:
         self.list_threads()
@@ -269,6 +206,24 @@ class Session:
             return  # we are already paused, don't just block forever
         self._pull_until(lambda e: e.event == "stopped" or e.event == "terminated")
 
+    # internal state management tools
+
+    def assert_state(self, expected_state: SessionState) -> None:
+        """Assert that this session is in the given state. Raises a `SessionStateError` if not."""
+        if self.state != expected_state:
+            raise SessionStateError(expected_state, self.state)
+
+    def fetch_current_position(self, thread_id: int | None) -> Breakpoint | None:
+        """
+        Get a floating breakpoint that represents the current position of the thread with the given ID.
+        IMPORTANT: On a paused thread, this takes 20ms. On a running thread, it takes 600ms.
+        This can be done while running but don't do that unless you have to, it's super slow.
+        """
+        if thread_id is None:
+            return None
+        top_frame = self.get_stack_trace(thread_id, limit=1).frames[0]
+        return Breakpoint.floating(Path(top_frame.file), top_frame.line)
+
     def _fetch_variable_children(
         self, variable_id: int, output: list[Variable] | None, show_hidden: bool, depth: int,
     ) -> None:
@@ -282,6 +237,55 @@ class Session:
             if child.type or show_hidden:
                 output.append(child)
                 self._fetch_variable_children(child.id, child.children, show_hidden, depth - 1)
+
+    def _pull(self) -> Iterator[Event]:
+        """
+        An unbounded iterator that returns every event sent by the DAP server.
+        This should only ever be called once, in the constructor of the session.
+        After that, you should use `self._event_iterator`.
+        """
+        while True:
+            yield from self.client.recv(self.sock.recv(self.CHUNK_SIZE))
+
+    def _pull_until(self, matcher: Callable[[Event], bool]) -> Event:
+        """Pull events from the DAP client until the given matcher function returns true on an event, then return that event."""
+        for event in self._event_iterator:
+            print(event.model_dump_json(indent=2))  # for easy logging
+
+            if self.state == SessionState.STOPPED:
+                raise SessionStoppedError()
+
+            if isinstance(event, ErrorResponse):
+                # yes, the typing says this is impossible, but trust me, it happens
+                raise DAPError(event)
+            self._handle_event(event)
+            if matcher(event):
+                return event
+
+    def _handle_event(self, event: Event) -> None:
+        """
+        Handle any state updates that need to happen when we see certain events.
+        This gets passed every event that we pull.
+        """
+        if event.body is not None and "threadId" in event.body:
+            self.threads.update(event)
+
+        if event.event == "stopped":
+            self.threads.set_current(event.body["threadId"])
+            if hit_breakpoint_ids := event.body.get("hitBreakpointIds"):
+                self.current_position = self.breakpoints.get_breakpoint_by_id(hit_breakpoint_ids[0])
+            self.state = SessionState.PAUSED
+
+        if event.event == "terminated":
+            self.state = SessionState.STOPPED
+            self.current_position = None  # don't report bad data from a stopped session
+            # TODO: this is what we want to do, but it breaks test, figure that out next
+            # self.sock.close()  # and finally, stop the socket
+
+        # TODO: handle other passive events that update our internal model of the debugger's state here
+
+    def _send(self):
+        self.sock.sendall(self.client.send())
 
     # DAP commands
 
