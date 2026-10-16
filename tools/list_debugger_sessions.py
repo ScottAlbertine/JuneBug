@@ -4,7 +4,7 @@ import session_service
 
 
 def list_debugger_sessions(project_path: ProjectPath) -> SessionStatuses:
-    """Returns all active debugger sessions.
+    """Returns all active debugger sessions that have the given project path.
 
     Next call:
     - If no sessions are running, call `launch_debugger_session` or `attach_debugger_session`.
