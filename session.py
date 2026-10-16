@@ -200,6 +200,12 @@ class Session:
         self.current_position = self.fetch_current_position(self.get_current_thread_id())
         self.state = SessionState.PAUSED
 
+    def remove_breakpoint(self, path: Path, line: int) -> None:
+        """Remove a breakpoint. Idempotent, no-op on nonexistent breakpoint."""
+        did_remove = self.breakpoints.remove_breakpoint(path, line)
+        if did_remove:
+            self.breakpoints.refresh(self._set_breakpoints(self.breakpoints.get_file(path)))
+
     def resume(self):
         """Resume this session. Does not block."""
         # we're going to need to list threads anyway in most cases
@@ -225,6 +231,20 @@ class Session:
         self.breakpoints.refresh(self._set_breakpoints(self.breakpoints.get_file(path)))
         return bp
 
+    def set_breakpoints_muted(self, breakpoints_muted: bool):
+        """Set all breakpoints to muted."""
+        self.breakpoints_muted = breakpoints_muted
+        # for every file we have
+        for file in self.breakpoints.list_files():
+            if self.breakpoints_muted:
+                # clear each file by sending a blank version of it
+                # DO NOT refresh our breakpoints internally
+                self._set_breakpoints(File(file.path))
+            else:
+                # re-send the real file to DAP if we're unmuting
+                # do refresh our breakpoints internally, this changes their IDs
+                self.breakpoints.refresh(self._set_breakpoints(file))
+
     def step(self, direction: StepDirection) -> None:
         """Step into, over, or out of the current thread."""
         self.assert_state(SessionState.PAUSED)
@@ -242,26 +262,6 @@ class Session:
         self._disconnect()
         if self.we_own:
             psutil.Process(self.debugee_pid).send_signal(SIGTERM)
-
-    def remove_breakpoint(self, path: Path, line: int) -> None:
-        """Remove a breakpoint. Idempotent, no-op on nonexistent breakpoint."""
-        did_remove = self.breakpoints.remove_breakpoint(path, line)
-        if did_remove:
-            self.breakpoints.refresh(self._set_breakpoints(self.breakpoints.get_file(path)))
-
-    def set_breakpoints_muted(self, breakpoints_muted: bool):
-        """Set all breakpoints to muted."""
-        self.breakpoints_muted = breakpoints_muted
-        # for every file we have
-        for file in self.breakpoints.list_files():
-            if self.breakpoints_muted:
-                # clear each file by sending a blank version of it
-                # DO NOT refresh our breakpoints internally
-                self._set_breakpoints(File(file.path))
-            else:
-                # re-send the real file to DAP if we're unmuting
-                # do refresh our breakpoints internally, this changes their IDs
-                self.breakpoints.refresh(self._set_breakpoints(file))
 
     def wait_for_pause(self):
         """Wait for the debugger to pause on a line on its own. Only blocks, does not send anything to DAP."""
