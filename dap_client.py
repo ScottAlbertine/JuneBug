@@ -23,14 +23,7 @@ class DAPClient:
     """
     CHUNK_SIZE = 65536
 
-    def __init__(
-        self,
-        session_id: str,
-        host: str,
-        port: int,
-        timeout: int,
-        handle_event: Callable[[Event | ErrorResponse], None],
-    ):
+    def __init__(self, session_id: str, host: str, port: int, timeout: int, handle_event: Callable[[Event], None]):
         """
         Timeout is in milliseconds.
         Every event this client receives from the DAP server, gets passed to `handle_event`, in order.
