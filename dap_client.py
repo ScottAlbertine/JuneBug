@@ -74,16 +74,7 @@ class DAPClient:
 
     def _pull_until(self, matcher: Callable[[Event], bool]) -> Event:
         """Pull events from the DAP client until the given matcher function returns true on an event, then return that event."""
-        if self._socket_closed:
-            # TODO: see if this is even possible to hit at all
-            raise SessionStoppedError()
-
         for event in self._event_iterator:
-
-            if self._socket_closed:
-                # TODO: see if this is even possible to hit at all
-                raise SessionStoppedError()
-
             print(event.model_dump_json(indent=2))  # for easy logging
 
             if isinstance(event, ErrorResponse):
@@ -97,6 +88,9 @@ class DAPClient:
 
             if matcher(event):
                 return event
+
+            if self._socket_closed:
+                raise SessionStoppedError()
 
     def attach(self) -> Event:
         """Attach to a running program."""
