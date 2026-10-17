@@ -131,7 +131,7 @@ class Session:
         """Remove a breakpoint. Idempotent, no-op on nonexistent breakpoint."""
         did_remove = self.breakpoints.remove_breakpoint(path, line)
         if did_remove:
-            self.breakpoints.refresh(self._client.set_breakpoints(self.breakpoints.get_file(path)))
+            self.breakpoints.refresh(self.set_breakpoints(self.breakpoints.get_file(path)))
 
     def resume(self):
         """Resume this session. Does not block."""
@@ -155,8 +155,17 @@ class Session:
         """Set a new breakpoint. See the docstring on the `Breakpoints` class to understand why this is so complex."""
         line_text = fetch_line_text(path, line)[:120]
         bp = self.breakpoints.add_breakpoint(path, line, line_text, condition, temporary, suspend_policy)
-        self.breakpoints.refresh(self._client.set_breakpoints(self.breakpoints.get_file(path)))
+        self.breakpoints.refresh(self.set_breakpoints(self.breakpoints.get_file(path)))
         return bp
+
+    def set_breakpoints(self, file: File) -> Event:
+        """
+        Send all breakpoints we're currently tracking in the given file, to DAP.
+        This wholly replaces all breakpoints in that file, in the DAP server.
+        Sadly, this is the *only* operation you can do with breakpoints in DAP, at all.
+        Pass in an empty file (with no breakpoints) to remove all breakpoints in that file.
+        """
+        return self._client.set_breakpoints(str(file.path), [bp.to_dap() for bp in file.list_breakpoints()])
 
     def set_breakpoints_muted(self, breakpoints_muted: bool):
         """Set all breakpoints to muted."""
@@ -166,11 +175,11 @@ class Session:
             if self.breakpoints_muted:
                 # clear each file by sending a blank version of it
                 # DO NOT refresh our breakpoints internally
-                self._client.set_breakpoints(File(file.path))
+                self.set_breakpoints(File(file.path))
             else:
                 # re-send the real file to DAP if we're unmuting
                 # do refresh our breakpoints internally, this changes their IDs
-                self.breakpoints.refresh(self._client.set_breakpoints(file))
+                self.breakpoints.refresh(self.set_breakpoints(file))
 
     def step(self, direction: StepDirection) -> None:
         """Step into, over, or out of the current thread."""

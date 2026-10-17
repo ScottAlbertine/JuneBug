@@ -5,7 +5,6 @@ from typing import Any, Callable, Iterator
 from dap import DAPClient as CrapClient, Event, InitializedEvent
 from dap.protocol import ErrorResponse
 
-from breakpoints import File
 from exceptions import DAPError, FrameNotFound, SessionStoppedError, ThreadNotFound
 from utils import connect_socket
 
@@ -152,10 +151,9 @@ class DAPClient:
                 raise FrameNotFound(frame_id)
             raise
 
-    # TODO: back this out a layer, it should take in a string and a list[dict[str, Any]]
-    def set_breakpoints(self, file: File) -> Event:
+    def set_breakpoints(self, path: str, breakpoints: list[dict[str, Any]]) -> Event:
         """Set breakpoints for a file."""
-        self._client.set_breakpoints({"path": str(file.path)}, [bp.to_dap() for bp in file.list_breakpoints()])
+        self._client.set_breakpoints({"path": path}, breakpoints)
         self._send()
         return self._pull_until(lambda e: e.event == "response" and e.body["command"] == "setBreakpoints")
 
