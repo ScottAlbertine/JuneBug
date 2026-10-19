@@ -50,7 +50,7 @@ async def test_set_breakpoint(client: Client) -> None:
 
     # check that the breakpoint was hit, based on thread state, stdout, and pid existence
     threads = await client.call_tool("list_threads", {"session_id": session_id})
-    assert threads.structured_content == {'threads': [MAIN_THREAD], 'total_count': 1}
+    assert threads.structured_content == {"threads": [MAIN_THREAD], "total_count": 1}
     assert Path(std_out_path).read_text() == "it started\n"
     assert psutil.Process(pid).is_running()
 
@@ -63,7 +63,7 @@ async def test_set_breakpoint(client: Client) -> None:
         ToolError, match=r"Session has stopped, no more tool calls can be made to its id. Start a new session instead.",
     ):
         threads = await client.call_tool("list_threads", {"session_id": session_id})
-    assert threads.structured_content == {'threads': [MAIN_THREAD], 'total_count': 1}
+    assert threads.structured_content == {"threads": [MAIN_THREAD], "total_count": 1}
     assert Path(std_out_path).read_text() == "it started\nit finished\n"
 
     # the process can take a while to change its status, give it 3 seconds to do so
@@ -127,5 +127,92 @@ async def test_set_breakpoint__temporary(client: Client) -> None:
     assert wait_for_done["current_position"] is None
 
     assert Path(std_out_path).read_text() == (
-        "it started\nloop number 0\nloop number 1\nloop number 2\nit finished\n"
+        "it started\nloop number 0\nloop number 1\nloop number 2\nloop number 3\nloop number 4\nit finished\n"
+    )
+
+
+async def test_breakpoint__conditional(client: Client) -> None:
+    start_response = await create_session(client, file_path=FAKE_MAIN_WITH_LOOP)
+    session_id = start_response["id"]
+    std_out_path = start_response["std_out_path"]
+
+    bp = await client.call_tool(
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_WITH_LOOP, "line": 5, "condition": "i > 2"},
+    )
+
+    expected_breakpoint = {
+        "type": "line",
+        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_loop.py",
+        "line": 5,
+        "line_text": '        print(f"loop number {i}", flush=True)\n',
+        "condition": "i > 2",
+        "temporary": False,
+        "hit_count": 0,
+    }
+
+    assert bp.structured_content == expected_breakpoint
+
+    wait_for_pause_1 = await move_to_next_breakpoint(client, session_id)
+    expected_breakpoint["hit_count"] += 1
+    assert wait_for_pause_1["current_position"] == expected_breakpoint
+
+    # Check that the condition was respected, and that we didn't hit it until i > 2
+    variables = await client.call_tool("list_variables", {"session_id": session_id})
+    assert variables.structured_content == {
+        "variables": [{"name": "i", "type": "int", "evaluate_name": "i", "value": "3", "children": None}],
+    }
+    assert Path(std_out_path).read_text() == "it started\nloop number 0\nloop number 1\nloop number 2\n"
+
+    # Hit it again, to check that it keeps applying
+    wait_for_pause_2 = await move_to_next_breakpoint(client, session_id)
+    expected_breakpoint["hit_count"] += 1
+    assert wait_for_pause_2["current_position"] == expected_breakpoint
+    assert Path(std_out_path).read_text() == "it started\nloop number 0\nloop number 1\nloop number 2\nloop number 3\n"
+
+
+async def test_breakpoint__temporary_conditional(client: Client) -> None:
+    start_response = await create_session(client, file_path=FAKE_MAIN_WITH_LOOP)
+    session_id = start_response["id"]
+    std_out_path = start_response["std_out_path"]
+
+    bp = await client.call_tool(
+        "set_breakpoint", {
+            "session_id": session_id,
+            "file_path": FAKE_MAIN_WITH_LOOP,
+            "line": 5,
+            "condition": "i > 2",
+            "temporary": True,
+        },
+    )
+
+    expected_breakpoint = {
+        "type": "line",
+        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_loop.py",
+        "line": 5,
+        "line_text": '        print(f"loop number {i}", flush=True)\n',
+        "condition": "i > 2",
+        "temporary": True,
+        "hit_count": 0,
+    }
+
+    assert bp.structured_content == expected_breakpoint
+
+    wait_for_pause_1 = await move_to_next_breakpoint(client, session_id)
+    expected_breakpoint["hit_count"] += 1
+    assert wait_for_pause_1["current_position"] == expected_breakpoint
+
+    # Check that the condition was respected, and that we didn't hit it until i > 2
+    variables = await client.call_tool("list_variables", {"session_id": session_id})
+    assert variables.structured_content == {
+        "variables": [{"name": "i", "type": "int", "evaluate_name": "i", "value": "3", "children": None}],
+    }
+    assert Path(std_out_path).read_text() == "it started\nloop number 0\nloop number 1\nloop number 2\n"
+
+    # Hit it again, to check that it doesn't keep applying
+    wait_for_done = await move_to_next_breakpoint(client, session_id)
+    assert wait_for_done["state"] == "stopped"
+    assert wait_for_done["current_position"] is None
+
+    assert Path(std_out_path).read_text() == (
+        "it started\nloop number 0\nloop number 1\nloop number 2\nloop number 3\nloop number 4\nit finished\n"
     )

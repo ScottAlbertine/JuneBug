@@ -1,7 +1,7 @@
 def main() -> None:
     print("it started", flush=True)
 
-    for i in range(3):
+    for i in range(5):
         print(f"loop number {i}", flush=True)
 
     print("it finished", flush=True)
