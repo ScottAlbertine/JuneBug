@@ -246,7 +246,10 @@ class Session:
         if event.event == "stopped":
             self.threads.set_current(event.body["threadId"])
             if hit_breakpoint_ids := event.body.get("hitBreakpointIds"):
-                self.current_position = self.breakpoints.get_breakpoint_by_id(hit_breakpoint_ids[0])
+                bp = self.breakpoints.get_breakpoint_by_id(hit_breakpoint_ids[0])
+                bp.hit_count += 1
+                self.current_position = bp
+
             self.state = SessionState.PAUSED
 
         if event.event == "terminated":

@@ -22,13 +22,13 @@ async def test_mute_breakpoints(client: Client) -> None:
 
     # resume, wait until pause, see that the program ran to completion and the session ended despite the breakpoints
     assert await move_to_next_breakpoint(client, session_id) == {
-        'id': session_id,
-        'state': 'stopped',
-        'debugee_pid': MatchAny(int),
-        'std_out_path': MatchAny(str),
-        'std_err_path': MatchAny(str),
-        'breakpoints_muted': True,
-        'current_position': None,
+        "id": session_id,
+        "state": "stopped",
+        "debugee_pid": MatchAny(int),
+        "std_out_path": MatchAny(str),
+        "std_err_path": MatchAny(str),
+        "breakpoints_muted": True,
+        "current_position": None,
     }
 
 
@@ -63,6 +63,6 @@ async def test_unmute_breakpoints(client: Client) -> None:
         "line": 7,
         "line_text": '    print("it started", flush=True)\n',
         "temporary": False,
-        "hit_count": 0,
+        "hit_count": 1,
     }
     assert updated_session["breakpoints_muted"] == False

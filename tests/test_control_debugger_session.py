@@ -112,7 +112,7 @@ async def test_wait_for_pause(client: Client) -> None:
             "line": 7,
             "line_text": '    print("it started", flush=True)\n',
             "temporary": False,
-            "hit_count": 0,
+            "hit_count": 1,
         },
     }
 
@@ -135,7 +135,7 @@ async def test_wait_for_pause(client: Client) -> None:
             "line": 13,
             "line_text": '    print("it finished", flush=True)\n',
             "temporary": False,
-            "hit_count": 0,
+            "hit_count": 1,
         },
     }
 
@@ -256,7 +256,7 @@ async def test_stepping(client: Client) -> None:
         "line": 35,
         "line_text": "    some_object = Car()\n",
         "temporary": False,
-        "hit_count": 0,
+        "hit_count": 1,
     }
 
     # --- step_into: enter Car.__init__() ---
