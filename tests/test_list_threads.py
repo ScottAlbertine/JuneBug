@@ -1,9 +1,11 @@
+from pathlib import Path
+
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
 import pytest
 
-from tests.constants import FAKE_MAIN, FAKE_MAIN_MULTI_THREAD, MAIN_THREAD
-from tests.utils import MatchAny, create_session, eventual_assert, move_to_next_breakpoint
+from tests.constants import FAKE_MAIN, FAKE_MAIN_MULTI_THREAD, FAKE_MAIN_THREAD_HANDOFF, MAIN_THREAD
+from tests.utils import MatchAny, MatchRegex, create_session, eventual_assert, move_to_next_breakpoint
 
 
 async def test_list_threads__invalid(client: Client) -> None:
@@ -95,3 +97,31 @@ async def test_running_threads(client: Client) -> None:
     await eventual_assert(
         all_threads_running, otherwise="Threads did not reach expected running state within 3 seconds",
     )
+
+
+async def test_thread_handoff(client: Client) -> None:
+    """
+    There's a unique thing you can do in Python where you can hand off to a second thread, and kill the main one.
+    This test ensures that our thread tracking stays accurate, even when using this technique.
+    """
+
+    session = await create_session(client, file_path=FAKE_MAIN_THREAD_HANDOFF)
+    session_id = session["id"]
+    std_out_path = session["std_out_path"]
+
+    await client.call_tool(
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_THREAD_HANDOFF, "line": 7},
+    )
+    await move_to_next_breakpoint(client, session_id)
+    # do this one more time to make sure the second thread is cycling
+    await move_to_next_breakpoint(client, session_id)
+
+    # check that the main thread exited via stdout
+    assert "This is the last line of main.py, and it has been run" in Path(std_out_path).read_text()
+
+    # check that we only have thread 2 at this point
+    threads = await client.call_tool("list_threads", {"session_id": session_id})
+    assert threads.structured_content == {
+        "threads": [{"id": MatchAny(int), "is_current": True, "name": MatchRegex(r".+worker.+"), "state": "paused"}],
+        "total_count": 1,
+    }
