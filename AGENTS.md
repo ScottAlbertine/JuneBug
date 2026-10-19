@@ -6,7 +6,7 @@ This is a `direnv` project (`.envrc` uses `layout python3`). The Python virtual 
 
 ## Main Code
 
-JuneBug is a [FastMCP](https://github.com/PrefectHQ/fastmcp) server that exposes 15 debugger tools over the MCP protocol. It wraps Python's DAP (Debug Adapter Protocol) implementation (`debugpy`/`dap`) to provide local and remote debugging capabilities.
+JuneBug is a [FastMCP](https://github.com/PrefectHQ/fastmcp) server that exposes 15 debugger tools over the MCP protocol. It speaks DAP (Debug Adapter Protocol) to provide local and remote debugging capabilities. This allows it to debug Python programs that are run in debug mode via `debugpy`.
 
 ### Architecture Overview
 
@@ -14,19 +14,19 @@ The code flows in four layers, top to bottom:
 
 1. **`main.py`** — FastMCP entry point. Creates the server (`FastMCP("JuneBug MCP Server")`), registers all 15 tools via `mcp.tool()`, and runs on HTTP transport at `127.0.0.1:9000`.
 2. **`tools/`** — 15 individual tool modules. Each is a plain function with `Annotated` parameters (from `annotations.py`) and a Pydantic model return type. Tools delegate to `session_service` or `Session`.
-3. **`session.py`** — Central orchestrator. Owns a `DAPClient`, manages session state (`SessionState` enum), handles breakpoints/threads/variables/stepping, and processes DAP events via `_handle_event()`.
-4. **`dap_client.py`** — DAP wrapper. Wraps the `dap` library's `DAPClient`, manages TCP socket lifecycle, auto-handles the initialize/attach handshake, and provides a send-then-pull pattern for every DAP command.
+3. **`session.py`** — Central orchestrator. Owns a `DAPClient`, manages session state (`SessionState` enum), handles breakpoints/threads/variables/stepping, and processes DAP messages via `_handle_message()`.
+4. **`dap/`** — Custom DAP client implementation. `dap/client.py` contains `DAPClient` — a TCP socket client that speaks DAP directly. It manages the socket lifecycle, auto-handles the initialize/attach handshake, and provides a send-then-pull pattern (`_send_request()` + `_pull_until()`) for every DAP command. DAP Messages returned from the client are plain `dict[str, Any]` typed as `Message` (defined in `constants.py`).
 
 ### Core Modules
 
 - **`session_service.py`** — Global session registry. Maintains `SESSIONS: dict[str, Session]` (shared in-memory across threads). Functions: `get_session()` (auto-selects if only one exists), `get_sessions()` (by project path), `attach_session()` (connect to existing process), `launch_session()` (spawns debugpy subprocess via `subprocess.Popen`).
-- **`breakpoints.py`** — `Breakpoints` class mirrors DAP's invisible internal indexes. Two dicts: files-by-path and breakpoints-by-id. DAP only exposes `setBreakpoints` and never lets you query back, so we track everything ourselves. `File` class holds breakpoints per-file, sorted by line. `refresh()` updates IDs from DAP responses.
-- **`threads.py`** — `Threads` class mirrors DAP's thread state. Tracks threads by ID, manages state via `refresh()` from `threads` requests and `update()` from thread events (started/paused/exited). Handles `allThreadsStopped`/`allThreadsContinued` broadcasts.
+- **`breakpoints.py`** — `Breakpoints` class mirrors DAP's invisible internal indexes. Two dicts: files-by-path and breakpoints-by-id. DAP only exposes `setBreakpoints` and never lets you query back, so we track everything ourselves. `File` class holds breakpoints per-file, sorted by line. `refresh()` updates IDs from DAP `Message` responses.
+- **`threads.py`** — `Threads` class mirrors DAP's thread state. Tracks threads by ID, manages state via `refresh()` from `threads` requests and `update()` from thread messages (started/paused/exited). Handles `allThreadsStopped`/`allThreadsContinued` broadcasts.
 - **`models.py`** — Pydantic `BaseModel` classes with detailed `Field` descriptions. Models: `Breakpoint` (with `to_dap()` and `floating()` factory), `Variable` (with `from_dap()`), `SessionStatus`, `StackFrame`, `Thread`, `StackFrames`, `ThreadsResponse`, `BreakpointsResponse`, `RunToLineResponse`, `SetVariableResponse`, `Variables`, `SessionStatuses`. All use `Annotated` with `Field` for MCP schema generation.
 - **`enums.py`** — Six enums: `Action` (step_into/over/out, resume, pause, stop, wait_for_pause), `BreakpointType` (line/exception/other), `DebuggerOutcome` (paused/stopped/timeout), `SessionState` (running/paused/stopped/unknown), `StepDirection` (into/over/out), `ThreadState` (running/paused/unknown).
-- **`exceptions.py`** — Custom exceptions with descriptive messages: `DebugpyInstallationFailed`, `DAPError` (wraps `ErrorResponse`), `FileNotFound`, `FrameNotFound`, `LineNotFound`, `MissingSessionId`, `SessionNotFound`, `SessionStateError`, `SessionStoppedError`, `ThreadNotFound`. These bubble up through FastMCP as `ToolError`.
+- **`exceptions.py`** — Custom exceptions with descriptive messages: `DebugpyInstallationFailed`, `DAPError` (wraps a `Message` dict from DAP), `FileNotFound`, `FrameNotFound`, `LineNotFound`, `MissingSessionId`, `SessionNotFound`, `SessionStateError`, `SessionStoppedError`, `ThreadNotFound`. These bubble up through FastMCP as `ToolError`.
 - **`annotations.py`** — Shared `Annotated` parameter types reused across tools: `ProjectPath`, `SessionID` (nullable, auto-selects on single session), `FilePath` (supports relative, absolute, `file://`), `LineNum` (1-based), `FrameID` (nullable, defaults to current frame).
-- **`constants.py`** — `TEMP_DIR = Path(gettempdir())` for stdout/stderr temp files.
+- **`constants.py`** — `TEMP_DIR = Path(gettempdir())` for stdout/stderr temp files, and `Message = dict[str, Any]` type alias for DAP messages.
 - **`utils.py`** — `install_debugpy()` (checks and pip-installs), `find_free_port()` (socket bind trick), `connect_socket()` (retry loop, 100ms intervals), `normalize_file_path()` (handles relative/absolute/`file://`), `fetch_line_text()` (uses `islice` for single-line read).
 
 ### Tool Pattern

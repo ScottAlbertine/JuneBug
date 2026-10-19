@@ -1,7 +1,5 @@
 """Data structure for storing the tracked threads under a given `Session`."""
-
-from dap import Event
-
+from constants import Message
 from enums import ThreadState
 from models import Thread
 
@@ -21,14 +19,14 @@ class Threads:
         # Shortcut, to save on time
         self._current_thread_id: int | None = None
 
-    def refresh(self, dap_threads_response: Event) -> list[Thread]:
+    def refresh(self, dap_threads_response: Message) -> list[Thread]:
         """
         Refresh our registry of tracked threads based DAP's response to a 'threads' request.
         Returns all the threads we're tracking, after the refresh, sorted by id.
         """
         # remove any thread that doesn't show up on an update.
         to_remove = set(self._threads.keys())
-        for dap_thread in dap_threads_response.body["body"]["threads"]:
+        for dap_thread in dap_threads_response["body"]["threads"]:
             thread_id: int = dap_thread["id"]
             thread_name: str = dap_thread["name"]
             if thread_id in self._threads:
@@ -48,9 +46,9 @@ class Threads:
 
         return [self._threads[thread_id] for thread_id in sorted(self._threads.keys())]
 
-    def update(self, dap_thread_event: Event) -> None:
+    def update(self, dap_thread_event: Message) -> None:
         """Update a single thread based on a 'thread' event from DAP."""
-        body = dap_thread_event.body
+        body = dap_thread_event["body"]
         thread_id = body["threadId"]
         reason = body.get("reason")
         if reason == "exited":
@@ -88,4 +86,3 @@ class Threads:
 
     def get_current_thread_id(self) -> int | None:
         return self._current_thread_id
-

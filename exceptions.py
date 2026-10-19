@@ -1,7 +1,6 @@
 from pathlib import Path
 
-from dap.protocol import ErrorResponse
-
+from constants import Message
 from enums import SessionState
 
 
@@ -17,9 +16,11 @@ class DebugpyInstallationFailed(Exception):
 class DAPError(Exception):
     """Generic exception representing an `ErrorResponse` from the DAP client."""
 
-    def __init__(self, event: ErrorResponse):
-        self.event = event
-        super().__init__(f"DAP Error from command {event.command}: {event.message}")
+    def __init__(self, message: Message):
+        self.message = message
+        command = message.get("command")
+        error_message = message.get("message")
+        super().__init__(f"DAP Error from command {command}: {error_message}")
 
 
 class FileNotFound(Exception):
