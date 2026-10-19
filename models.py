@@ -3,7 +3,7 @@ from typing import Annotated, Any
 
 from pydantic import BaseModel, Field
 
-from enums import BreakpointType, DebuggerOutcome, SessionState, ThreadState
+from enums import DebuggerOutcome, SessionState, ThreadState
 from utils import fetch_line_text
 
 
@@ -12,7 +12,6 @@ class Breakpoint(BaseModel):
 
     # `id` is excluded because it's unstable. All IDs change anytime we mute/unmute all breakpoints, for example
     id: Annotated[int | None, Field(description="Breakpoint id.", exclude=True)]
-    type: Annotated[BreakpointType, Field(description="Breakpoint type (line/exception/other).")]
     file: Annotated[Path, Field(default=None, description="File path of the breakpoint.")]
     line: Annotated[int, Field(default=None, description="1-based breakpoint line number.")]
     line_text: Annotated[
@@ -47,7 +46,6 @@ class Breakpoint(BaseModel):
         """
         return cls(
             id=None,
-            type=BreakpointType.LINE,
             file=path,
             line=line,
             line_text=fetch_line_text(path, line),

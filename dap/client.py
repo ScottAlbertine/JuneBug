@@ -33,9 +33,9 @@ class DAPClient:
                 "clientName": "JuneBug",
                 "locale": "en-US",
                 "adapterID": None,
-                # "linesStartAt1": linesStartAt1,
-                # "columnsStartAt1": columnsStartAt1,
-                # "pathFormat": pathFormat,
+                "linesStartAt1": True,
+                "columnsStartAt1": True,
+                "pathFormat": "path",
                 # "supportsVariableType": supportsVariableType,
                 # "supportsVariablePaging": supportsVariablePaging,
                 # "supportsRunInTerminalRequest": supportsRunInTerminalRequest,
@@ -50,7 +50,8 @@ class DAPClient:
             lambda m: m.get("type") == "response" and m.get("command") == "initialize",
         )
 
-        # TODO: actually use this response ^, it's the whole reason we ate the lib
+        initialize_body = initialize_response.get("body", {})
+        self.exception_breakpoint_filters: list[dict[str, Any]] = initialize_body.get("exceptionBreakpointFilters", [])
 
         # nothing can happen until we attach, let's do that automatically
         self.attach()
@@ -182,7 +183,7 @@ class DAPClient:
     def set_exception_breakpoints(self, filters: list[str]) -> Message:
         """Set exception breakpoints."""
         self._send_request("setExceptionBreakpoints", {"filters": filters})
-        return self._pull_until(lambda m: True)
+        return self._pull_until(lambda m: m.get("type") == "response" and m.get("command") == "setExceptionBreakpoints")
 
     def set_function_breakpoints(self, breakpoints: list[dict[str, Any]]) -> Message:
         """Set function breakpoints."""

@@ -36,7 +36,6 @@ async def test_set_breakpoint(client: Client) -> None:
     )
 
     assert breakpoint_response.structured_content == {
-        "type": "line",
         "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
         "line": 13,
         "line_text": '    print("it finished", flush=True)\n',
@@ -89,7 +88,6 @@ async def test_set_breakpoint__odd_file_paths(client: Client, file_to_breakpoint
         "set_breakpoint", {"session_id": session_id, "file_path": file_to_breakpoint, "line": 13},
     )
     assert breakpoint_response.structured_content == {
-        "type": "line",
         "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
         "line": 13,
         "line_text": '    print("it finished", flush=True)\n',
@@ -108,7 +106,6 @@ async def test_set_breakpoint__temporary(client: Client) -> None:
     )
 
     expected_breakpoint = {
-        "type": "line",
         "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_loop.py",
         "line": 5,
         "line_text": '        print(f"loop number {i}", flush=True)\n',
@@ -141,7 +138,6 @@ async def test_breakpoint__conditional(client: Client) -> None:
     )
 
     expected_breakpoint = {
-        "type": "line",
         "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_loop.py",
         "line": 5,
         "line_text": '        print(f"loop number {i}", flush=True)\n',
@@ -186,7 +182,6 @@ async def test_breakpoint__temporary_conditional(client: Client) -> None:
     )
 
     expected_breakpoint = {
-        "type": "line",
         "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_loop.py",
         "line": 5,
         "line_text": '        print(f"loop number {i}", flush=True)\n',

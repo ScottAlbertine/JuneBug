@@ -61,7 +61,6 @@ async def test_get_real_sessions(client: Client, clear_sessions: None) -> None:
             {
                 "breakpoints_muted": False,
                 "current_position": {
-                    "type": "line",
                     "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
                     "line": 13,
                     "line_text": '    print("it finished", flush=True)\n',

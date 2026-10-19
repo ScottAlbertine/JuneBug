@@ -17,7 +17,6 @@ async def test_remove_breakpoint(client: Client) -> None:
     )
 
     breakpoint_1 = {
-        "type": "line",
         "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
         "line": 7,
         "line_text": '    print("it started", flush=True)\n',
@@ -25,7 +24,6 @@ async def test_remove_breakpoint(client: Client) -> None:
         "hit_count": 0,
     }
     breakpoint_2 = {
-        "type": "line",
         "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
         "line": 13,
         "line_text": '    print("it finished", flush=True)\n',

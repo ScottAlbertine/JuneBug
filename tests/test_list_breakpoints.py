@@ -25,7 +25,6 @@ async def test_list_breakpoints(client: Client) -> None:
     )
 
     breakpoint_1 = {
-        "type": "line",
         "file": f"{PROJECT_ROOT}/tests/fakes/fake_library.py",
         "line": 2,
         "line_text": "    return a + b\n",
@@ -33,7 +32,6 @@ async def test_list_breakpoints(client: Client) -> None:
         "hit_count": 0,
     }
     breakpoint_2 = {
-        "type": "line",
         "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_import.py",
         "line": 8,
         "line_text": '    print("it started", flush=True)\n',
@@ -41,7 +39,6 @@ async def test_list_breakpoints(client: Client) -> None:
         "hit_count": 0,
     }
     breakpoint_3 = {
-        "type": "line",
         "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_import.py",
         "line": 13,
         "line_text": '    print("it finished", flush=True)\n',

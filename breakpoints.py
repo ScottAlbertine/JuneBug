@@ -2,7 +2,6 @@
 from pathlib import Path
 
 from constants import Message
-from enums import BreakpointType
 from models import Breakpoint
 
 
@@ -55,7 +54,6 @@ class Breakpoints:
     ) -> Breakpoint:
         bp = Breakpoint(
             id=None,  # for now
-            type=BreakpointType.LINE,
             file=path,
             line=line,
             line_text=line_text,
