@@ -15,7 +15,7 @@ The code flows in four layers, top to bottom:
 1. **`main.py`** — FastMCP entry point. Creates the server (`FastMCP("JuneBug MCP Server")`), registers all 15 tools via `mcp.tool()`, and runs on HTTP transport at `127.0.0.1:9000`.
 2. **`tools/`** — 15 individual tool modules. Each is a plain function with `Annotated` parameters (from `annotations.py`) and a Pydantic model return type. Tools delegate to `session_service` or `Session`.
 3. **`session.py`** — Central orchestrator. Owns a `DAPClient`, manages session state (`SessionState` enum), handles breakpoints/threads/variables/stepping, and processes DAP events via `_handle_event()`.
-4. **`dap_client.py`** — DAP wrapper. Wraps the `dap` library's `DAPClient`, manages TCP socket lifecycle, auto-handles the initialize/attach handshake, and provides a send-then-pull pattern for every DAP command.
+4. **`dap_client/client.py`** — DAP wrapper. Wraps the `dap` library's `DAPClient`, manages TCP socket lifecycle, auto-handles the initialize/attach handshake, and provides a send-then-pull pattern for every DAP command.
 
 ### Core Modules
 

@@ -7,7 +7,7 @@ import psutil
 
 from breakpoints import Breakpoints, File
 from constants import TEMP_DIR
-from dap_client import DAPClient
+from dap_client.client import DAPClient
 from enums import SessionState, StepDirection
 from exceptions import SessionStateError
 from models import Breakpoint, SessionStatus, StackFrame, StackFrames, Thread, Variable
@@ -17,7 +17,6 @@ from utils import fetch_line_text
 
 class Session:
     """A debug session, equivalent to a debugger instance like a `pdb` process or a PyCharm debugger tab."""
-    CHUNK_SIZE = 65536
 
     def __init__(
         self,
