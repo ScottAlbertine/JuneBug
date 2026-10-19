@@ -128,7 +128,7 @@ async def test_set_breakpoint__temporary(client: Client) -> None:
     )
 
 
-async def test_breakpoint__conditional(client: Client) -> None:
+async def test_set_breakpoint__conditional(client: Client) -> None:
     start_response = await create_session(client, file_path=FAKE_MAIN_WITH_LOOP)
     session_id = start_response["id"]
     std_out_path = start_response["std_out_path"]
@@ -166,7 +166,7 @@ async def test_breakpoint__conditional(client: Client) -> None:
     assert Path(std_out_path).read_text() == "it started\nloop number 0\nloop number 1\nloop number 2\nloop number 3\n"
 
 
-async def test_breakpoint__temporary_conditional(client: Client) -> None:
+async def test_set_breakpoint__temporary_conditional(client: Client) -> None:
     start_response = await create_session(client, file_path=FAKE_MAIN_WITH_LOOP)
     session_id = start_response["id"]
     std_out_path = start_response["std_out_path"]
@@ -211,3 +211,48 @@ async def test_breakpoint__temporary_conditional(client: Client) -> None:
     assert Path(std_out_path).read_text() == (
         "it started\nloop number 0\nloop number 1\nloop number 2\nloop number 3\nloop number 4\nit finished\n"
     )
+
+
+async def test_set_breakpoint__update_condition(client: Client) -> None:
+    start_response = await create_session(client, file_path=FAKE_MAIN_WITH_LOOP)
+    session_id = start_response["id"]
+    std_out_path = start_response["std_out_path"]
+
+    bp = await client.call_tool(
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_WITH_LOOP, "line": 5},
+    )
+
+    expected_breakpoint = {
+        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_loop.py",
+        "line": 5,
+        "line_text": '        print(f"loop number {i}", flush=True)\n',
+        "temporary": False,
+        "hit_count": 0,
+    }
+
+    assert bp.structured_content == expected_breakpoint
+
+    wait_for_pause_1 = await move_to_next_breakpoint(client, session_id)
+    expected_breakpoint["hit_count"] += 1
+    assert wait_for_pause_1["current_position"] == expected_breakpoint
+
+    # Check that no condition was used
+    variables = await client.call_tool("list_variables", {"session_id": session_id})
+    assert variables.structured_content == {
+        "variables": [{"name": "i", "type": "int", "evaluate_name": "i", "value": "0", "children": None}],
+    }
+    assert Path(std_out_path).read_text() == "it started\n"
+
+    # Update that breakpoint to have a condition
+    bp = await client.call_tool(
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_WITH_LOOP, "line": 5, "condition": "i > 2"},
+    )
+    expected_breakpoint["hit_count"] = 0  # new breakpoint, hasn't been hit yet
+    expected_breakpoint["condition"] = "i > 2"
+    assert bp.structured_content == expected_breakpoint
+
+    # Hit it again, to check that the newly added condition applies
+    wait_for_pause_2 = await move_to_next_breakpoint(client, session_id)
+    expected_breakpoint["hit_count"] += 1
+    assert wait_for_pause_2["current_position"] == expected_breakpoint
+    assert Path(std_out_path).read_text() == "it started\nloop number 0\nloop number 1\nloop number 2\n"
