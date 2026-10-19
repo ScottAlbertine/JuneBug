@@ -1,8 +1,7 @@
 """Data structure for storing the tracked breakpoints under a given `Session`."""
 from pathlib import Path
 
-from dap import Event
-
+from constants import Message
 from enums import BreakpointType
 from models import Breakpoint
 
@@ -102,13 +101,13 @@ class Breakpoints:
         self._breakpoints.pop(bp.id, None)
         return True
 
-    def refresh(self, dap_set_breakpoints_response: Event) -> None:
+    def refresh(self, dap_set_breakpoints_response: Message) -> None:
         """
         Refresh our registries of tracked breakpoints based DAP's response to a 'setBreakpoints' request.
         Right now, all we have to do here is set the newly returned IDs on `self._breakpoints`.
         In the future, we might need to add or remove breakpoints from our list of breakpoints in the file, as well, depending on what comes back.
         """
-        for dap_breakpoint in dap_set_breakpoints_response.body["body"]["breakpoints"]:
+        for dap_breakpoint in dap_set_breakpoints_response["body"]["breakpoints"]:
             bp = self.get_breakpoint(Path(dap_breakpoint["source"]["path"]), dap_breakpoint["line"])
             bp.id = dap_breakpoint["id"]
             self._breakpoints[bp.id] = bp

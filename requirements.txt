@@ -1,4 +1,3 @@
-dap-python==1.0.1
 fastmcp==4.1.0
 psutil==7.2.2
 pydantic==2.14.1

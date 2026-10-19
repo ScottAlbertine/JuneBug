@@ -2,12 +2,11 @@
 from pathlib import Path
 from signal import SIGTERM
 
-from dap import Event
 import psutil
 
 from breakpoints import Breakpoints, File
-from constants import TEMP_DIR
-from dap_client.client import DAPClient
+from constants import Message, TEMP_DIR
+from dap import DAPClient
 from enums import SessionState, StepDirection
 from exceptions import SessionStateError
 from models import Breakpoint, SessionStatus, StackFrame, StackFrames, Thread, Variable
@@ -42,7 +41,7 @@ class Session:
         self.threads = Threads()
         self.we_own = we_own
 
-        self._client = DAPClient(session_id, host, port, timeout, self._handle_event)
+        self._client = DAPClient(session_id, host, port, timeout, self._handle_message)
 
         # always get the initial registry of threads at this point, because we can.
         self.list_threads()
@@ -74,7 +73,7 @@ class Session:
         """
         if thread_id is None:
             raise Exception("No thread ID specified, and there is no current thread listed.")
-        dap_stack_trace = self._client.stack_trace(thread_id, limit, offset).body["body"]
+        dap_stack_trace = self._client.stack_trace(thread_id, limit, offset)["body"]
         frames = [StackFrame.from_dap(frame) for frame in dap_stack_trace["stackFrames"]]
         return StackFrames(frames=frames, thread_id=thread_id, total_frames=dap_stack_trace["totalFrames"])
 
@@ -107,7 +106,7 @@ class Session:
 
         self.assert_state(SessionState.PAUSED)
         scope_ids: list[int] = [
-            dap_scope["variablesReference"] for dap_scope in self._client.scopes(frame_id).body["body"]["scopes"]
+            dap_scope["variablesReference"] for dap_scope in self._client.scopes(frame_id)["body"]["scopes"]
         ]
 
         variables: list[Variable] = []
@@ -135,7 +134,7 @@ class Session:
     def resume(self):
         """Resume this session. Does not block."""
         # we're going to need to list threads anyway in most cases
-        # and listing threads pulls the latest events to update our state and current_position, which we then check
+        # and listing threads pulls the latest messages to update our state and current_position, which we then check
         threads = self.list_threads()
         if self.state == SessionState.RUNNING:
             return  # Don't double run
@@ -155,7 +154,7 @@ class Session:
         self.breakpoints.refresh(self.set_breakpoints(self.breakpoints.get_file(path)))
         return bp
 
-    def set_breakpoints(self, file: File) -> Event:
+    def set_breakpoints(self, file: File) -> Message:
         """
         Send all breakpoints we're currently tracking in the given file, to DAP.
         This wholly replaces all breakpoints in that file, in the DAP server.
@@ -227,24 +226,26 @@ class Session:
         if depth == 0 or variable_id == 0 or output is None:
             return
 
-        for dap_variable in self._client.variables(variable_id).body["body"]["variables"]:
+        for dap_variable in self._client.variables(variable_id)["body"]["variables"]:
             child = Variable.from_dap(dap_variable)
             # All the variables we want to hide by default, in python, luckily, do not have a type
             if child.type or show_hidden:
                 output.append(child)
                 self._fetch_variable_children(child.id, child.children, show_hidden, depth - 1)
 
-    def _handle_event(self, event: Event) -> None:
+    def _handle_message(self, message: Message) -> None:
         """
-        Handle any state updates that need to happen when we see certain events.
-        This sees every event that we pull, in order.
+        Handle any state updates that need to happen when we see certain messages.
+        This sees every message that the DAP server sends to us, in order.
         """
-        if event.body is not None and "threadId" in event.body:
-            self.threads.update(event)
+        body = message.get("body")
+        if body is not None and "threadId" in body:
+            self.threads.update(message)
 
-        if event.event == "stopped":
-            self.threads.set_current(event.body["threadId"])
-            if hit_breakpoint_ids := event.body.get("hitBreakpointIds"):
+        event = message.get("event")
+        if event == "stopped":
+            self.threads.set_current(body["threadId"])
+            if hit_breakpoint_ids := body.get("hitBreakpointIds"):
                 bp = self.breakpoints.get_breakpoint_by_id(hit_breakpoint_ids[0])
                 bp.hit_count += 1
                 self.current_position = bp
@@ -253,8 +254,8 @@ class Session:
 
             self.state = SessionState.PAUSED
 
-        if event.event == "terminated":
+        if event == "terminated":
             self.state = SessionState.STOPPED
             self.current_position = None  # don't report bad data from a stopped session
 
-        # TODO: handle other passive events that update our internal model of the debugger's state here
+        # TODO: handle other passive messages that update our internal model of the debugger's state here
