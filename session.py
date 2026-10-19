@@ -249,6 +249,8 @@ class Session:
                 bp = self.breakpoints.get_breakpoint_by_id(hit_breakpoint_ids[0])
                 bp.hit_count += 1
                 self.current_position = bp
+                if bp.temporary:
+                    self.remove_breakpoint(bp.file, bp.line)
 
             self.state = SessionState.PAUSED
 

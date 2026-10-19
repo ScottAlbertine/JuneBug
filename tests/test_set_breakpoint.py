@@ -5,7 +5,7 @@ from fastmcp.exceptions import ToolError
 import psutil
 import pytest
 
-from tests.constants import FAKE_MAIN, MAIN_THREAD, PROJECT_ROOT
+from tests.constants import FAKE_MAIN, FAKE_MAIN_WITH_LOOP, MAIN_THREAD, PROJECT_ROOT
 import tests.fakes.fake_main as fake_main
 from tests.utils import create_session, eventual_assert, move_to_next_breakpoint
 
@@ -96,3 +96,36 @@ async def test_set_breakpoint__odd_file_paths(client: Client, file_to_breakpoint
         "temporary": False,
         "hit_count": 0,
     }
+
+
+async def test_set_breakpoint__temporary(client: Client) -> None:
+    start_response = await create_session(client, file_path=FAKE_MAIN_WITH_LOOP)
+    session_id = start_response["id"]
+    std_out_path = start_response["std_out_path"]
+
+    bp = await client.call_tool(
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_WITH_LOOP, "line": 5, "temporary": True},
+    )
+
+    expected_breakpoint = {
+        "type": "line",
+        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_loop.py",
+        "line": 5,
+        "line_text": '        print(f"loop number {i}", flush=True)\n',
+        "temporary": True,
+        "hit_count": 0,
+    }
+
+    assert bp.structured_content == expected_breakpoint
+
+    wait_for_pause = await move_to_next_breakpoint(client, session_id)
+    expected_breakpoint["hit_count"] += 1
+    assert wait_for_pause["current_position"] == expected_breakpoint
+
+    wait_for_done = await move_to_next_breakpoint(client, session_id)
+    assert wait_for_done["state"] == "stopped"
+    assert wait_for_done["current_position"] is None
+
+    assert Path(std_out_path).read_text() == (
+        "it started\nloop number 0\nloop number 1\nloop number 2\nit finished\n"
+    )
