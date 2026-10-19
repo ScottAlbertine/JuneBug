@@ -56,7 +56,6 @@ async def test_resume_and_pause(client: Client) -> None:
         "line": 38,
         "line_text": "        sleep(1)\n",
         "temporary": True,
-        "suspend_policy": "all",
         "hit_count": 1,
     }
 
@@ -114,7 +113,6 @@ async def test_wait_for_pause(client: Client) -> None:
             "line_text": '    print("it started", flush=True)\n',
             "temporary": False,
             "hit_count": 0,
-            "suspend_policy": "all",
         },
     }
 
@@ -138,7 +136,6 @@ async def test_wait_for_pause(client: Client) -> None:
             "line_text": '    print("it finished", flush=True)\n',
             "temporary": False,
             "hit_count": 0,
-            "suspend_policy": "all",
         },
     }
 
@@ -259,7 +256,6 @@ async def test_stepping(client: Client) -> None:
         "line": 35,
         "line_text": "    some_object = Car()\n",
         "temporary": False,
-        "suspend_policy": "all",
         "hit_count": 0,
     }
 
@@ -272,7 +268,6 @@ async def test_stepping(client: Client) -> None:
         "line": 22,
         "line_text": "        self.color = Color.RED\n",
         "temporary": True,
-        "suspend_policy": "all",
         "hit_count": 1,
     }
 
@@ -287,7 +282,6 @@ async def test_stepping(client: Client) -> None:
         "line": 23,
         "line_text": '        self.name = "Greased Lightning"\n',
         "temporary": True,
-        "suspend_policy": "all",
         "hit_count": 1,
     }
 
@@ -302,7 +296,6 @@ async def test_stepping(client: Client) -> None:
         "line": 35,
         "line_text": "    some_object = Car()\n",
         "temporary": True,
-        "suspend_policy": "all",
         "hit_count": 1,
     }
 

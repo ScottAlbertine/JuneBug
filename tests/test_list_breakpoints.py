@@ -30,7 +30,6 @@ async def test_list_breakpoints(client: Client) -> None:
         "line": 2,
         "line_text": "    return a + b\n",
         "temporary": False,
-        "suspend_policy": "all",
         "hit_count": 0,
     }
     breakpoint_2 = {
@@ -39,7 +38,6 @@ async def test_list_breakpoints(client: Client) -> None:
         "line": 8,
         "line_text": '    print("it started", flush=True)\n',
         "temporary": False,
-        "suspend_policy": "all",
         "hit_count": 0,
     }
     breakpoint_3 = {
@@ -48,7 +46,6 @@ async def test_list_breakpoints(client: Client) -> None:
         "line": 13,
         "line_text": '    print("it finished", flush=True)\n',
         "temporary": False,
-        "suspend_policy": "all",
         "hit_count": 0,
     }
     all_breakpoints = await client.call_tool("list_breakpoints", {"session_id": session_id})

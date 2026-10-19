@@ -1,7 +1,6 @@
 from typing import Annotated
 
 from annotations import FilePath, LineNum, SessionID
-from enums import SuspendPolicy
 from models import Breakpoint
 import session_service
 from utils import normalize_file_path
@@ -16,7 +15,6 @@ def set_breakpoint(
         "Optional condition expression - breakpoint will only trigger when this evaluates to true. Default: null.",
     ] = None,
     temporary: Annotated[bool, "Temporary breakpoint (removed after first hit). Default: false."] = False,
-    suspend_policy: Annotated[SuspendPolicy, "Suspend policy: all, thread, none. Default: all."] = SuspendPolicy.ALL,
 ) -> Breakpoint:
     """
     Creates a breakpoint.
@@ -34,4 +32,4 @@ def set_breakpoint(
     """
     session = session_service.get_session(session_id)
     path = normalize_file_path(session.project_path, file_path)
-    return session.set_breakpoint(path, line, condition, temporary, suspend_policy)
+    return session.set_breakpoint(path, line, condition, temporary)

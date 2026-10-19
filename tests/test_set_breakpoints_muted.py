@@ -64,6 +64,5 @@ async def test_unmute_breakpoints(client: Client) -> None:
         "line_text": '    print("it started", flush=True)\n',
         "temporary": False,
         "hit_count": 0,
-        "suspend_policy": "all",
     }
     assert updated_session["breakpoints_muted"] == False

@@ -22,7 +22,7 @@ def list_breakpoints(
 
     Behavior:
     - If `file_path` is provided, returns only breakpoints in that file.
-    - Returns rich attributes for each breakpoint (type, file, line, line_text, condition, temporary, suspend_policy, hit_count).
+    - Returns rich attributes for each breakpoint (type, file, line, line_text, condition, temporary, hit_count).
     - `breakpoints_muted` reports the session-wide debugger mute flag.
 
     Next call:

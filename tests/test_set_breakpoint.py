@@ -41,7 +41,6 @@ async def test_set_breakpoint(client: Client) -> None:
         "line": 13,
         "line_text": '    print("it finished", flush=True)\n',
         "temporary": False,
-        "suspend_policy": "all",
         "hit_count": 0,
     }
 
@@ -95,6 +94,5 @@ async def test_set_breakpoint__odd_file_paths(client: Client, file_to_breakpoint
         "line": 13,
         "line_text": '    print("it finished", flush=True)\n',
         "temporary": False,
-        "suspend_policy": "all",
         "hit_count": 0,
     }

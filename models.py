@@ -3,7 +3,7 @@ from typing import Annotated, Any
 
 from pydantic import BaseModel, Field
 
-from enums import BreakpointType, DebuggerOutcome, SessionState, SuspendPolicy, ThreadState
+from enums import BreakpointType, DebuggerOutcome, SessionState, ThreadState
 from utils import fetch_line_text
 
 
@@ -32,7 +32,6 @@ class Breakpoint(BaseModel):
         ),
     ] = None
     temporary: Annotated[bool, Field(description="Whether breakpoint is temporary.")]
-    suspend_policy: Annotated[SuspendPolicy, Field(description="Breakpoint suspend policy (all/thread/none).")]
     hit_count: Annotated[int, Field(description="Breakpoint hit count, 0 when unavailable.")]
 
     def to_dap(self) -> dict[str, Any]:
@@ -54,7 +53,6 @@ class Breakpoint(BaseModel):
             line_text=fetch_line_text(path, line),
             condition=None,
             temporary=True,
-            suspend_policy=SuspendPolicy.ALL,
             hit_count=1,
         )
 

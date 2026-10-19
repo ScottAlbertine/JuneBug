@@ -8,7 +8,7 @@ import psutil
 from breakpoints import Breakpoints, File
 from constants import TEMP_DIR
 from dap_client import DAPClient
-from enums import SessionState, StepDirection, SuspendPolicy
+from enums import SessionState, StepDirection
 from exceptions import SessionStateError
 from models import Breakpoint, SessionStatus, StackFrame, StackFrames, Thread, Variable
 from threads import Threads
@@ -149,12 +149,10 @@ class Session:
         self.current_position = None
         self.state = SessionState.RUNNING
 
-    def set_breakpoint(
-        self, path: Path, line: int, condition: str | None, temporary: bool, suspend_policy: SuspendPolicy,
-    ) -> Breakpoint:
+    def set_breakpoint(self, path: Path, line: int, condition: str | None, temporary: bool) -> Breakpoint:
         """Set a new breakpoint. See the docstring on the `Breakpoints` class to understand why this is so complex."""
         line_text = fetch_line_text(path, line)[:120]
-        bp = self.breakpoints.add_breakpoint(path, line, line_text, condition, temporary, suspend_policy)
+        bp = self.breakpoints.add_breakpoint(path, line, line_text, condition, temporary)
         self.breakpoints.refresh(self.set_breakpoints(self.breakpoints.get_file(path)))
         return bp
 

@@ -67,7 +67,6 @@ async def test_get_real_sessions(client: Client, clear_sessions: None) -> None:
                     "line_text": '    print("it finished", flush=True)\n',
                     "hit_count": 0,
                     "temporary": False,
-                    "suspend_policy": "all",
                 },
                 "debugee_pid": MatchAny(int),
                 "id": session_id_0,

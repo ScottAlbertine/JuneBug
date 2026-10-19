@@ -3,7 +3,7 @@ from pathlib import Path
 
 from dap import Event
 
-from enums import BreakpointType, SuspendPolicy
+from enums import BreakpointType
 from models import Breakpoint
 
 
@@ -52,13 +52,7 @@ class Breakpoints:
         self._breakpoints: dict[int, Breakpoint] = {}
 
     def add_breakpoint(
-        self,
-        path: Path,
-        line: int,
-        line_text: str,
-        condition: str | None,
-        temporary: bool,
-        suspend_policy: SuspendPolicy,
+        self, path: Path, line: int, line_text: str, condition: str | None, temporary: bool,
     ) -> Breakpoint:
         bp = Breakpoint(
             id=None,  # for now
@@ -68,7 +62,6 @@ class Breakpoints:
             line_text=line_text,
             condition=condition,
             temporary=temporary,
-            suspend_policy=suspend_policy,
             hit_count=0,
         )
         self.get_file(path).add_breakpoint(bp)

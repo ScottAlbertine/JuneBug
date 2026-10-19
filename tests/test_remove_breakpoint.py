@@ -22,7 +22,6 @@ async def test_remove_breakpoint(client: Client) -> None:
         "line": 7,
         "line_text": '    print("it started", flush=True)\n',
         "temporary": False,
-        "suspend_policy": "all",
         "hit_count": 0,
     }
     breakpoint_2 = {
@@ -31,7 +30,6 @@ async def test_remove_breakpoint(client: Client) -> None:
         "line": 13,
         "line_text": '    print("it finished", flush=True)\n',
         "temporary": False,
-        "suspend_policy": "all",
         "hit_count": 0,
     }
 
