@@ -11,18 +11,6 @@ class Action(Enum):
     WAIT_FOR_PAUSE = "wait_for_pause"
 
 
-class BreakpointType(Enum):
-    LINE = "line"
-    EXCEPTION = "exception"
-    OTHER = "other"
-
-
-class DebuggerOutcome(Enum):
-    PAUSED = "paused"
-    STOPPED = "stopped"
-    TIMEOUT = "timeout"
-
-
 class SessionState(Enum):
     RUNNING = "running"
     PAUSED = "paused"
@@ -34,12 +22,6 @@ class StepDirection(Enum):
     INTO = "into"
     OVER = "over"
     OUT = "out"
-
-
-class SuspendPolicy(Enum):
-    ALL = "all"
-    THREAD = "thread"
-    NONE = "none"
 
 
 class ThreadState(Enum):

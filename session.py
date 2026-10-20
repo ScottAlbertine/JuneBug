@@ -147,7 +147,27 @@ class Session:
         self.current_position = None
         self.state = SessionState.RUNNING
 
-    def set_breakpoint(self, path: Path, line: int, condition: str | None, temporary: bool) -> Breakpoint:
+    def run_to_line(self, path: Path, line: int) -> None:
+        """
+        Set a temporary breakpoint at the given location, resume execution until it is hit, ignoring all breakpoints until that happens.
+        Blocks until the specifically set breakpoint is hit.
+        """
+        was_muted = self.breakpoints_muted
+        try:
+            self.set_breakpoints_muted(True)
+            # This is about to not work, with my rework of how breakpoint muting works.
+            # TODO: figure out a way to set just one temporary breakpoint, with both us and DAP, while muted
+            # Make sure it's self-cleaning, the tests will check for this
+            self.set_breakpoint(path, line, temporary=True)
+            self.resume()
+            self.wait_for_pause()
+        finally:
+            if self.state != SessionState.STOPPED:
+                self.set_breakpoints_muted(was_muted)  # restore our muting state
+
+    def set_breakpoint(
+        self, path: Path, line: int, temporary: bool = False, condition: str | None = None,
+    ) -> Breakpoint:
         """Set a new breakpoint. See the docstring on the `Breakpoints` class to understand why this is so complex."""
         line_text = fetch_line_text(path, line)[:120]
         bp = self.breakpoints.add_breakpoint(path, line, line_text, condition, temporary)
@@ -165,6 +185,9 @@ class Session:
 
     def set_breakpoints_muted(self, breakpoints_muted: bool):
         """Set all breakpoints to muted."""
+        if self.breakpoints_muted == breakpoints_muted:
+            return  # already there, nothing to do
+
         self.breakpoints_muted = breakpoints_muted
         # for every file we have
         for file in self.breakpoints.list_files():

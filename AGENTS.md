@@ -22,8 +22,8 @@ The code flows in four layers, top to bottom:
 - **`session_service.py`** — Global session registry. Maintains `SESSIONS: dict[str, Session]` (shared in-memory across threads). Functions: `get_session()` (auto-selects if only one exists), `get_sessions()` (by project path), `attach_session()` (connect to existing process), `launch_session()` (spawns debugpy subprocess via `subprocess.Popen`).
 - **`breakpoints.py`** — `Breakpoints` class mirrors DAP's invisible internal indexes. Two dicts: files-by-path and breakpoints-by-id. DAP only exposes `setBreakpoints` and never lets you query back, so we track everything ourselves. `File` class holds breakpoints per-file, sorted by line. `refresh()` updates IDs from DAP `Message` responses.
 - **`threads.py`** — `Threads` class mirrors DAP's thread state. Tracks threads by ID, manages state via `refresh()` from `threads` requests and `update()` from thread messages (started/paused/exited). Handles `allThreadsStopped`/`allThreadsContinued` broadcasts.
-- **`models.py`** — Pydantic `BaseModel` classes with detailed `Field` descriptions. Models: `Breakpoint` (with `to_dap()` and `floating()` factory), `Variable` (with `from_dap()`), `SessionStatus`, `StackFrame`, `Thread`, `StackFrames`, `ThreadsResponse`, `BreakpointsResponse`, `RunToLineResponse`, `SetVariableResponse`, `Variables`, `SessionStatuses`. All use `Annotated` with `Field` for MCP schema generation.
-- **`enums.py`** — Five enums: `Action` (step_into/over/out, resume, pause, stop, wait_for_pause), `DebuggerOutcome` (paused/stopped/timeout), `SessionState` (running/paused/stopped/unknown), `StepDirection` (into/over/out), `ThreadState` (running/paused/unknown).
+- **`models.py`** — Pydantic `BaseModel` classes with detailed `Field` descriptions. Models: `Breakpoint` (with `to_dap()` and `floating()` factory), `Variable` (with `from_dap()`), `SessionStatus`, `StackFrame`, `Thread`, `StackFrames`, `ThreadsResponse`, `BreakpointsResponse`, `SetVariableResponse`, `Variables`, `SessionStatuses`. All use `Annotated` with `Field` for MCP schema generation.
+- **`enums.py`** — Four enums: `Action` (step_into/over/out, resume, pause, stop, wait_for_pause), `SessionState` (running/paused/stopped/unknown), `StepDirection` (into/over/out), `ThreadState` (running/paused/unknown).
 - **`exceptions.py`** — Custom exceptions with descriptive messages: `DebugpyInstallationFailed`, `DAPError` (wraps a `Message` dict from DAP), `FileNotFound`, `FrameNotFound`, `LineNotFound`, `MissingSessionId`, `SessionNotFound`, `SessionStateError`, `SessionStoppedError`, `ThreadNotFound`. These bubble up through FastMCP as `ToolError`.
 - **`annotations.py`** — Shared `Annotated` parameter types reused across tools: `ProjectPath`, `SessionID` (nullable, auto-selects on single session), `FilePath` (supports relative, absolute, `file://`), `LineNum` (1-based), `FrameID` (nullable, defaults to current frame).
 - **`constants.py`** — `TEMP_DIR = Path(gettempdir())` for stdout/stderr temp files, and `Message = dict[str, Any]` type alias for DAP messages.
@@ -43,9 +43,9 @@ Tools that don't need a session (e.g., `list_debugger_sessions`) call `session_s
 
 ### Tool Implementation Status
 
-**Implemented** (12 tools): `launch_debugger_session`, `attach_debugger_session`, `get_debugger_session`, `list_debugger_sessions`, `control_debugger_session`, `set_breakpoint`, `list_breakpoints`, `remove_breakpoint`, `set_breakpoints_muted`, `list_threads`, `get_stack`, `list_variables`.
+**Implemented** (13 tools): `launch_debugger_session`, `attach_debugger_session`, `get_debugger_session`, `list_debugger_sessions`, `control_debugger_session`, `set_breakpoint`, `list_breakpoints`, `remove_breakpoint`, `set_breakpoints_muted`, `list_threads`, `get_stack`, `list_variables`, `run_to_line`.
 
-**Stubs** (4 tools): `evaluate_expression`, `get_value_by_path`, `run_to_line`, `set_variable`. These have complete docstrings and parameter annotations but only `print()` their arguments. They need implementation.
+**Stubs** (3 tools): `evaluate_expression`, `get_value_by_path`, `set_variable`. These have complete docstrings and parameter annotations but only `print()` their arguments. They need implementation.
 
 ### Key Design Decisions
 

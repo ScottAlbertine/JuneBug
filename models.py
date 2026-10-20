@@ -3,7 +3,7 @@ from typing import Annotated, Any
 
 from pydantic import BaseModel, Field
 
-from enums import DebuggerOutcome, SessionState, ThreadState
+from enums import SessionState, ThreadState
 from utils import fetch_line_text
 
 
@@ -196,22 +196,6 @@ class BreakpointsResponse(BaseModel):
         bool,
         Field(default=False, description="Whether breakpoints are globally muted for the resolved debugger session."),
     ]
-
-
-class RunToLineResponse(BaseModel):
-    """Result of a run-to-line operation."""
-
-    session_id: Annotated[str, Field(description="Session identifier.")]
-    outcome: Annotated[
-        DebuggerOutcome, Field(description="Outcome after attempting run-to-line (paused/stopped/timeout)."),
-    ]
-    current_position: Annotated[
-        Breakpoint | None,
-        Field(default=None, description="Current position when outcome is paused and position is known."),
-    ] = None
-    message: Annotated[
-        str | None, Field(default=None, description="Additional context message (timeout or errors)."),
-    ] = None
 
 
 class SetVariableResponse(BaseModel):
