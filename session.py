@@ -60,8 +60,13 @@ class Session:
 
     # session commands
 
-    def evaluate_expression(self, expression: str, frame_id: int, show_hidden: bool, depth: int) -> Variable:
+    def evaluate_expression(
+        self, expression: str, frame_id: int | None = None, show_hidden: bool = False, depth: int = 0,
+    ) -> Variable:
         self.assert_state(SessionState.PAUSED)
+
+        if frame_id is None:
+            frame_id = self.get_top_stack_frame().id
 
         message = self._client.evaluate(expression, frame_id)
         variable = Variable.from_dap_evaluation(message["body"], expression)
@@ -99,6 +104,11 @@ class Session:
             current_position=self.current_position,
         )
 
+    def get_top_stack_frame(self) -> StackFrame:
+        """Convenience method, get the top frame of the stack on the current thread."""
+        thread_id = self.get_current_thread_id()  # update state before asserting it, should save some calls sometimes
+        return self.get_stack_trace(thread_id, limit=1).frames[0]
+
     def list_breakpoints(self, path: Path | None) -> list[Breakpoint]:
         """
         List all breakpoints, sorted by file, and then by line number.
@@ -109,9 +119,12 @@ class Session:
         else:
             return self.breakpoints.list_breakpoints_for_file(path)
 
-    def list_variables(self, frame_id: int, show_hidden: bool, depth: int) -> list[Variable]:
+    def list_variables(self, frame_id: int | None = None, show_hidden: bool = False, depth: int = 0) -> list[Variable]:
         """List all variables of a given frame ID, down to a given depth, showing hidden ones if requested."""
         self.assert_state(SessionState.PAUSED)
+
+        if frame_id is None:
+            frame_id = self.get_top_stack_frame().id
 
         scope_ids: list[int] = [
             dap_scope["variablesReference"] for dap_scope in self._client.scopes(frame_id)["body"]["scopes"]

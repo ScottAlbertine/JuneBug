@@ -47,8 +47,4 @@ def evaluate_expression(
     - If more detail is needed, inspect related values via further `evaluate_expression` calls.
     """
     session = session_service.get_session(session_id)
-    # TODO: probably inline this into a session method, it's happening at least twice
-    if frame_id is None:
-        thread_id = session.get_current_thread_id()  # update state before asserting it, should save some calls sometimes
-        frame_id = session.get_stack_trace(thread_id, limit=1).frames[0].id
     return session.evaluate_expression(expression, frame_id, show_hidden, depth)

@@ -37,8 +37,5 @@ def list_variables(
     - Do not reuse a cached `frame_id` after `resume`, `step_*`, `run_to_line`, or any change in paused location.
     """
     session = session_service.get_session(session_id)
-    if frame_id is None:
-        thread_id = session.get_current_thread_id()  # update state before asserting it, should save some calls sometimes
-        frame_id = session.get_stack_trace(thread_id, limit=1).frames[0].id
     variables = session.list_variables(frame_id, show_hidden, depth)
     return Variables(variables=variables)
