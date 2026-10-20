@@ -49,11 +49,6 @@ class Session:
         if self.we_own:
             self.state: SessionState = SessionState.PAUSED
             self.threads.pause_at_start()
-        else:
-            # TODO: figure out how to get the state here, when we attach to an existing process that may or may not have `--wait-for-client` set on its launch
-            # TODO: probably do that instead of hard setting paused above
-            # self.state = something
-            pass
 
         # Technically, we could get the current position here, however, in many cases that takes 600ms, or is misleading, or both.
         # self.current_position = self.fetch_current_position(self.threads.get_current_thread_id())
@@ -306,5 +301,3 @@ class Session:
         if event == "terminated":
             self.state = SessionState.STOPPED
             self.current_position = None  # don't report bad data from a stopped session
-
-        # TODO: handle other passive messages that update our internal model of the debugger's state here
