@@ -128,7 +128,9 @@ class Session:
     def remove_breakpoint(self, path: Path, line: int) -> None:
         """Remove a breakpoint. Idempotent, no-op on nonexistent breakpoint."""
         did_remove = self.breakpoints.remove_breakpoint(path, line)
-        if did_remove:
+        # don't shuffle our breakpoint IDs if we don't need to
+        # and don't talk to DAP about breakpoints while muted
+        if did_remove and not self.breakpoints_muted:
             self.breakpoints.refresh(self.set_breakpoints(self.breakpoints.get_file(path)))
 
     def resume(self):
@@ -171,7 +173,8 @@ class Session:
         """Set a new breakpoint. See the docstring on the `Breakpoints` class to understand why this is so complex."""
         line_text = fetch_line_text(path, line)[:120]
         bp = self.breakpoints.add_breakpoint(path, line, line_text, condition, temporary)
-        self.breakpoints.refresh(self.set_breakpoints(self.breakpoints.get_file(path)))
+        if not self.breakpoints_muted:  # don't talk to DAP about breakpoints while muted
+            self.breakpoints.refresh(self.set_breakpoints(self.breakpoints.get_file(path)))
         return bp
 
     def set_breakpoints(self, file: File) -> Message:
