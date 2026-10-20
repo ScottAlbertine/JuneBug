@@ -6,14 +6,14 @@ This is a `direnv` project (`.envrc` uses `layout python3`). The Python virtual 
 
 ## Main Code
 
-JuneBug is a [FastMCP](https://github.com/PrefectHQ/fastmcp) server that exposes 16 debugger tools over the MCP protocol. It speaks DAP (Debug Adapter Protocol) to provide local and remote debugging capabilities. This allows it to debug Python programs that are run in debug mode via `debugpy`.
+JuneBug is a [FastMCP](https://github.com/PrefectHQ/fastmcp) server that exposes 14 debugger tools over the MCP protocol. It speaks DAP (Debug Adapter Protocol) to provide local and remote debugging capabilities. This allows it to debug Python programs that are run in debug mode via `debugpy`.
 
 ### Architecture Overview
 
 The code flows in four layers, top to bottom:
 
-1. **`main.py`** — FastMCP entry point. Creates the server (`FastMCP("JuneBug MCP Server")`), registers all 16 tools via `mcp.tool()`, and runs on HTTP transport at `127.0.0.1:9000`.
-2. **`tools/`** — 16 individual tool modules. Each is a plain function with `Annotated` parameters (from `annotations.py`) and a Pydantic model return type. Tools delegate to `session_service` or `Session`.
+1. **`main.py`** — FastMCP entry point. Creates the server (`FastMCP("JuneBug MCP Server")`), registers all 14 tools via `mcp.tool()`, and runs on HTTP transport at `127.0.0.1:9000`.
+2. **`tools/`** — 14 individual tool modules. Each is a plain function with `Annotated` parameters (from `annotations.py`) and a Pydantic model return type. Tools delegate to `session_service` or `Session`.
 3. **`session.py`** — Central orchestrator. Owns a `DAPClient`, manages session state (`SessionState` enum), handles breakpoints/threads/variables/stepping, and processes DAP messages via `_handle_message()`.
 4. **`dap/`** — Custom DAP client implementation. `dap/client.py` contains `DAPClient` — a TCP socket client that speaks DAP directly. It manages the socket lifecycle, auto-handles the initialize/attach handshake, and provides a send-then-pull pattern (`_send_request()` + `_pull_until()`) for every DAP command. DAP Messages returned from the client are plain `dict[str, Any]` typed as `Message` (defined in `constants.py`).
 
@@ -40,12 +40,6 @@ Every tool in `tools/` follows the same pattern:
 5. Delegate to `session.some_method()` and return the result.
 
 Tools that don't need a session (e.g., `list_debugger_sessions`) call `session_service` directly. Tools that create sessions (`launch_debugger_session`, `attach_debugger_session`) call the appropriate factory and return `session.get_status()`.
-
-### Tool Implementation Status
-
-**Implemented** (14 tools): `launch_debugger_session`, `attach_debugger_session`, `get_debugger_session`, `list_debugger_sessions`, `control_debugger_session`, `set_breakpoint`, `list_breakpoints`, `remove_breakpoint`, `set_breakpoints_muted`, `list_threads`, `get_stack`, `list_variables`, `run_to_line`, `evaluate_expression`.
-
-**Stubs** (2 tools): `get_value_by_path`, `set_variable`. These have complete docstrings and parameter annotations but only `print()` their arguments. They need implementation.
 
 ### Key Design Decisions
 

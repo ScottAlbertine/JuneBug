@@ -198,7 +198,7 @@ class DAPClient:
         self._send_request(
             "setVariable", {"variablesReference": variables_reference, "name": name, "value": value},
         )
-        return self._pull_until(lambda m: True)
+        return self._pull_until(lambda m: m.get("type") == "response" and m.get("command") == "setVariable")
 
     def source(self, source_reference: int) -> Message:
         """Get the source code."""

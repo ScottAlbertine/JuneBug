@@ -33,8 +33,7 @@ def list_variables(
     - An empty list `[]` of children means that the variable may have children, but they have not been omitted to avoid flooding your context window.
 
     Next call:
-    - Use `get_value_by_path` to drill into nested fields.
-    - Use `evaluate_expression` for computed checks in the same frame.
+    - Use `evaluate_expression` to drill into nested fields, or for computed checks in the same frame.
     - Do not reuse a cached `frame_id` after `resume`, `step_*`, `run_to_line`, or any change in paused location.
     """
     session = session_service.get_session(session_id)

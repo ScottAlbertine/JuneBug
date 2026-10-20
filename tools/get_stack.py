@@ -33,7 +33,7 @@ def get_stack(
     `file` is reported as provided by the debugger (no path normalization).
 
     Next call:
-    - Use frame `id` from the current paused result in `list_variables`, `get_value_by_path`, or `evaluate_expression`.
+    - Use frame `id` from the current paused result in `list_variables` or `evaluate_expression`.
     - Do not reuse a cached `frame_id` after `resume`, `step_*`, `run_to_line`, or any change in paused location.
     """
 

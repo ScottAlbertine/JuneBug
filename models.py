@@ -209,12 +209,3 @@ class Variable(BaseModel):
 class Variables(BaseModel):
     """A list of variables."""
     variables: Annotated[list[Variable], Field(description="A list of variables.")]
-
-
-class SetVariableResponse(BaseModel):
-    """Response from mutating a variable value by path in the selected stack frame."""
-
-    path: Annotated[list[str], Field(description="Variable path used for mutation.")]
-    old_value: Annotated[str, Field(description="Value before mutation.")]
-    new_value: Annotated[str, Field(description="Value after mutation.")]
-    applied: Annotated[bool, Field(description="Whether mutation was applied.")]
