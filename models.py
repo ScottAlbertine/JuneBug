@@ -55,40 +55,14 @@ class Breakpoint(BaseModel):
         )
 
 
-class Variable(BaseModel):
-    """A variable."""
-    id: Annotated[int, Field(description="Variable id. Very often 0, if the variable has no children.", exclude=True)]
-    name: Annotated[str, Field(description="Name of the variable.")]
-    value: Annotated[str, Field(description="Current value of the variable.")]
-    type: Annotated[str, Field(description="Type of the variable.")]
-    evaluate_name: Annotated[
-        str | None,
-        Field(description="Name of the variable if you want to evaluate it.", exclude_if=lambda v: v is None),
-    ] = None
-    presentation_hint: Annotated[Any, Field(description="Presentation hint.", exclude_if=lambda v: v is None)]
-    children: Annotated[list[Variable] | None, Field(description="Children of this variable.")]
+class BreakpointsResponse(BaseModel):
+    """List of configured breakpoints."""
 
-    @classmethod
-    def from_dap(cls, dap_variable: dict[str, Any]) -> Variable:
-        variable_id = dap_variable["variablesReference"]
-        variable_type = dap_variable["type"]
-        # This is a python specific quirk, we get variables with evaluation names that don't actually work
-        # Every single one I've seen has "type": "", so to not mislead the LLM, we remove those bad eval names
-        evaluate_name = dap_variable.get("evaluateName") if variable_type else None
-        return cls(
-            id=variable_id,
-            name=dap_variable["name"],
-            value=dap_variable["value"],
-            type=variable_type,
-            evaluate_name=evaluate_name,
-            presentation_hint=dap_variable.get("presentationHint"),
-            children=None if variable_id == 0 else [],
-        )
-
-
-class Variables(BaseModel):
-    """A list of variables."""
-    variables: Annotated[list[Variable], Field(description="A list of variables.")]
+    breakpoints: Annotated[list[Breakpoint], Field(description="List of currently configured breakpoints.")]
+    breakpoints_muted: Annotated[
+        bool,
+        Field(default=False, description="Whether breakpoints are globally muted for the resolved debugger session."),
+    ]
 
 
 class SessionStatus(BaseModel):
@@ -161,15 +135,6 @@ class StackFrame(BaseModel):
         )
 
 
-class Thread(BaseModel):
-    """A thread in the debug session."""
-
-    id: Annotated[int, Field(description="Thread identifier to pass as `thread_id` in `get_stack`.")]
-    name: Annotated[str | None, Field(description="Human-readable thread name.")]
-    state: Annotated[ThreadState, Field(description="Current thread status as last reported to the debugger.")]
-    is_current: Annotated[bool, Field(description="Whether this thread is currently selected.")]
-
-
 class StackFrames(BaseModel):
     """Call stack for a debugged thread."""
 
@@ -181,6 +146,15 @@ class StackFrames(BaseModel):
     total_frames: Annotated[int, Field(description="Total frame count for the stack.")]
 
 
+class Thread(BaseModel):
+    """A thread in the debug session."""
+
+    id: Annotated[int, Field(description="Thread identifier to pass as `thread_id` in `get_stack`.")]
+    name: Annotated[str | None, Field(description="Human-readable thread name.")]
+    state: Annotated[ThreadState, Field(description="Current thread status as last reported to the debugger.")]
+    is_current: Annotated[bool, Field(description="Whether this thread is currently selected.")]
+
+
 class ThreadsResponse(BaseModel):
     """List of threads in the debug session."""
 
@@ -188,14 +162,40 @@ class ThreadsResponse(BaseModel):
     total_count: Annotated[int, Field(description="Total known thread count.")]
 
 
-class BreakpointsResponse(BaseModel):
-    """List of configured breakpoints."""
+class Variable(BaseModel):
+    """A variable."""
+    id: Annotated[int, Field(description="Variable id. Very often 0, if the variable has no children.", exclude=True)]
+    name: Annotated[str, Field(description="Name of the variable.")]
+    value: Annotated[str, Field(description="Current value of the variable.")]
+    type: Annotated[str, Field(description="Type of the variable.")]
+    evaluate_name: Annotated[
+        str | None,
+        Field(description="Name of the variable if you want to evaluate it.", exclude_if=lambda v: v is None),
+    ] = None
+    presentation_hint: Annotated[Any, Field(description="Presentation hint.", exclude_if=lambda v: v is None)]
+    children: Annotated[list[Variable] | None, Field(description="Children of this variable.")]
 
-    breakpoints: Annotated[list[Breakpoint], Field(description="List of currently configured breakpoints.")]
-    breakpoints_muted: Annotated[
-        bool,
-        Field(default=False, description="Whether breakpoints are globally muted for the resolved debugger session."),
-    ]
+    @classmethod
+    def from_dap(cls, dap_variable: dict[str, Any]) -> Variable:
+        variable_id = dap_variable["variablesReference"]
+        variable_type = dap_variable["type"]
+        # This is a python specific quirk, we get variables with evaluation names that don't actually work
+        # Every single one I've seen has "type": "", so to not mislead the LLM, we remove those bad eval names
+        evaluate_name = dap_variable.get("evaluateName") if variable_type else None
+        return cls(
+            id=variable_id,
+            name=dap_variable["name"],
+            value=dap_variable["value"],
+            type=variable_type,
+            evaluate_name=evaluate_name,
+            presentation_hint=dap_variable.get("presentationHint"),
+            children=None if variable_id == 0 else [],
+        )
+
+
+class Variables(BaseModel):
+    """A list of variables."""
+    variables: Annotated[list[Variable], Field(description="A list of variables.")]
 
 
 class SetVariableResponse(BaseModel):
