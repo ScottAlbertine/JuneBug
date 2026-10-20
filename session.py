@@ -157,10 +157,12 @@ class Session:
         was_muted = self.breakpoints_muted
         try:
             self.set_breakpoints_muted(True)
-            # This is about to not work, with my rework of how breakpoint muting works.
-            # TODO: figure out a way to set just one temporary breakpoint, with both us and DAP, while muted
-            # Make sure it's self-cleaning, the tests will check for this
-            self.set_breakpoint(path, line, temporary=True)
+            # since we're muted, this next line sends nothing to DAP
+            bp = self.set_breakpoint(path, line, temporary=True)
+            # This is fine, because we want to send DAP just that one special breakpoint anyway
+            special_file = File(path)
+            special_file.add_breakpoint(bp)
+            self.breakpoints.refresh(self.set_breakpoints(special_file))
             self.resume()
             self.wait_for_pause()
         finally:
