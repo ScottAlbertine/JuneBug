@@ -1,12 +1,14 @@
 from pathlib import Path
 
-import tests.fakes.fake_library as fake_library
-import tests.fakes.fake_main as fake_main
-import tests.fakes.fake_main_multi_thread as fake_main_multi_thread
-import tests.fakes.fake_main_thread_handoff as fake_main_thread_handoff
-import tests.fakes.fake_main_with_import as fake_main_with_import
-import tests.fakes.fake_main_with_loop as fake_main_with_loop
-import tests.fakes.fake_main_with_variables as fake_main_with_variables
+from tests.fakes import (
+    fake_library,
+    fake_main,
+    fake_main_multi_thread,
+    fake_main_thread_handoff,
+    fake_main_with_import,
+    fake_main_with_loop,
+    fake_main_with_variables,
+)
 
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 
