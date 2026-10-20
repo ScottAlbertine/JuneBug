@@ -32,5 +32,13 @@ FrameID = Annotated[
     Stack frame id. Obtain this from the current paused `get_stack` result;
     do not reuse a cached frame id after `resume`, `step_*`, `run_to_line`, or any change in paused location.
     If null, uses the frame currently selected in the debugger, the first one `get_stack` returns. Default: null.
+    """,
+]
+
+ShowHidden = Annotated[
+    bool,
     """
+    List all variables, including ones that are normally hidden, like __dunder_variables__, Classes, functions, etc.
+    Default: False.
+    """,
 ]

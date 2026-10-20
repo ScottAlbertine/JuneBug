@@ -2,33 +2,23 @@ from typing import Annotated
 
 from pydantic import Field
 
-from annotations import FrameID, SessionID
+from annotations import FrameID, SessionID, ShowHidden
 from models import Variables
 import session_service
 
+DEPTH_DESCRIPTION = """
+    Maximum depth for expanding nested objects
+    (0 = no children (only frame variables), 1 = variables with first level children, 2 = two levels of children, etc.). "
+    Maximum allowed depth is 4, which returns 9MB of data from a typical Python process.
+    Be very careful not to flood your context with this.
+    Default: 0.
+"""
 
 def list_variables(
     session_id: SessionID = None,
     frame_id: FrameID = None,
-    show_hidden: Annotated[
-        bool,
-        "List all variables, including ones that are normally hidden, like __dunder_variables__, Classes, functions, etc. "
-        "Default: False",
-    ] = False,
-    depth: Annotated[
-        int,
-        Field(
-            description="""
-                Maximum depth for expanding nested objects
-                (0 = no children (only frame variables), 1 = variables with first level children, 2 = two levels of children, etc.). "
-                Maximum allowed depth is 4, which returns 9MB of data from a typical Python process.
-                Be very careful not to flood your context with this.
-                Default: 0.
-            """,
-            ge=0,
-            le=4,
-        ),
-    ] = 0,
+    show_hidden: ShowHidden = False,
+    depth: Annotated[int, Field(description=DEPTH_DESCRIPTION, ge=0, le=4)] = 0,
 ) -> Variables:
     """
     Returns the variables visible in the specified stack frame as a tree structure.

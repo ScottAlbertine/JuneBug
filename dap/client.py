@@ -141,13 +141,16 @@ class DAPClient:
         self._send_request("disconnect")
         return self._pull_until(lambda m: m.get("type") == "event" and m.get("event") == "terminated")
 
-    def evaluate(self, expression: str, frame_id: int | None = None, **kwargs) -> Message:
+    def evaluate(self, expression: str, frame_id: int, **kwargs) -> Message:
         """Evaluate an expression."""
-        arguments = {"expression": expression, **kwargs}
-        if frame_id is not None:
-            arguments["frameId"] = frame_id
-        self._send_request("evaluate", arguments)
-        return self._pull_until(lambda m: True)
+        self._send_request("evaluate", {"expression": expression, "frameId": frame_id, **kwargs})
+        try:
+            return self._pull_until(lambda m: m.get("type") == "response" and m.get("command") == "evaluate")
+        except DAPError as dap_error:
+            m = dap_error.message
+            if m.get("command") == "evaluate" and m.get("message", "").startswith("Wrong ID sent from the client"):
+                raise FrameNotFound(frame_id)
+            raise
 
     def launch(self, program: str, **kwargs) -> Message:
         """Launch a program in the debugger."""

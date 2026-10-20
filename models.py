@@ -172,11 +172,11 @@ class Variable(BaseModel):
         str | None,
         Field(description="Name of the variable if you want to evaluate it.", exclude_if=lambda v: v is None),
     ] = None
-    presentation_hint: Annotated[Any, Field(description="Presentation hint.", exclude_if=lambda v: v is None)]
+    presentation_hint: Annotated[Any, Field(description="Presentation hint.", exclude_if=lambda v: not v)]
     children: Annotated[list[Variable] | None, Field(description="Children of this variable.")]
 
     @classmethod
-    def from_dap(cls, dap_variable: dict[str, Any]) -> Variable:
+    def from_dap_variable(cls, dap_variable: dict[str, Any]) -> Variable:
         variable_id = dap_variable["variablesReference"]
         variable_type = dap_variable["type"]
         # This is a python specific quirk, we get variables with evaluation names that don't actually work
@@ -189,6 +189,19 @@ class Variable(BaseModel):
             type=variable_type,
             evaluate_name=evaluate_name,
             presentation_hint=dap_variable.get("presentationHint"),
+            children=None if variable_id == 0 else [],
+        )
+
+    @classmethod
+    def from_dap_evaluation(cls, dap_evaluation: dict[str, Any], evaluate_name: str) -> Variable:
+        variable_id = dap_evaluation["variablesReference"]
+        return cls(
+            id=variable_id,
+            name=evaluate_name,
+            value=dap_evaluation["result"],
+            type=dap_evaluation["type"],
+            evaluate_name=evaluate_name,
+            presentation_hint=dap_evaluation.get("presentationHint"),
             children=None if variable_id == 0 else [],
         )
 

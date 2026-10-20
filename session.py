@@ -60,6 +60,14 @@ class Session:
 
     # session commands
 
+    def evaluate_expression(self, expression: str, frame_id: int, show_hidden: bool, depth: int) -> Variable:
+        self.assert_state(SessionState.PAUSED)
+
+        message = self._client.evaluate(expression, frame_id)
+        variable = Variable.from_dap_evaluation(message["body"], expression)
+        self._fetch_variable_children(variable.id, variable.children, show_hidden, depth)
+        return variable
+
     def get_current_thread_id(self) -> int | None:
         self.list_threads()
         return self.threads.get_current_thread_id()
@@ -103,8 +111,8 @@ class Session:
 
     def list_variables(self, frame_id: int, show_hidden: bool, depth: int) -> list[Variable]:
         """List all variables of a given frame ID, down to a given depth, showing hidden ones if requested."""
-
         self.assert_state(SessionState.PAUSED)
+
         scope_ids: list[int] = [
             dap_scope["variablesReference"] for dap_scope in self._client.scopes(frame_id)["body"]["scopes"]
         ]
@@ -255,7 +263,7 @@ class Session:
             return
 
         for dap_variable in self._client.variables(variable_id)["body"]["variables"]:
-            child = Variable.from_dap(dap_variable)
+            child = Variable.from_dap_variable(dap_variable)
             # All the variables we want to hide by default, in python, luckily, do not have a type
             if child.type or show_hidden:
                 output.append(child)

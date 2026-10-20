@@ -1,25 +1,31 @@
 from typing import Annotated
 
-from annotations import FrameID, SessionID
+from pydantic import Field
+
+from annotations import FrameID, SessionID, ShowHidden
+from models import Variable
+import session_service
+
+DEPTH_DESCRIPTION = """
+    Maximum depth for expanding children of the evaluated result
+    (0 = value only, 1 = immediate children, 2 = children + grandchildren, etc.). Default: 0.
+"""
 
 
 def evaluate_expression(
     expression: Annotated[
         str,
-        "Expression to evaluate in the current context. "
+        "Expression to evaluate in the given frame. "
         "Pass raw expression text in the language of the current frame; "
         "do not pass JSON-escaped payloads or literal backslash-escaped quoted text.",
     ],
     session_id: SessionID = None,
     frame_id: FrameID = None,
-    depth: Annotated[
-        int,
-        "Maximum depth for expanding children of the evaluated result "
-        "(0 = value only, 1 = immediate children, 2 = children + grandchildren, etc.). Default: 0.",
-    ] = 0,
-) -> None:
+    show_hidden: ShowHidden = False,
+    depth: Annotated[int, Field(description=DEPTH_DESCRIPTION, ge=0, le=4)] = 0,
+) -> Variable:
     """
-    Evaluates an expression in the context of the current stack frame.
+    Evaluates an expression in the context of the given stack frame.
     Use this tool to compute values, call methods, or inspect expressions during debugging.
 
     Preconditions:
@@ -28,18 +34,21 @@ def evaluate_expression(
     - `expression` must be a valid expression in the language of the current frame.
 
     The result is returned as:
-    - depth == 0: just the presentation of the evaluated expression
-    - depth > 0: the presentation plus a pseudo-graphics tree of its children up to the requested depth
+    - depth == 0: just the result of the evaluated expression
+    - depth > 0: the presentation plus any children, like `list_variables` does
 
     Input rules:
     - Pass raw expression text exactly as the debugger evaluator should parse it.
     - Do not pass JSON-escaped payloads or literal escape sequences such as `\\"text\\"`.
+    - Recommended to pass the `evaluate_name` from the result of a `list_variables` tool call.
 
     Next call:
     - If expression confirms hypothesis, continue with `control_debugger_session(step_*|resume)`.
-    - If more detail is needed, inspect related values via `list_variables` / `get_value_by_path`.
+    - If more detail is needed, inspect related values via further `evaluate_expression` calls.
     """
-    print(session_id)
-    print(frame_id)
-    print(expression)
-    print(depth)
+    session = session_service.get_session(session_id)
+    # TODO: probably inline this into a session method, it's happening at least twice
+    if frame_id is None:
+        thread_id = session.get_current_thread_id()  # update state before asserting it, should save some calls sometimes
+        frame_id = session.get_stack_trace(thread_id, limit=1).frames[0].id
+    return session.evaluate_expression(expression, frame_id, show_hidden, depth)
