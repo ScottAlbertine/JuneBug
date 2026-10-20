@@ -18,27 +18,29 @@ def get_value_by_path(
         "(0 = value only, 1 = immediate children, 2 = children + grandchildren, etc.). Default: 0.",
     ] = 0,
 ) -> None:
-    """Gets the value of a nested object by following a path of property names.
-Use this tool to drill down into complex objects and inspect their nested properties.
+    """
+    Gets the value of a nested object by following a path of property names.
+    Use this tool to drill down into complex objects and inspect their nested properties.
 
-Preconditions:
-- Session must be suspended.
-- Path must be non-empty and refer to names visible in the selected frame/object.
+    Preconditions:
+    - Session must be suspended.
+    - Path must be non-empty and refer to names visible in the selected frame/object.
 
-The result is returned as:
-- depth == 0: just the presentation of the value at the specified path
-- depth > 0: the presentation of the value plus a pseudo-graphics tree of its children up to the requested depth
+    The result is returned as:
+    - depth == 0: just the presentation of the value at the specified path
+    - depth > 0: the presentation of the value plus a pseudo-graphics tree of its children up to the requested depth
 
-Example: To get the value of obj.field.subField, use path = ["obj", "field", "subField"].
-For array/list indexers, pass the index token as a regular path element (child name), e.g.
-items[0].name -> path = ["items", "[0]", "name"].
-Use exact child names from the current paused `list_variables` / previous `get_value_by_path` output
-because index node names may differ by language/debugger (for example, "[0]" vs "0").
-Refresh `path` tokens after `resume`, `step_*`, `run_to_line`, or any other change in paused location.
+    Example: To get the value of obj.field.subField, use path = ["obj", "field", "subField"].
+    For array/list indexers, pass the index token as a regular path element (child name), e.g.
+    items[0].name -> path = ["items", "[0]", "name"].
+    Use exact child names from the current paused `list_variables` / previous `get_value_by_path` output
+    because index node names may differ by language/debugger (for example, "[0]" vs "0").
+    Refresh `path` tokens after `resume`, `step_*`, `run_to_line`, or any other change in paused location.
 
-Next call:
-- Use another `get_value_by_path` call to continue drilling deeper.
-- Use `evaluate_expression` when direct name-path navigation is insufficient."""
+    Next call:
+    - Use another `get_value_by_path` call to continue drilling deeper.
+    - Use `evaluate_expression` when direct name-path navigation is insufficient.
+    """
     print(session_id)
     print(frame_id)
     print(path)

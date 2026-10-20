@@ -18,25 +18,27 @@ def evaluate_expression(
         "(0 = value only, 1 = immediate children, 2 = children + grandchildren, etc.). Default: 0.",
     ] = 0,
 ) -> None:
-    """Evaluates an expression in the context of the current stack frame.
-Use this tool to compute values, call methods, or inspect expressions during debugging.
+    """
+    Evaluates an expression in the context of the current stack frame.
+    Use this tool to compute values, call methods, or inspect expressions during debugging.
 
-Preconditions:
-- Session must be suspended.
-- Evaluation must be supported for the selected frame/language.
-- `expression` must be a valid expression in the language of the current frame.
+    Preconditions:
+    - Session must be suspended.
+    - Evaluation must be supported for the selected frame/language.
+    - `expression` must be a valid expression in the language of the current frame.
 
-The result is returned as:
-- depth == 0: just the presentation of the evaluated expression
-- depth > 0: the presentation plus a pseudo-graphics tree of its children up to the requested depth
+    The result is returned as:
+    - depth == 0: just the presentation of the evaluated expression
+    - depth > 0: the presentation plus a pseudo-graphics tree of its children up to the requested depth
 
-Input rules:
-- Pass raw expression text exactly as the debugger evaluator should parse it.
-- Do not pass JSON-escaped payloads or literal escape sequences such as `\\"text\\"`.
+    Input rules:
+    - Pass raw expression text exactly as the debugger evaluator should parse it.
+    - Do not pass JSON-escaped payloads or literal escape sequences such as `\\"text\\"`.
 
-Next call:
-- If expression confirms hypothesis, continue with `control_debugger_session(step_*|resume)`.
-- If more detail is needed, inspect related values via `list_variables` / `get_value_by_path`."""
+    Next call:
+    - If expression confirms hypothesis, continue with `control_debugger_session(step_*|resume)`.
+    - If more detail is needed, inspect related values via `list_variables` / `get_value_by_path`.
+    """
     print(session_id)
     print(frame_id)
     print(expression)

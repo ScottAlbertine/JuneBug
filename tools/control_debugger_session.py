@@ -18,7 +18,8 @@ def control_debugger_session(
         "Default: 30000.",
     ] = 30000,
 ) -> SessionStatus:
-    """Controls the execution of a debug session.
+    """
+    Controls the execution of a debug session.
     Use this tool to step through code, resume execution, pause, or stop the debug session.
 
     Preconditions:

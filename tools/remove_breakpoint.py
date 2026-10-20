@@ -4,7 +4,8 @@ from utils import normalize_file_path
 
 
 def remove_breakpoint(file_path: FilePath, line: LineNum, session_id: SessionID = None) -> None:
-    """Removes previously set breakpoints.
+    """
+    Removes previously set breakpoints.
 
     Behavior:
     - Idempotent: removing a non-existing breakpoint does nothing.
