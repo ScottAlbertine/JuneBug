@@ -52,11 +52,11 @@ async def test_evaluate_expression__not_top_frame(client: Client) -> None:
     # Pick the second frame ID
     frame_id = stack.structured_content["frames"][1]["id"]
 
-    # Check its variables
-    variables = await client.call_tool(
+    # Evaluate a function scoped variable
+    variable = await client.call_tool(
         "evaluate_expression", {"expression": "function_scoped_string", "session_id": session_id, "frame_id": frame_id},
     )
-    assert variables.structured_content == {
+    assert variable.structured_content == {
         "name": "function_scoped_string",
         "value": "'in here'",
         "type": "str",
@@ -68,11 +68,11 @@ async def test_evaluate_expression__not_top_frame(client: Client) -> None:
     # Pick the first frame ID
     frame_id = stack.structured_content["frames"][0]["id"]
 
-    # Check its variables
-    variables = await client.call_tool(
+    # Evaluate a function scoped variable
+    variable = await client.call_tool(
         "evaluate_expression", {"expression": "b", "session_id": session_id, "frame_id": frame_id},
     )
-    assert variables.structured_content == {
+    assert variable.structured_content == {
         "name": "b", "value": "3", "type": "int", "evaluate_name": "b", "children": None,
     }
 
