@@ -20,7 +20,7 @@ CLEANUP_MODULES = [
 @pytest.fixture()
 def clear_sessions() -> None:
     """These tests list sessions, so they need to clear that list before each one runs."""
-    session_service.SESSIONS = {}
+    session_service.SESSIONS.clear()
 
 
 @pytest.fixture(autouse=True, scope="session")

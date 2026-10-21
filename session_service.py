@@ -3,8 +3,10 @@ Service module that manages a global index of sessions.
 This is shared in-memory across threads, since it represents a single, universal, external state.
 It can create, find, and eventually delete sessions.
 """
+from collections.abc import MutableMapping
 from pathlib import Path
 import subprocess
+from typing import Iterator
 import uuid
 
 from constants import TEMP_DIR
@@ -12,8 +14,47 @@ from exceptions import FileNotFound, MissingSessionId, SessionNotFound
 from session import Session
 from utils import find_free_port, install_debugpy
 
-# global index of live Session objects, available across all threads
-SESSIONS: dict[str, Session] = {}
+
+class Sessions(MutableMapping):
+    """
+    Global singleton index of live Session objects, available across all threads
+    Has a 100 item limit, with the Least Recently Created item being dropped.
+    This is specifically to avoid leaking memory when this MCP server is left running for weeks.
+    It is its own class, rather than using `cachetools.FIFOCache` because we want to try and gracefully stop the sessions before dropping them.
+    """
+    LIMIT = 100
+
+    def __init__(self):
+        self.sessions: dict[str, Session] = {}
+
+    def __delitem__(self, session_id: str, /) -> None:
+        del self.sessions[session_id]
+
+    def __getitem__(self, session_id: str, /) -> Session:
+        return self.sessions[session_id]
+
+    def __setitem__(self, session_id: str, session: Session, /) -> None:
+        self.sessions[session_id] = session
+
+        if len(self.sessions) > self.LIMIT:
+            # Python dicts are insertion ordered since 3.7
+            oldest_session_id = next(iter(self.sessions))
+            oldest_session = self.sessions[oldest_session_id]
+            # try to stop the session, to be nice and clean up
+            try:
+                oldest_session.stop()
+            except BaseException:
+                pass  # no matter what happens, don't error, if we can't clean up, too bad.
+            del self.sessions[oldest_session_id]
+
+    def __len__(self) -> int:
+        return len(self.sessions)
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self.sessions)
+
+
+SESSIONS = Sessions()
 
 
 def get_session(session_id: str | None) -> Session:
