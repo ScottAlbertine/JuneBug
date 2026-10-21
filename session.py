@@ -8,7 +8,7 @@ from breakpoints import Breakpoints, File
 from constants import Message, TEMP_DIR
 from dap import DAPClient
 from enums import SessionState, StepDirection
-from exceptions import SessionStateError
+from exceptions import SessionStateError, SessionStoppedError
 from models import Breakpoint, SessionStatus, StackFrame, StackFrames, Thread, Variable
 from threads import Threads
 from utils import fetch_line_text
@@ -58,6 +58,7 @@ class Session:
     def evaluate_expression(
         self, expression: str, frame_id: int | None = None, show_hidden: bool = False, depth: int = 0,
     ) -> Variable:
+        self.assert_not_stopped()
         self.assert_state(SessionState.PAUSED)
 
         if frame_id is None:
@@ -73,14 +74,20 @@ class Session:
         return self.threads.get_current_thread_id()
 
     def get_stack_trace(
-        self, thread_id: int | None, limit: int | None = None, offset: int | None = None,
+        self, thread_id: int | None = None, limit: int | None = None, offset: int | None = None,
     ) -> StackFrames:
         """
-        List all stack frames of a given thread ID. Errors appropriately if no thread ID is given.
+        List all stack frames of a given thread ID.
+        Uses the current thread ID if none is given. Errors appropriately if no current thread ID can be found.
         IMPORTANT: On a paused thread, this takes 20ms. On a running thread, it takes 600ms.
         """
+        self.assert_not_stopped()
+
+        if thread_id is None:
+            thread_id = self.get_current_thread_id()
         if thread_id is None:
             raise Exception("No thread ID specified, and there is no current thread listed.")
+
         dap_stack_trace = self._client.stack_trace(thread_id, limit, offset)["body"]
         frames = [StackFrame.from_dap(frame) for frame in dap_stack_trace["stackFrames"]]
         return StackFrames(frames=frames, thread_id=thread_id, total_frames=dap_stack_trace["totalFrames"])
@@ -101,14 +108,14 @@ class Session:
 
     def get_top_stack_frame(self) -> StackFrame:
         """Convenience method, get the top frame of the stack on the current thread."""
-        thread_id = self.get_current_thread_id()  # update state before asserting it, should save some calls sometimes
-        return self.get_stack_trace(thread_id, limit=1).frames[0]
+        return self.get_stack_trace(limit=1).frames[0]
 
     def list_breakpoints(self, path: Path | None) -> list[Breakpoint]:
         """
         List all breakpoints, sorted by file, and then by line number.
         Lists them only for the given file if one is specified, otherwise lists all of them.
         """
+        self.assert_not_stopped()
         if path is None:
             return self.breakpoints.list_breakpoints()
         else:
@@ -116,6 +123,7 @@ class Session:
 
     def list_variables(self, frame_id: int | None = None, show_hidden: bool = False, depth: int = 0) -> list[Variable]:
         """List all variables of a given frame ID, down to a given depth, showing hidden ones if requested."""
+        self.assert_not_stopped()
         self.assert_state(SessionState.PAUSED)
 
         if frame_id is None:
@@ -133,16 +141,19 @@ class Session:
 
     def list_threads(self) -> list[Thread]:
         """Get all threads, sorted by id."""
+        self.assert_not_stopped()
         return self.threads.refresh(self._client.threads())
 
     def pause(self):
         """Pause this session."""
+        self.assert_not_stopped()
         self._client.pause(self.list_threads()[0].id)
         self.current_position = self.fetch_current_position(self.get_current_thread_id())
         self.state = SessionState.PAUSED
 
     def remove_breakpoint(self, path: Path, line: int) -> None:
         """Remove a breakpoint. Idempotent, no-op on nonexistent breakpoint."""
+        self.assert_not_stopped()
         did_remove = self.breakpoints.remove_breakpoint(path, line)
         # don't shuffle our breakpoint IDs if we don't need to
         # and don't talk to DAP about breakpoints while muted
@@ -151,6 +162,7 @@ class Session:
 
     def resume(self):
         """Resume this session. Does not block."""
+        self.assert_not_stopped()
         # we're going to need to list threads anyway in most cases
         # and listing threads pulls the latest messages to update our state and current_position, which we then check
         threads = self.list_threads()
@@ -170,6 +182,7 @@ class Session:
         Set a temporary breakpoint at the given location, resume execution until it is hit, ignoring all breakpoints until that happens.
         Blocks until the specifically set breakpoint is hit.
         """
+        self.assert_not_stopped()
         was_muted = self.breakpoints_muted
         try:
             self.set_breakpoints_muted(True)
@@ -223,6 +236,7 @@ class Session:
 
     def step(self, direction: StepDirection) -> None:
         """Step into, over, or out of the current thread."""
+        self.assert_not_stopped()  # yes, this seems redundant, but it produces better error messages
         self.assert_state(SessionState.PAUSED)
         thread_id = self.threads.get_current_thread_id()
         if direction == StepDirection.INTO:
@@ -235,6 +249,8 @@ class Session:
 
     def stop(self) -> None:
         """Stop this session."""
+        if self.state == SessionState.STOPPED:
+            return  # already stopped, nothing to do
         self._client.disconnect()
         if self.we_own:
             psutil.Process(self.debugee_pid).send_signal(SIGTERM)
@@ -243,6 +259,7 @@ class Session:
         """Wait for the debugger to pause on a line on its own. Only blocks, does not send anything to DAP."""
         if self.state == SessionState.PAUSED:
             return  # we are already paused, don't just block forever
+        self.assert_not_stopped()
         self._client.wait_for_pause()
 
     # internal state management tools
@@ -251,6 +268,10 @@ class Session:
         """Assert that this session is in the given state. Raises a `SessionStateError` if not."""
         if self.state != expected_state:
             raise SessionStateError(expected_state, self.state)
+
+    def assert_not_stopped(self) -> None:
+        if self.state == SessionState.STOPPED:
+            raise SessionStoppedError()
 
     def fetch_current_position(self, thread_id: int | None) -> Breakpoint | None:
         """

@@ -38,6 +38,4 @@ def get_stack(
     """
 
     session = session_service.get_session(session_id)
-    if thread_id is None:
-        thread_id = session.get_current_thread_id()
     return session.get_stack_trace(thread_id, limit, offset)
