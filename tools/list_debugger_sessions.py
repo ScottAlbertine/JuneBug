@@ -1,6 +1,8 @@
 from annotations import ProjectPath
+from exceptions import AbsolutePathError
 from models import SessionStatuses
 import session_service
+from utils import normalize_file_path
 
 
 def list_debugger_sessions(project_path: ProjectPath) -> SessionStatuses:
@@ -27,6 +29,10 @@ def list_debugger_sessions(project_path: ProjectPath) -> SessionStatuses:
     - Call this tool periodically to check if a session has stopped before
       attempting further operations.
     """
-    sessions = session_service.get_sessions(project_path)
+    try:
+        normal_project_path = normalize_file_path(project_path)
+    except ValueError:
+        raise AbsolutePathError("project_path")
+    sessions = session_service.get_sessions(normal_project_path)
     statuses = [session.get_status() for session in sessions]
     return SessionStatuses(sessions=statuses)

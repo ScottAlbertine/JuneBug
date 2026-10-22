@@ -42,5 +42,5 @@ def set_breakpoint(
     - Use list_breakpoints to verify the breakpoint was registered.
     """
     session = session_service.get_session(session_id)
-    path = normalize_file_path(session.project_path, file_path)
+    path = normalize_file_path(file_path, session.project_path)
     return session.set_breakpoint(path, line, temporary, condition)

@@ -47,20 +47,23 @@ def connect_socket(host: str, port: int, timeout: float) -> socket:
     raise TimeoutError()
 
 
-def normalize_file_path(base_path: str, file_path: str) -> Path:
-    """Normalize a file path string to a standard absolute Path.
+def normalize_file_path(file_path: str | Path, base_path: str | Path | None = None) -> Path:
+    """Normalize a file path to a standard absolute Path.
 
-    Handles relative paths, absolute paths, paths with ``..`` components,
-    and ``file://`` URLs.
+    Handles strings or Path objects, relative paths, absolute paths, paths with ``..`` components, and ``file://`` URLs.
 
     :param file_path: A file path in any supported format.
-    :param base_path: Base directory for resolving relative paths.
+    :param base_path: Optional base directory for resolving relative paths.
+        If not specified, file_path must be an absolute path.
     :return: A normalized absolute :class:`Path`.
+    :raises ValueError: If file_path is not an absolute path.
     """
-    if file_path.startswith("file://"):
+    if isinstance(file_path, str) and file_path.startswith("file://"):
         file_path = file_path[7:]
     p = Path(file_path)
     if not p.is_absolute():
+        if base_path is None:
+            raise ValueError("Path must be an absolute path")
         p = Path(base_path) / p
     return p.resolve()
 

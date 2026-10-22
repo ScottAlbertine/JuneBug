@@ -4,13 +4,12 @@ from constants import Message
 from enums import SessionState
 
 
-class DebugpyInstallationFailed(Exception):
-    """Special exception to inform the client that we couldn't install debugpy."""
+class AbsolutePathError(Exception):
+    """Exception indicating that the given field must be an absolute directory path."""
 
-    def __init__(self, python_path: str, stdout: bytes, stderr: bytes):
-        super().__init__(
-            f"Failed to install debugpy with {python_path}. \n\n Stderr: \n {stderr.decode('utf-8')} \n\n Stdout: \n {stdout.decode('utf-8')} \n",
-        )
+    def __init__(self, field_name: str):
+        super().__init__(f"{field_name} must be an absolute directory path.")
+
 
 
 class DAPError(Exception):
@@ -21,6 +20,22 @@ class DAPError(Exception):
         command = message.get("command")
         error_message = message.get("message")
         super().__init__(f"DAP Error from command {command}: {error_message}")
+
+
+class DebugpyInstallationFailed(Exception):
+    """Special exception to inform the client that we couldn't install debugpy."""
+
+    def __init__(self, python_path: str, stdout: bytes, stderr: bytes):
+        super().__init__(
+            f"Failed to install debugpy with {python_path}. \n\n Stderr: \n {stderr.decode('utf-8')} \n\n Stdout: \n {stdout.decode('utf-8')} \n",
+        )
+
+
+class DirectoryNotFound(Exception):
+    """Exception indicating that the client's specified directory was not found."""
+
+    def __init__(self, path: str | Path):
+        super().__init__(f"Directory {path} was not found.")
 
 
 class FileNotFound(Exception):

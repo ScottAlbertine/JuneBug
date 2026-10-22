@@ -1,8 +1,10 @@
+from pathlib import Path
 from typing import Annotated
 
 from pydantic import Field
 
 from annotations import ProjectPath
+from exceptions import AbsolutePathError
 from models import SessionStatus
 import session_service
 from utils import normalize_file_path
@@ -61,9 +63,17 @@ def launch_debugger_session(
     if env is None:
         env = {}
 
-    normal_file_path = normalize_file_path(project_path, file_path)
+    try:
+        normal_project_path = normalize_file_path(project_path)
+    except ValueError:
+        raise AbsolutePathError("project_path")
+    normal_file_path = normalize_file_path(file_path, project_path)
+    normal_working_directory: Path | None = None
+    if working_directory is not None:
+        normal_working_directory = normalize_file_path(working_directory, project_path)
+    # don't normalize python_path, since it might be just "python", which is neither an absolute nor a relative path
 
     session = session_service.launch_session(
-        project_path, python_path, normal_file_path, timeout, program_arguments, working_directory, env,
+        normal_project_path, python_path, normal_file_path, timeout, program_arguments, normal_working_directory, env,
     )
     return session.get_status()

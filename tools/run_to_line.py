@@ -40,6 +40,6 @@ def run_to_line(
       Create a new session instead of trying new calls on this one.
     """
     session = session_service.get_session(session_id)
-    path = normalize_file_path(session.project_path, file_path)
+    path = normalize_file_path(file_path, session.project_path)
     session.run_to_line(path, line)
     return session.get_status()

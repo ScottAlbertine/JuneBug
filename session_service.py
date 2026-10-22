@@ -8,7 +8,7 @@ import subprocess
 import uuid
 
 from constants import TEMP_DIR
-from exceptions import FileNotFound, MissingSessionId, SessionNotFound
+from exceptions import DirectoryNotFound, FileNotFound, MissingSessionId, SessionNotFound
 from session import Session
 from utils import find_free_port, install_debugpy
 
@@ -58,14 +58,14 @@ def get_session(session_id: str | None) -> Session:
     return SESSIONS[session_id]
 
 
-def get_sessions(project_path: str) -> list[Session]:
+def get_sessions(project_path: Path) -> list[Session]:
     """Get all sessions for a given project path."""
     return [session for session in SESSIONS.values() if session.project_path == project_path]
 
 
 def attach_session(
     session_id: str,
-    project_path: str,
+    project_path: Path,
     host: str,
     port: int,
     timeout: int,
@@ -79,19 +79,23 @@ def attach_session(
 
 
 def launch_session(
-    project_path: str,
+    project_path: Path,
     python_path: str,
     file_path: Path,
     timeout: int,
     program_arguments: list[str],
-    working_directory: str | None,
+    working_directory: Path | None,
     env: dict[str, str],
 ) -> Session:
     """Launch a new python process in debug mode, and attach a new session to it."""
     install_debugpy(python_path)
 
+    if not project_path.is_dir():
+        raise DirectoryNotFound(project_path)
     if not file_path.exists():
         raise FileNotFound(file_path)
+    if working_directory is not None and not working_directory.is_dir():
+        raise DirectoryNotFound(working_directory)
 
     session_id = str(uuid.uuid4())
     port = find_free_port()

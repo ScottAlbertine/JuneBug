@@ -36,6 +36,6 @@ def list_breakpoints(
     - Check hit_count to verify breakpoints were actually hit during execution.
     """
     session = session_service.get_session(session_id)
-    path = normalize_file_path(session.project_path, file_path) if file_path else None
+    path = normalize_file_path(file_path, session.project_path) if file_path else None
     breakpoints = session.list_breakpoints(path)
     return BreakpointsResponse(breakpoints=breakpoints, breakpoints_muted=session.breakpoints_muted)

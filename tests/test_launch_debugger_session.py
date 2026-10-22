@@ -17,6 +17,17 @@ async def test_launch_debugger_session__invalid(client: Client) -> None:
     with pytest.raises(ToolError, match=r"project_path\n.+Missing required argument.+"):
         await client.call_tool("launch_debugger_session", {"python_path": sys.executable, "file_path": FAKE_MAIN})
 
+    with pytest.raises(ToolError, match=r"project_path must be an absolute directory path\."):
+        await client.call_tool(
+            "launch_debugger_session", {"project_path": "a/b/c", "python_path": sys.executable, "file_path": FAKE_MAIN},
+        )
+
+    with pytest.raises(ToolError, match=r"Directory /a/b/c was not found\."):
+        await client.call_tool(
+            "launch_debugger_session",
+            {"project_path": "/a/b/c", "python_path": sys.executable, "file_path": FAKE_MAIN},
+        )
+
     with pytest.raises(ToolError, match=r"No such file or directory: '/not/a/real/path'"):
         await client.call_tool(
             "launch_debugger_session", {
@@ -41,7 +52,7 @@ async def test_launch_debugger_session__invalid(client: Client) -> None:
             },
         )
 
-    with pytest.raises(ToolError, match=r"No such file or directory: '/not/a/real/path'"):
+    with pytest.raises(ToolError, match=r"Directory /not/a/real/path was not found\."):
         await client.call_tool(
             "launch_debugger_session", {
                 "project_path": str(PROJECT_ROOT),

@@ -20,7 +20,7 @@ class Session:
     def __init__(
         self,
         session_id: str,
-        project_path: str,
+        project_path: Path,
         host: str,
         port: int,
         timeout: int,

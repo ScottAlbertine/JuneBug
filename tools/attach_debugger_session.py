@@ -4,8 +4,10 @@ import uuid
 from pydantic import Field
 
 from annotations import ProjectPath
+from exceptions import AbsolutePathError
 from models import SessionStatus
 import session_service
+from utils import normalize_file_path
 
 
 def attach_debugger_session(
@@ -44,5 +46,10 @@ def attach_debugger_session(
       to get it to the state you want before attempting to inspect.
     """
     session_id = str(uuid.uuid4())
-    session = session_service.attach_session(session_id, project_path, host, port, timeout)
+
+    try:
+        normal_project_path = normalize_file_path(project_path)
+    except ValueError:
+        raise AbsolutePathError("project_path")
+    session = session_service.attach_session(session_id, normal_project_path, host, port, timeout)
     return session.get_status()

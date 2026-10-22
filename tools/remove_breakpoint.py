@@ -22,5 +22,5 @@ def remove_breakpoint(file_path: FilePath, line: LineNum, session_id: SessionID 
     - Use list_breakpoints to verify the breakpoint was removed.
     """
     session = session_service.get_session(session_id)
-    path = normalize_file_path(session.project_path, file_path)
+    path = normalize_file_path(file_path, session.project_path)
     session.remove_breakpoint(path, line)
