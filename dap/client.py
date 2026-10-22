@@ -93,7 +93,7 @@ class DAPClient:
     def _pull_until(self, matcher: Callable[[Message], bool]) -> Message:
         """ Pull JSON dicts from the DAP client until the given matcher function returns true on a dict, then return that dict. """
         for message in self._message_iterator:
-            print(message)  # for easy logging
+            # print(message)  # for easy logging
 
             if not message.get("success", True):
                 raise DAPError(message)
