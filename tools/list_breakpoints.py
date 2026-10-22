@@ -15,19 +15,25 @@ def list_breakpoints(
     ] = None,
 ) -> BreakpointsResponse:
     """
-    Lists all breakpoints in the project or in a specific file.
-    Use this tool to see all currently set breakpoints and their properties.
+    List all configured breakpoints in a debug session, optionally filtered by file.
 
-    Tip: Call this before `resume` or `wait_for_pause` to confirm there is at least one enabled breakpoint that is expected to be hit next.
+    Returns breakpoints sorted by file path, then by line number. Each breakpoint
+    includes its location, source line text, condition, temporary flag, and hit count.
+
+    Preconditions:
+    - A valid, non-stopped session must exist.
 
     Behavior:
-    - If `file_path` is provided, returns only breakpoints in that file.
-    - Returns rich attributes for each breakpoint (file, line, line_text, condition, temporary, hit_count).
-    - `breakpoints_muted` reports the session-wide debugger mute flag.
+    - If file_path is provided, returns only breakpoints in that file.
+    - If file_path is omitted, returns all breakpoints across all files.
+    - The response includes the session's breakpoint mute status so you know whether
+      breakpoints are currently active or dormant.
+    - Hit count shows how many times each breakpoint has been triggered (0 if never hit).
 
-    Next call:
-    - If no suitable breakpoint exists, call `set_breakpoint`.
-    - Then continue execution with `control_debugger_session(action=resume)`.
+    Next call guidance:
+    - Use the returned breakpoint locations to understand where the debugee will pause.
+    - If breakpoints_muted is true, the breakpoints exist but won't trigger until unmuted.
+    - Check hit_count to verify breakpoints were actually hit during execution.
     """
     session = session_service.get_session(session_id)
     path = normalize_file_path(session.project_path, file_path) if file_path else None

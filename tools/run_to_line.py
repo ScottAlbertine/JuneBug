@@ -13,18 +13,31 @@ def run_to_line(
     timeout: Annotated[int, "Timeout in milliseconds waiting for paused/stopped result. Default: 30000."] = 30000,
 ) -> SessionStatus:
     """
-    Runs the program until it reaches a target line.
-    Use this tool when you want to ignore all other breakpoints, and just run until you get to a given location.
-    This tool sets a temporary breakpoint at the given location, then resumes execution.
-    It then skips past all other breakpoints until it hits the breakpoint it set.
-    The tool does block until that happens, just like `control_debugger_session(action=wait_for_pause)`.
+    Run execution until a specific file and line, then pause.
 
-    Outcome:
-    If the debugger status is `stopped`, it is reasonable to conclude that the program ran to completion without hitting the given line.
+    Convenient shortcut to jump to a location without manually setting and
+    removing a temporary breakpoint. Existing breakpoints are temporarily
+    bypassed so only the target location triggers a pause.
 
-    Next call:
-    - If paused, call `get_stack` / `list_variables` / `evaluate_expression`.
-    - If the session stopped, create a new one before issuing another session-scoped call.
+    Preconditions:
+    - A valid, non-stopped session must exist.
+    - The target file and line must exist and point to executable code.
+
+    Behavior:
+    - Resumes execution, ignoring all existing breakpoints, until the target
+      line is reached. Blocks until paused at that location or the session stops.
+    - Preserves the session's previous breakpoint mute state.
+    - Returns the session status showing the paused state and current position.
+
+    Next call guidance:
+    - After this call, the session is paused at the target line. Use `get_stack`
+      and `list_variables` to inspect state at that location.
+    - Use this instead of set_breakpoint + resume + wait_for_pause when you
+      want to skip over existing breakpoints.
+    - Not useful if you want to hit multiple breakpoints along the way — use
+      the standard resume + wait_for_pause flow instead.
+    - If the session is stopped, the program ran to completion.
+      Create a new session instead of trying new calls on this one.
     """
     session = session_service.get_session(session_id)
     path = normalize_file_path(session.project_path, file_path)

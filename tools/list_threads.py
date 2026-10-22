@@ -13,19 +13,22 @@ def list_threads(
     offset: Annotated[int, Field(description="Page offset. Default: 0.", ge=0)] = 0,
 ) -> ThreadsResponse:
     """
-    Returns the list of threads in the debug session.
-    Use this tool to see all threads and their current status.
+    List all threads in a debug session, with pagination support.
 
-    Next call:
-    - Use `get_stack` for the selected thread.
+    Returns the threads tracked by the session, reflecting their current state
+    (running/paused/unknown) and which one is currently selected.
 
-    Pagination:
-    - `offset`/`limit` are applied after collecting all stacks.
+    Preconditions:
+    - A valid, non-stopped session must exist.
 
-    Ordering:
-    - By id
+    Behavior:
+    - Results are paginated: `offset` skips that many threads, `limit` caps the
+      number returned. `total_count` gives the full count for pagination math.
+    - Each thread shows its id, name, state, and whether it is the current thread.
 
-    Schema fields: id, name, state, is_current.
+    Next call guidance:
+    - Use a thread's `id` with `get_stack` to inspect its call stack.
+    - Call this after resuming or pausing to see updated thread states.
     """
     session = session_service.get_session(session_id)
     threads = session.list_threads()

@@ -25,26 +25,33 @@ def evaluate_expression(
     depth: Annotated[int, Field(description=DEPTH_DESCRIPTION, ge=0, le=4)] = 0,
 ) -> Variable:
     """
-    Evaluates an expression in the context of the given stack frame.
-    Use this tool to compute values, call methods, or inspect expressions during debugging.
+    Evaluate a Python expression in the context of a stack frame.
+
+    Executes the given expression using the variables and scope of the selected
+    frame. Useful for inspecting computed values, drilling into objects, calling methods,
+    or testing hypotheses about program state.
 
     Preconditions:
-    - Session must be suspended.
-    - Evaluation must be supported for the selected frame/language.
-    - `expression` must be a valid expression in the language of the current frame.
+    - The session must be in a paused state.
+    - If frame_id is not provided, the top frame of the current thread is used.
 
-    The result is returned as:
-    - depth == 0: just the result of the evaluated expression
-    - depth > 0: the presentation plus any children, like `list_variables` does
+    Behavior:
+    - Evaluates the raw Python expression in the target frame's scope.
+    - Returns the result as a Variable with name (the expression), value, type,
+      and optional children (if `depth > 0`).
+    - `depth` controls recursive expansion of the result object, same as
+      `list_variables`. 0 returns the value only; higher values expand children.
+    - `show_hidden` includes hidden attributes (dunders, etc.) in child expansion.
+    - If the expression raises an exception, the tool call returns the exception as a Variable.
+    - Frame IDs become stale after stepping or resuming — always get a fresh
+      frame_id from `get_stack` before evaluating.
 
-    Input rules:
-    - Pass raw expression text exactly as the debugger evaluator should parse it.
-    - Do not pass JSON-escaped payloads or literal escape sequences such as `\\"text\\"`.
-    - Recommended to pass the `evaluate_name` from the result of a `list_variables` tool call.
-
-    Next call:
-    - If expression confirms hypothesis, continue with `control_debugger_session(step_*|resume)`.
-    - If more detail is needed, inspect related values via further `evaluate_expression` calls.
+    Next call guidance:
+    - Use the returned Variable's children to inspect nested structures.
+    - If you need to evaluate something in a different frame, get that frame's
+      id from `get_stack` first, then call this tool with the new frame_id.
+    - For simple variable inspection, `list_variables` is often sufficient;
+      use this tool for computed expressions or when you need a specific value.
     """
     session = session_service.get_session(session_id)
     return session.evaluate_expression(expression, frame_id, show_hidden, depth)

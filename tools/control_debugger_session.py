@@ -19,36 +19,41 @@ def control_debugger_session(
     ] = 30000,
 ) -> SessionStatus:
     """
-    Controls the execution of a debug session.
-    Use this tool to step through code, resume execution, pause, or stop the debug session.
+    Control the execution flow of a debug session: step, resume, pause, stop, or wait.
+
+    This is the primary tool for driving execution during a debugging session.
+    Choose the action that matches your debugging goal.
 
     Preconditions:
-    - A debug session must exist.
-    - `step_*` actions require a suspended session.
+    - A valid, non-stopped session must exist. Operations on stopped sessions fail.
+    - step_into, step_over, step_out require the session to be in a paused state.
 
-    Actions:
-    - step_into: Step into the next method call. Blocks until step is done.
-    - step_over: Step over the current line. Blocks until step is done.
-    - step_out: Step out of the current method. Blocks until step is done.
-    - resume: Resume program execution. Does not block, program runs in the background after this tool call completes. Only use this when the program is paused.
-    - pause: Pause program execution. Blocks until program is paused.
-    - stop: Stop the debug session. Does not block. This attempts to terminate the debugee process, however, the debugee process may run to completion after this signal.
-    - wait_for_pause: Wait until the program pauses due to breakpoint hit or program completion. Blocks until program is paused. Idempotent, does nothing if the program is already paused.
+    Behavior by action:
+    - step_into: Steps one line into the current call. If the line calls a function,
+      execution enters that function. Blocks until stepping is complete.
+    - step_over: Steps one line, executing any function calls on that line without
+      entering them. Blocks until stepping is complete.
+    - step_out: Steps until the current function returns. Blocks until paused at the
+      caller's next line.
+    - resume: Resumes execution of all threads. Non-blocking — returns immediately.
+      Does nothing if the session is already running.
+    - pause: Interrupts execution of all threads. Blocks until all threads are paused.
+      The session state becomes paused. Does nothing if the session is already paused.
+    - stop: Terminates the debug session. Disconnects from the debugger and sends
+      SIGTERM to the debugee process (for sessions launched by this server).
+      The debugee may run to completion after this signal.
+      No further tool calls can be made to this session_id after stop.
+    - wait_for_pause: Blocks until the debugger pauses on its own (e.g., hits a
+      breakpoint). Does not send any DAP commands. Use this after resume to wait
+      for a breakpoint hit. If already paused, returns immediately.
 
-    Important notes:
-    - Use a current `session_id` from one of the other debugger_session tools. If a session stops, times out, or disappears, refresh the session list before the next session-scoped call.
-    - `resume` does NOT set breakpoints. If there are no enabled breakpoints (or none will be hit next), the program may run to completion and the session may stop without pausing.
-    - If the program is running, use `wait_for_pause` or `pause` before `step_*` / `resume`.
-    - If `wait_for_pause` times out, consider `pause` and re-check breakpoints.
-
-    Next call:
-    - After `resume`, call `control_debugger_session(action=wait_for_pause)` to confirm the next suspension.
-    - After a paused result, call `get_stack` / `list_variables` / `evaluate_expression`.
-
-    State values in the result:
-    - running: Program is executing
-    - paused: Execution is suspended (breakpoint, step, or manual pause)
-    - stopped: Debug session has terminated
+    Next call guidance:
+    - After step_* or pause: the session is paused. Use get_stack, list_variables,
+      or evaluate_expression to inspect state, then step again or resume.
+    - After resume: call wait_for_pause (with an appropriate timeout) to wait for
+      the next breakpoint hit. Timeout guidance: step_* / pause usually 5000-15000ms;
+      wait_for_pause usually 30000-120000ms depending on workload and breakpoints.
+    - After stop: the session is dead. Launch a new session to continue debugging.
     """
     session = session_service.get_session(session_id)
 

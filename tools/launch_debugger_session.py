@@ -27,19 +27,34 @@ def launch_debugger_session(
     ] = None,
 ) -> SessionStatus:
     """
-    Start a debugger session for a given Python program in the current project.
-    Use this tool to start a debugger session.
-    The session will be started and you can then use other tools on this MCP server to control execution.
-    This tool call will block until session creation to succeeds, up to `timeout` milliseconds.
-    The program will be started in a paused state, before the first line of code has run.
-    This allows you to set breakpoints that you expect to be hit during startup, before resuming the process.
+    Launch a new Python program under the debugger and create a debug session.
 
-    Next call:
-    - `set_breakpoint` to set the first breakpoint you want.
+    This tool spawns a new Python process running through debugpy, which pauses on
+    startup, before the first line has run, waiting for the debugger to connect.
+    Once connected, the process remains paused and ready for breakpoints, stepping, and inspection.
 
-    Returns a flat result with debugger session metadata.
+    Preconditions:
+    - The project_path must point to an existing project directory.
+    - The python_path must point to a valid Python executable. debugpy will be
+      installed for that Python if not already present.
+    - The file_path must exist and be a Python file within or relative to the project.
+
+    Behavior:
+    - Installs debugpy for the target Python executable if needed.
+    - Launches the target file via debugpy in --wait-for-client mode, so all threads start paused.
+    - Connects to the debuggee, registering a new session with an auto-generated ID.
+    - The debugee's stdout and stderr are captured to temp files (paths returned
+      in the SessionStatus).
+    - Blocks until the debugger connects or the timeout expires.
+
+    Next call guidance:
+    - Use the returned session_id for all subsequent debugger calls (breakpoints,
+      stepping, variables). If you have only one active session, session_id can be
+      omitted.
+    - The session starts in a paused state. Set breakpoints with set_breakpoint,
+      then call control_debugger_session with action "resume" to begin execution.
+    - To check output, read the std_out_path or std_err_path from the returned status.
     """
-
     if program_arguments is None:
         program_arguments = []
 

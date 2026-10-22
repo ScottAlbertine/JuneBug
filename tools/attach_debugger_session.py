@@ -18,7 +18,31 @@ def attach_debugger_session(
         ),
     ] = 60000,
 ) -> SessionStatus:
-    # TODO: once all the remaining tool docstrings are finalized, have Junie generate this one.
+    """
+    Attach a debugger to an already-running Python process that is listening for debug connections.
+
+    Use this when a program has already been started with debugpy (e.g., via
+    `python -m debugpy --listen <port> --wait-for-client script.py`) and is waiting
+    for a debugger to connect. Unlike launch_debugger_session, this does not spawn a
+    new process — it connects to an existing one.
+
+    Preconditions:
+    - A Python process must already be running with debugpy attached, listening on
+      the specified host and port.
+    - The project_path should point to the project containing the debugee's source.
+
+    Behavior:
+    - Generates a new session ID and connects to the debuggee over TCP.
+    - The session starts in an unknown state (the debugee may already be running or paused).
+    - Unlike launched sessions, attached sessions do not capture stdout/stderr
+      (those fields are null in the returned status).
+    - Blocks until the connection is established or the timeout expires.
+
+    Next call guidance:
+    - Use the returned session_id for all subsequent debugger calls.
+    - Since the process could be running or paused, call control_debugger_session to resume or pause it,
+      to get it to the state you want before attempting to inspect.
+    """
     session_id = str(uuid.uuid4())
     session = session_service.attach_session(session_id, project_path, host, port, timeout)
     return session.get_status()

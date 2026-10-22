@@ -21,20 +21,31 @@ def list_variables(
     depth: Annotated[int, Field(description=DEPTH_DESCRIPTION, ge=0, le=4)] = 0,
 ) -> Variables:
     """
-    Returns the variables visible in the specified stack frame as a tree structure.
-    Use this tool to inspect local variables, parameters, and fields or other values available at a specific point in the call stack.
+    List variables visible in a stack frame's scope.
+
+    Returns local variables, global variables, function parameters, and other values from the selected frame.
 
     Preconditions:
-    - Session must be suspended.
-    - Frame index should come from the current paused `get_stack` result.
+    - The session must be in a paused state.
 
     Behavior:
-    - The `children` property of a variable is `null` if the variable has no children.
-    - An empty list `[]` of children means that the variable may have children, but they have not been omitted to avoid flooding your context window.
+    - If frame_id is omitted, uses the top frame of the current thread's stack.
+    - `show_hidden` controls whether dunder variables, classes, functions, and
+      other normally hidden symbols are included.
+    - `depth` controls recursive expansion of nested objects (dicts, lists,
+      objects with attributes). 0 = variables only, no children. 1 = first level
+      of children. Up to 4 is allowed (depth 4 can return ~9MB for a typical
+      Python process — use sparingly).
+    - Each variable shows its name, value, type, and optional children array.
+    - A variable's `evaluate_name`, if present, can be used directly in `evaluate_expression`.
 
-    Next call:
-    - Use `evaluate_expression` to drill into nested fields, or for computed checks in the same frame.
-    - Do not reuse a cached `frame_id` after `resume`, `step_*`, `run_to_line`, or any change in paused location.
+    Next call guidance:
+    - For deeper inspection of a specific variable, call this tool again with
+      a higher `depth` value, or use `evaluate_expression` on a variable's
+      `evaluate_name` to drill into it.
+    - Re-fetch variables after stepping, as the frame context changes.
+    - Do not reuse a cached frame_id after resume/step — get a fresh one from
+      `get_stack` first.
     """
     session = session_service.get_session(session_id)
     variables = session.list_variables(frame_id, show_hidden, depth)
