@@ -8,6 +8,7 @@ import subprocess
 import uuid
 
 from constants import TEMP_DIR
+from enums import SessionState
 from exceptions import DirectoryNotFound, FileNotFound, MissingSessionId, SessionNotFound
 from session import Session
 from utils import find_free_port, install_debugpy
@@ -42,12 +43,13 @@ SESSIONS = Sessions()
 
 def get_session(session_id: str | None) -> Session:
     """
-    Raises MissingSessionId if one isn't specified and there's more tha one session.
+    Raises MissingSessionId if one isn't specified and there's more than one non-stopped session.
     Raises SessionNotFound if we can't find a client.
     """
     if not session_id:
-        if len(SESSIONS) == 1:
-            session_id = next(iter(SESSIONS.keys()))
+        active_sessions = {sid for sid, s in SESSIONS.items() if s.state != SessionState.STOPPED}
+        if len(active_sessions) == 1:
+            session_id = next(iter(active_sessions))
 
     if not session_id:
         raise MissingSessionId()

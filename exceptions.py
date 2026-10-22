@@ -11,7 +11,6 @@ class AbsolutePathError(Exception):
         super().__init__(f"{field_name} must be an absolute directory path.")
 
 
-
 class DAPError(Exception):
     """Generic exception representing an `ErrorResponse` from the DAP client."""
 
@@ -63,7 +62,9 @@ class MissingSessionId(Exception):
     """Exception indicating that you need to specify a session ID."""
 
     def __init__(self):
-        super().__init__("Session ID is required for this tool call, and you did not specify a session ID.")
+        super().__init__(
+            "There is more than one active session, and you did not specify a session ID. You must specify one.",
+        )
 
 
 class SessionNotFound(Exception):

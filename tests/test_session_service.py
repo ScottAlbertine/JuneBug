@@ -12,19 +12,31 @@ from tests.utils import create_session
 
 async def test_automatic_single_session_finding(client: Client, clear_sessions: None) -> None:
     # create a session
-    await create_session(client, file_path=FAKE_MAIN)
+    first_session = await create_session(client, file_path=FAKE_MAIN)
 
     # get its threads without a session ID
     threads = await client.call_tool("list_threads")
     assert threads.structured_content == {"threads": [MAIN_THREAD], "total_count": 1}
 
+    # stop the session
+    await client.call_tool(
+        "control_debugger_session", {"session_id": first_session["id"], "action": "stop"},
+    )
+
     # create a second session
     await create_session(client, file_path=FAKE_MAIN)
 
-    # see that you need a session ID to distinguish between the two.
+    # see that you can get its threads without a session ID
+    threads = await client.call_tool("list_threads")
+    assert threads.structured_content == {"threads": [MAIN_THREAD], "total_count": 1}
+
+    # leave the second session running, and create a third session
+    await create_session(client, file_path=FAKE_MAIN)
+
+    # see that you need a session ID to distinguish between the two non-stopped sessions.
     with pytest.raises(
         ToolError,
-        match=r"Error calling tool 'list_threads': Session ID is required for this tool call, and you did not specify a session ID\.",
+        match=r"There is more than one active session, and you did not specify a session ID\. You must specify one\.",
     ):
         await client.call_tool("list_threads")
 
