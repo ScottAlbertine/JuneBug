@@ -1,6 +1,7 @@
 """A debug session, equivalent to a debugger instance like a `pdb` process or a PyCharm debugger tab."""
 from pathlib import Path
 from signal import SIGTERM
+from typing import Self
 
 import psutil
 
@@ -15,19 +16,31 @@ from utils import fetch_line_text
 
 
 class Session:
-    """A debug session, equivalent to a debugger instance like a `pdb` process or a PyCharm debugger tab."""
+    """
+    A debug session, equivalent to a debugger instance like a `pdb` process or a PyCharm debugger tab.
+    Use `Session.create()` to create a new session, do not call `Session()` directly.
+    """
 
-    def __init__(
-        self,
-        session_id: str,
-        project_path: Path,
-        host: str,
-        port: int,
-        timeout: float,
-        we_own: bool,
-        pid: int | None = None,
-    ):
-        """Timeout is in seconds."""
+    @classmethod
+    async def create(
+        cls, session_id: str, project_path: Path, host: str, port: int, we_own: bool, pid: int | None = None,
+    ) -> Self:
+        session = cls(session_id, project_path, we_own, pid)
+        session._client = await DAPClient.create(session_id, host, port, session._handle_message)
+        # always get the initial registry of threads at this point, because we can.
+        await session.list_threads()
+        # if we own it, we always launch with `--wait-for-client`, so all threads are paused on start
+        if session.we_own:
+            session.state = SessionState.PAUSED
+            session.threads.pause_at_start()
+
+        # Technically, we could get the current position here, however, in many cases that takes 600ms, or is misleading, or both.
+        # self.current_position = self.fetch_current_position(self.threads.get_current_thread_id())
+
+        return session
+
+    def __init__(self, session_id: str, project_path: Path, we_own: bool, pid: int | None = None):
+        """DO NOT CALL THIS, this is for internal use only."""
         self.breakpoints = Breakpoints()
         self.breakpoints_muted: bool = False
         self.current_position: Breakpoint | None = None
@@ -41,39 +54,29 @@ class Session:
         self.threads = Threads()
         self.we_own = we_own
 
-        self._client = DAPClient(session_id, host, port, timeout, self._handle_message)
-
-        # always get the initial registry of threads at this point, because we can.
-        self.list_threads()
-        # if we own it, we always launch with `--wait-for-client`, so all threads are paused on start
-        if self.we_own:
-            self.state: SessionState = SessionState.PAUSED
-            self.threads.pause_at_start()
-
-        # Technically, we could get the current position here, however, in many cases that takes 600ms, or is misleading, or both.
-        # self.current_position = self.fetch_current_position(self.threads.get_current_thread_id())
+        self._client: DAPClient
 
     # session commands
 
-    def evaluate_expression(
+    async def evaluate_expression(
         self, expression: str, frame_id: int | None = None, show_hidden: bool = False, depth: int = 0,
     ) -> Variable:
         self.assert_not_stopped()
         self.assert_state(SessionState.PAUSED)
 
         if frame_id is None:
-            frame_id = self.get_top_stack_frame().id
+            frame_id = (await self.get_top_stack_frame()).id
 
-        message = self._client.evaluate(expression, frame_id)
+        message = await self._client.evaluate(expression, frame_id)
         variable = Variable.from_dap_evaluation(message["body"], expression)
-        self._fetch_variable_children(variable.id, variable.children, show_hidden, depth)
+        await self._fetch_variable_children(variable.id, variable.children, show_hidden, depth)
         return variable
 
-    def get_current_thread_id(self) -> int | None:
-        self.list_threads()
+    async def get_current_thread_id(self) -> int | None:
+        await self.list_threads()
         return self.threads.get_current_thread_id()
 
-    def get_stack_trace(
+    async def get_stack_trace(
         self, thread_id: int | None = None, limit: int | None = None, offset: int | None = None,
     ) -> StackFrames:
         """
@@ -84,18 +87,18 @@ class Session:
         self.assert_not_stopped()
 
         if thread_id is None:
-            thread_id = self.get_current_thread_id()
+            thread_id = await self.get_current_thread_id()
         if thread_id is None:
             raise Exception("No thread ID specified, and there is no current thread listed.")
 
-        dap_stack_trace = self._client.stack_trace(thread_id, limit, offset)["body"]
+        dap_stack_trace = (await self._client.stack_trace(thread_id, limit, offset))["body"]
         frames = [StackFrame.from_dap(frame) for frame in dap_stack_trace["stackFrames"]]
         return StackFrames(frames=frames, thread_id=thread_id, total_frames=dap_stack_trace["totalFrames"])
 
-    def get_status(self) -> SessionStatus:
+    async def get_status(self) -> SessionStatus:
         """Get the status of this session."""
         if self.state != SessionState.STOPPED:  # don't try talking anymore if we're stopped
-            self.list_threads()  # do a list_threads to pull the most recent messages from the DAP server
+            await self.list_threads()  # do a list_threads to pull the most recent messages from the DAP server
         return SessionStatus(
             id=self.session_id,
             state=self.state,
@@ -106,9 +109,9 @@ class Session:
             current_position=self.current_position,
         )
 
-    def get_top_stack_frame(self) -> StackFrame:
+    async def get_top_stack_frame(self) -> StackFrame:
         """Convenience method, get the top frame of the stack on the current thread."""
-        return self.get_stack_trace(limit=1).frames[0]
+        return (await self.get_stack_trace(limit=1)).frames[0]
 
     def list_breakpoints(self, path: Path | None) -> list[Breakpoint]:
         """
@@ -121,63 +124,64 @@ class Session:
         else:
             return self.breakpoints.list_breakpoints_for_file(path)
 
-    def list_variables(self, frame_id: int | None = None, show_hidden: bool = False, depth: int = 0) -> list[Variable]:
+    async def list_variables(
+        self, frame_id: int | None = None, show_hidden: bool = False, depth: int = 0,
+    ) -> list[Variable]:
         """List all variables of a given frame ID, down to a given depth, showing hidden ones if requested."""
         self.assert_not_stopped()
         self.assert_state(SessionState.PAUSED)
 
         if frame_id is None:
-            frame_id = self.get_top_stack_frame().id
+            frame_id = (await self.get_top_stack_frame()).id
 
-        scope_ids: list[int] = [
-            dap_scope["variablesReference"] for dap_scope in self._client.scopes(frame_id)["body"]["scopes"]
-        ]
+        scopes = await self._client.scopes(frame_id)
+        scope_ids: list[int] = [dap_scope["variablesReference"] for dap_scope in scopes["body"]["scopes"]]
 
         variables: list[Variable] = []
         for scope_id in scope_ids:
-            self._fetch_variable_children(scope_id, variables, show_hidden, depth + 1)
+            await self._fetch_variable_children(scope_id, variables, show_hidden, depth + 1)
 
         return variables
 
-    def list_threads(self) -> list[Thread]:
+    async def list_threads(self) -> list[Thread]:
         """Get all threads, sorted by id."""
         self.assert_not_stopped()
-        return self.threads.refresh(self._client.threads())
+        return self.threads.refresh(await self._client.threads())
 
-    def pause(self) -> None:
+    async def pause(self) -> None:
         """Pause this session."""
         self.assert_not_stopped()
-        self._client.pause(self.list_threads()[0].id)
-        self.current_position = self.fetch_current_position(self.get_current_thread_id())
+        await self._client.pause((await self.list_threads())[0].id)
+        self.current_position = await self.fetch_current_position(await self.get_current_thread_id())
         self.state = SessionState.PAUSED
 
-    def remove_breakpoint(self, path: Path, line: int) -> None:
+    async def remove_breakpoint(self, path: Path, line: int) -> None:
         """Remove a breakpoint. Idempotent, no-op on nonexistent breakpoint."""
         self.assert_not_stopped()
         did_remove = self.breakpoints.remove_breakpoint(path, line)
         # don't shuffle our breakpoint IDs if we don't need to
         # and don't talk to DAP about breakpoints while muted
         if did_remove and not self.breakpoints_muted:
-            self.breakpoints.refresh(self.set_breakpoints(self.breakpoints.get_file(path)))
+            self.breakpoints.refresh(await self.set_breakpoints(self.breakpoints.get_file(path)))
 
-    def resume(self) -> None:
+    async def resume(self) -> None:
         """Resume this session. Does not block."""
         self.assert_not_stopped()
         # we're going to need to list threads anyway in most cases
         # and listing threads pulls the latest messages to update our state and current_position, which we then check
-        threads = self.list_threads()
+        threads = await self.list_threads()
         if self.state == SessionState.RUNNING:
             return  # Don't double run
         if not self.has_configuration_done:
             # this has to happen once per session, and only once, and it automatically resumes all threads
-            self._client.configuration_done()
+            await self._client.configuration_done()
             self.has_configuration_done = True
         else:
-            self._client.continue_execution(threads[0].id)
+            await self._client.continue_execution(threads[0].id)
         self.current_position = None
         self.state = SessionState.RUNNING
 
-    def run_to_line(self, path: Path, line: int) -> None:
+    async def run_to_line(self, path: Path, line: int) -> None:
         """
         Set a temporary breakpoint at the given location, resume execution until it is hit, ignoring all breakpoints until that happens.
         Blocks until the specifically set breakpoint is hit.
@@ -185,39 +189,39 @@ class Session:
         self.assert_not_stopped()
         was_muted = self.breakpoints_muted
         try:
-            self.set_breakpoints_muted(True)
+            await self.set_breakpoints_muted(True)
             # since we're muted, this next line sends nothing to DAP
-            bp = self.set_breakpoint(path, line, temporary=True)
+            bp = await self.set_breakpoint(path, line, temporary=True)
             # This is fine, because we want to send DAP just that one special breakpoint anyway
             special_file = File(path)
             special_file.add_breakpoint(bp)
-            self.breakpoints.refresh(self.set_breakpoints(special_file))
-            self.resume()
-            self.wait_for_pause()
+            self.breakpoints.refresh(await self.set_breakpoints(special_file))
+            await self.resume()
+            await self.wait_for_pause()
         finally:
             if self.state != SessionState.STOPPED:
-                self.set_breakpoints_muted(was_muted)  # restore our muting state
+                await self.set_breakpoints_muted(was_muted)  # restore our muting state
 
-    def set_breakpoint(
+    async def set_breakpoint(
         self, path: Path, line: int, temporary: bool = False, condition: str | None = None,
     ) -> Breakpoint:
         """Set a new breakpoint. See the docstring on the `Breakpoints` class to understand why this is so complex."""
         line_text = fetch_line_text(path, line)[:120]
         bp = self.breakpoints.add_breakpoint(path, line, line_text, condition, temporary)
         if not self.breakpoints_muted:  # don't talk to DAP about breakpoints while muted
-            self.breakpoints.refresh(self.set_breakpoints(self.breakpoints.get_file(path)))
+            self.breakpoints.refresh(await self.set_breakpoints(self.breakpoints.get_file(path)))
         return bp
 
-    def set_breakpoints(self, file: File) -> Message:
+    async def set_breakpoints(self, file: File) -> Message:
         """
         Send all breakpoints we're currently tracking in the given file, to DAP.
         This wholly replaces all breakpoints in that file, in the DAP server.
         Sadly, this is the *only* operation you can do with breakpoints in DAP, at all.
         Pass in an empty file (with no breakpoints) to remove all breakpoints in that file.
         """
-        return self._client.set_breakpoints(str(file.path), [bp.to_dap() for bp in file.list_breakpoints()])
+        return await self._client.set_breakpoints(str(file.path), [bp.to_dap() for bp in file.list_breakpoints()])
 
-    def set_breakpoints_muted(self, breakpoints_muted: bool) -> None:
+    async def set_breakpoints_muted(self, breakpoints_muted: bool) -> None:
         """Set all breakpoints to muted."""
         if self.breakpoints_muted == breakpoints_muted:
             return  # already there, nothing to do
@@ -228,39 +232,39 @@ class Session:
             if self.breakpoints_muted:
                 # clear each file by sending a blank version of it
                 # DO NOT refresh our breakpoints internally
-                self.set_breakpoints(File(file.path))
+                await self.set_breakpoints(File(file.path))
             else:
                 # re-send the real file to DAP if we're unmuting
                 # do refresh our breakpoints internally, this changes their IDs
-                self.breakpoints.refresh(self.set_breakpoints(file))
+                self.breakpoints.refresh(await self.set_breakpoints(file))
 
-    def step(self, direction: StepDirection) -> None:
+    async def step(self, direction: StepDirection) -> None:
         """Step into, over, or out of the current thread."""
         self.assert_not_stopped()  # yes, this seems redundant, but it produces better error messages
         self.assert_state(SessionState.PAUSED)
         thread_id = self.threads.get_current_thread_id()
         if direction == StepDirection.INTO:
-            self._client.step_in(thread_id)
+            await self._client.step_in(thread_id)
         elif direction == StepDirection.OVER:
-            self._client.next(thread_id)
+            await self._client.next(thread_id)
         elif direction == StepDirection.OUT:
-            self._client.step_out(thread_id)
-        self.current_position = self.fetch_current_position(thread_id)
+            await self._client.step_out(thread_id)
+        self.current_position = await self.fetch_current_position(thread_id)
 
-    def stop(self) -> None:
+    async def stop(self) -> None:
         """Stop this session."""
         if self.state == SessionState.STOPPED:
             return  # already stopped, nothing to do
-        self._client.disconnect()
+        await self._client.disconnect()
         if self.we_own:
             psutil.Process(self.debugee_pid).send_signal(SIGTERM)
 
-    def wait_for_pause(self) -> None:
+    async def wait_for_pause(self) -> None:
         """Wait for the debugger to pause on a line on its own. Only blocks, does not send anything to DAP."""
         if self.state == SessionState.PAUSED:
             return  # we are already paused, don't just block forever
         self.assert_not_stopped()
-        self._client.wait_for_pause()
+        await self._client.wait_for_pause()
 
     # internal state management tools
 
@@ -273,7 +277,7 @@ class Session:
         if self.state == SessionState.STOPPED:
             raise SessionStoppedError()
 
-    def fetch_current_position(self, thread_id: int | None) -> Breakpoint | None:
+    async def fetch_current_position(self, thread_id: int | None) -> Breakpoint | None:
         """
         Get a floating breakpoint that represents the current position of the thread with the given ID.
         IMPORTANT: On a paused thread, this takes 20ms. On a running thread, it takes 600ms.
@@ -281,24 +285,24 @@ class Session:
         """
         if thread_id is None:
             return None
-        top_frame = self.get_stack_trace(thread_id, limit=1).frames[0]
+        top_frame = (await self.get_stack_trace(thread_id, limit=1)).frames[0]
         return Breakpoint.floating(Path(top_frame.file), top_frame.line)
 
-    def _fetch_variable_children(
+    async def _fetch_variable_children(
         self, variable_id: int, output: list[Variable] | None, show_hidden: bool, depth: int,
     ) -> None:
         """Fetch the children of a variable, into the given output array, recursively, down to the given depth."""
         if depth == 0 or variable_id == 0 or output is None:
             return
 
-        for dap_variable in self._client.variables(variable_id)["body"]["variables"]:
+        for dap_variable in (await self._client.variables(variable_id))["body"]["variables"]:
             child = Variable.from_dap_variable(dap_variable)
             # All the variables we want to hide by default, in python, luckily, do not have a type
             if child.type or show_hidden:
                 output.append(child)
-                self._fetch_variable_children(child.id, child.children, show_hidden, depth - 1)
+                await self._fetch_variable_children(child.id, child.children, show_hidden, depth - 1)
 
-    def _handle_message(self, message: Message) -> None:
+    async def _handle_message(self, message: Message) -> None:
         """
         Handle any state updates that need to happen when we see certain messages.
         This sees every message that the DAP server sends to us, in order.
@@ -315,7 +319,7 @@ class Session:
                 bp.hit_count += 1
                 self.current_position = bp
                 if bp.temporary:
-                    self.remove_breakpoint(bp.file, bp.line)
+                    await self.remove_breakpoint(bp.file, bp.line)
 
             self.state = SessionState.PAUSED
 

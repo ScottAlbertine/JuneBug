@@ -1,3 +1,4 @@
+from asyncio import wait_for
 from pathlib import Path
 from typing import Annotated
 
@@ -10,7 +11,7 @@ import session_service
 from utils import normalize_file_path
 
 
-def launch_debugger_session(
+async def launch_debugger_session(
     project_path: ProjectPath,
     python_path: Annotated[str, "Absolute path to the Python executable to use when running the program."],
     file_path: Annotated[str, "File path of the Python program to debug, relative to `project_path`."],
@@ -73,13 +74,15 @@ def launch_debugger_session(
         normal_working_directory = normalize_file_path(working_directory, project_path)
     # don't normalize python_path, since it might be just "python", which is neither an absolute nor a relative path
 
-    session = session_service.launch_session(
-        normal_project_path,
-        python_path,
-        normal_file_path,
-        timeout / 1000.0,
-        program_arguments,
-        normal_working_directory,
-        env,
+    session = await wait_for(
+        session_service.launch_session(
+            normal_project_path,
+            python_path,
+            normal_file_path,
+            program_arguments,
+            normal_working_directory,
+            env,
+        ), timeout=timeout / 1000.0,
     )
-    return session.get_status()
+
+    return await session.get_status()

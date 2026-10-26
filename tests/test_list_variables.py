@@ -1,24 +1,34 @@
-from typing import AsyncGenerator
-
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
 import pytest
-import pytest_asyncio
 
-from main import mcp
 from tests.constants import FAKE_MAIN, FAKE_MAIN_WITH_IMPORT, FAKE_MAIN_WITH_VARIABLES
 from tests.utils import MatchAny, MatchRegex, create_session, move_to_next_breakpoint
 
 
-async def test_list_variables__invalid(client: Client, session_id_with_variables: str) -> None:
+async def common_setup(client: Client) -> str:
+    """
+    A bunch of tests in this file use intentionally identical setup, and are read-only, so they don't alter the setup at all.
+    This handles that setup for them.
+    """
+    session_id = (await create_session(client, file_path=FAKE_MAIN_WITH_VARIABLES))["id"]
+    await client.call_tool(
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_WITH_VARIABLES, "line": 38},
+    )
+    await move_to_next_breakpoint(client, session_id)
+    return session_id
+
+
+async def test_list_variables__invalid(client: Client) -> None:
+    session_id = await common_setup(client)
     with pytest.raises(ToolError, match=r"Stack frame 999999 was not found\."):
-        await client.call_tool("list_variables", {"session_id": session_id_with_variables, "frame_id": 999999})
+        await client.call_tool("list_variables", {"session_id": session_id, "frame_id": 999999})
 
     with pytest.raises(ToolError, match=r"depth\n.+Input should be greater than or equal to 0.+"):
-        await client.call_tool("list_variables", {"session_id": session_id_with_variables, "depth": -1})
+        await client.call_tool("list_variables", {"session_id": session_id, "depth": -1})
 
     with pytest.raises(ToolError, match=r"depth\n.+Input should be less than or equal to 4.+"):
-        await client.call_tool("list_variables", {"session_id": session_id_with_variables, "depth": 5})
+        await client.call_tool("list_variables", {"session_id": session_id, "depth": 5})
 
 
 async def test_list_variables__not_top_frame(client: Client) -> None:
@@ -85,27 +95,9 @@ async def test_list_variables__not_paused(client: Client) -> None:
         await client.call_tool("list_variables", {"session_id": session_id})
 
 
-@pytest_asyncio.fixture(scope="session")
-async def session_id_with_variables() -> AsyncGenerator[str, None]:
-    """
-    A bunch of tests in this file use intentionally identical setup, and are read-only, so they don't alter the setup at all.
-    This runs the setup once per test running session, rather than duplicating all that setup repeatedly.
-    This is for test speed.
-    This function returns the ID of an existing session that is stopped at a breakpoint that has a ton of variables available to it.
-    """
-    async with Client(mcp) as client:
-        session_id = (await create_session(client, file_path=FAKE_MAIN_WITH_VARIABLES))["id"]
-
-        await client.call_tool(
-            "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_WITH_VARIABLES, "line": 38},
-        )
-
-        await move_to_next_breakpoint(client, session_id)
-        yield session_id
-
-
-async def test_list_variables__shallow(client: Client, session_id_with_variables: str) -> None:
-    shallow = await client.call_tool("list_variables", {"session_id": session_id_with_variables})
+async def test_list_variables__shallow(client: Client) -> None:
+    session_id = await common_setup(client)
+    shallow = await client.call_tool("list_variables", {"session_id": session_id})
     assert shallow.structured_content == {
         "variables": [
             {"name": "some_bool", "value": "True", "type": "bool", "evaluate_name": "some_bool", "children": None},
@@ -152,8 +144,9 @@ async def test_list_variables__shallow(client: Client, session_id_with_variables
     }
 
 
-async def test_list_variables__deep(client: Client, session_id_with_variables: str) -> None:
-    deep = await client.call_tool("list_variables", {"session_id": session_id_with_variables, "depth": 4})
+async def test_list_variables__deep(client: Client) -> None:
+    session_id = await common_setup(client)
+    deep = await client.call_tool("list_variables", {"session_id": session_id, "depth": 4})
     assert deep.structured_content == {
         "variables": [
             {"name": "some_bool", "value": "True", "type": "bool", "evaluate_name": "some_bool", "children": None},
@@ -406,9 +399,10 @@ async def test_list_variables__deep(client: Client, session_id_with_variables: s
     }
 
 
-async def test_list_variables__hidden(client: Client, session_id_with_variables: str) -> None:
+async def test_list_variables__hidden(client: Client) -> None:
+    session_id = await common_setup(client)
     hidden = await client.call_tool(
-        "list_variables", {"session_id": session_id_with_variables, "show_hidden": True, "depth": 2},
+        "list_variables", {"session_id": session_id, "show_hidden": True, "depth": 2},
     )
 
     # This dictionary, if printed, is 2,900 lines long.

@@ -14,31 +14,8 @@ from session import Session
 from utils import find_free_port, install_debugpy
 
 
-class Sessions(dict[str, Session]):
-    """
-    Global singleton index of live Session objects, available across all threads
-    Has a 100 item limit, with the Least Recently Created item being dropped.
-    This is specifically to avoid leaking memory when this MCP server is left running for weeks.
-    It is its own class, rather than using `cachetools.FIFOCache` because we want to try and gracefully stop the sessions before dropping them.
-    """
-    LIMIT = 100
-
-    def __setitem__(self, session_id: str, session: Session, /) -> None:
-        super().__setitem__(session_id, session)
-
-        if len(self) > self.LIMIT:
-            # Python dicts are insertion ordered since 3.7
-            oldest_session_id = next(iter(self))
-            oldest_session = self[oldest_session_id]
-            # try to stop the session, to be nice and clean up
-            try:
-                oldest_session.stop()
-            except BaseException:
-                pass  # no matter what happens, don't error, if we can't clean up, too bad.
-            del self[oldest_session_id]
-
-
-SESSIONS = Sessions()
+# Indexed by session ID, available across all threads.
+SESSIONS: dict[str, Session] = {}
 
 
 def get_session(session_id: str | None) -> Session:
@@ -65,26 +42,34 @@ def get_sessions(project_path: Path | None) -> list[Session]:
     return [session for session in SESSIONS.values() if project_path is None or session.project_path == project_path]
 
 
-def attach_session(
-    session_id: str,
-    project_path: Path,
-    host: str,
-    port: int,
-    timeout: float,
-    we_own: bool = False,
-    pid: int | None = None,
+async def attach_session(
+    session_id: str, project_path: Path, host: str, port: int, we_own: bool = False, pid: int | None = None,
 ) -> Session:
-    """Attach a new session to an existing python process, via DAP, on the given port."""
-    session = Session(session_id, project_path, host, port, timeout, we_own, pid)
+    """
+    Attach a new session to an existing python process, via DAP, on the given port.
+    Enforces a 100 session limit, with the Least Recently Created item being dropped.
+    This is specifically to avoid leaking memory when this MCP server is left running for weeks.
+    Gracefully tries to stop sessions before dropping them.
+    """
+    session = await Session.create(session_id, project_path, host, port, we_own, pid)
     SESSIONS[session_id] = session
+    if len(SESSIONS) > 100:
+        # Python dicts are insertion ordered since 3.7
+        oldest_session_id = next(iter(SESSIONS))
+        oldest_session = SESSIONS[oldest_session_id]
+        # try to stop the session, to be nice and clean up
+        try:
+            await oldest_session.stop()
+        except BaseException:
+            pass  # no matter what happens, don't error, if we can't clean up, too bad.
+        del SESSIONS[oldest_session_id]
     return session
 
 
-def launch_session(
+async def launch_session(
     project_path: Path,
     python_path: str,
     file_path: Path,
-    timeout: float,
     program_arguments: list[str],
     working_directory: Path | None,
     env: dict[str, str],
@@ -118,4 +103,4 @@ def launch_session(
         env=env,
     )
 
-    return attach_session(session_id, project_path, "127.0.0.1", port, timeout, we_own=True, pid=debugee.pid)
+    return await attach_session(session_id, project_path, "127.0.0.1", port, we_own=True, pid=debugee.pid)

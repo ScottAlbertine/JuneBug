@@ -1,36 +1,45 @@
-from typing import AsyncGenerator
-
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
 import pytest
-import pytest_asyncio
 
-from main import mcp
 from tests.constants import FAKE_MAIN, FAKE_MAIN_WITH_IMPORT, FAKE_MAIN_WITH_VARIABLES
 from tests.utils import MatchAny, MatchRegex, create_session, move_to_next_breakpoint
 
 
-async def test_evaluate_expression__invalid(
-    client: Client, session_id_with_variables: str,
-) -> None:
+async def common_setup(client: Client) -> str:
+    """
+    A bunch of tests in this file use intentionally identical setup, and are read-only, so they don't alter the setup at all.
+    This runs the setup once per test running session, rather than duplicating all that setup repeatedly.
+    This is for test speed.
+    This function returns the ID of an existing session that is stopped at a breakpoint that has a ton of variables available to it.
+    """
+    session_id = (await create_session(client, file_path=FAKE_MAIN_WITH_VARIABLES))["id"]
+    await client.call_tool(
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_WITH_VARIABLES, "line": 38},
+    )
+    await move_to_next_breakpoint(client, session_id)
+    return session_id
+
+
+async def test_evaluate_expression__invalid(client: Client) -> None:
+    session_id = await common_setup(client)
     with pytest.raises(ToolError, match=r"Stack frame 999999 was not found\."):
         await client.call_tool(
-            "evaluate_expression",
-            {"expression": "some_list", "session_id": session_id_with_variables, "frame_id": 999999},
+            "evaluate_expression", {"expression": "some_list", "session_id": session_id, "frame_id": 999999},
         )
 
     with pytest.raises(
         ToolError, match=r"depth\n.+Input should be greater than or equal to 0.+",
     ):
         await client.call_tool(
-            "evaluate_expression", {"expression": "some_list", "session_id": session_id_with_variables, "depth": -1},
+            "evaluate_expression", {"expression": "some_list", "session_id": session_id, "depth": -1},
         )
 
     with pytest.raises(
         ToolError, match=r"depth\n.+Input should be less than or equal to 4.+",
     ):
         await client.call_tool(
-            "evaluate_expression", {"expression": "some_list", "session_id": session_id_with_variables, "depth": 5},
+            "evaluate_expression", {"expression": "some_list", "session_id": session_id, "depth": 5},
         )
 
 
@@ -133,31 +142,9 @@ async def test_evaluate_expression__can_write(client: Client) -> None:
     }
 
 
-@pytest_asyncio.fixture(scope="session")
-async def session_id_with_variables() -> AsyncGenerator[str, None]:
-    """
-    A bunch of tests in this file use intentionally identical setup, and are read-only, so they don't alter the setup at all.
-    This runs the setup once per test running session, rather than duplicating all that setup repeatedly.
-    This is for test speed.
-    This function returns the ID of an existing session that is stopped at a breakpoint that has a ton of variables available to it.
-    """
-    async with Client(mcp) as client:
-        session_id = (await create_session(client, file_path=FAKE_MAIN_WITH_VARIABLES))["id"]
-
-        await client.call_tool(
-            "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_WITH_VARIABLES, "line": 38},
-        )
-
-        await move_to_next_breakpoint(client, session_id)
-        yield session_id
-
-
-async def test_evaluate_expression__shallow(
-    client: Client, session_id_with_variables: str,
-) -> None:
-    shallow = await client.call_tool(
-        "evaluate_expression", {"expression": "some_list", "session_id": session_id_with_variables},
-    )
+async def test_evaluate_expression__shallow(client: Client) -> None:
+    session_id = await common_setup(client)
+    shallow = await client.call_tool("evaluate_expression", {"expression": "some_list", "session_id": session_id})
     assert shallow.structured_content == {
         "name": "some_list",
         "value": "[1, 2, 3]",
@@ -167,11 +154,10 @@ async def test_evaluate_expression__shallow(
     }
 
 
-async def test_evaluate_expression__deep(
-    client: Client, session_id_with_variables: str,
-) -> None:
+async def test_evaluate_expression__deep(client: Client) -> None:
+    session_id = await common_setup(client)
     deep = await client.call_tool(
-        "evaluate_expression", {"expression": "some_object", "session_id": session_id_with_variables, "depth": 4},
+        "evaluate_expression", {"expression": "some_object", "session_id": session_id, "depth": 4},
     )
     assert deep.structured_content == {
         "name": "some_object",
@@ -345,12 +331,10 @@ async def test_evaluate_expression__deep(
     }
 
 
-async def test_evaluate_expression__hidden(
-    client: Client, session_id_with_variables: str,
-) -> None:
+async def test_evaluate_expression__hidden(client: Client) -> None:
+    session_id = await common_setup(client)
     hidden = await client.call_tool(
-        "evaluate_expression",
-        {"expression": "some_list", "session_id": session_id_with_variables, "show_hidden": True, "depth": 2},
+        "evaluate_expression", {"expression": "some_list", "session_id": session_id, "show_hidden": True, "depth": 2},
     )
     some_list = hidden.structured_content
 
@@ -391,13 +375,14 @@ async def test_evaluate_expression__hidden(
     }
 
 
-async def test_evaluate_expression__errors(client: Client, session_id_with_variables: str) -> None:
+async def test_evaluate_expression__errors(client: Client) -> None:
     """
     Test that passing an invalid or useless expression to `evaluate_expression` doesn't raise a tool error.
     instead it returns the actual python error, as a value.
     """
+    session_id = await common_setup(client)
     bad_syntax = await client.call_tool(
-        "evaluate_expression", {"expression": "some_list[1", "session_id": session_id_with_variables, "depth": 1},
+        "evaluate_expression", {"expression": "some_list[1", "session_id": session_id, "depth": 1},
     )
     assert bad_syntax.structured_content == {
         "name": "some_list[1",
@@ -423,7 +408,7 @@ async def test_evaluate_expression__errors(client: Client, session_id_with_varia
     }
 
     nonexistent_variable = await client.call_tool(
-        "evaluate_expression", {"expression": "sldkjf", "session_id": session_id_with_variables},
+        "evaluate_expression", {"expression": "sldkjf", "session_id": session_id},
     )
     assert nonexistent_variable.structured_content == {
         "name": "sldkjf",
@@ -433,9 +418,7 @@ async def test_evaluate_expression__errors(client: Client, session_id_with_varia
         "children": [],
     }
 
-    empty_string = await client.call_tool(
-        "evaluate_expression", {"expression": "", "session_id": session_id_with_variables},
-    )
+    empty_string = await client.call_tool("evaluate_expression", {"expression": "", "session_id": session_id})
     assert empty_string.structured_content == {
         "name": "",
         "value": "SyntaxError('invalid syntax', ('<string>', 0, 0, '', 0, 0))",
@@ -444,9 +427,7 @@ async def test_evaluate_expression__errors(client: Client, session_id_with_varia
         "children": [],
     }
 
-    space = await client.call_tool(
-        "evaluate_expression", {"expression": " ", "session_id": session_id_with_variables},
-    )
+    space = await client.call_tool("evaluate_expression", {"expression": " ", "session_id": session_id})
     assert space.structured_content == {
         "name": " ",
         "value": "IndentationError('unexpected indent', ('<string>', 1, 1, ' ', 1, -1))",
@@ -456,14 +437,13 @@ async def test_evaluate_expression__errors(client: Client, session_id_with_varia
     }
 
 
-async def test_evaluate_expression__specials(client: Client, session_id_with_variables: str) -> None:
+async def test_evaluate_expression__specials(client: Client) -> None:
+    session_id = await common_setup(client)
     """
     Test that passing an invalid or useless expression to `evaluate_expression` doesn't raise a tool error.
     instead it returns the actual python error, as a value.
     """
-    dunder = await client.call_tool(
-        "evaluate_expression", {"expression": "__name__", "session_id": session_id_with_variables},
-    )
+    dunder = await client.call_tool("evaluate_expression", {"expression": "__name__", "session_id": session_id})
     assert dunder.structured_content == {
         "name": "__name__",
         "value": "'__main__'",
@@ -473,9 +453,7 @@ async def test_evaluate_expression__specials(client: Client, session_id_with_var
         "children": None,
     }
 
-    clazz = await client.call_tool(
-        "evaluate_expression", {"expression": "Car", "session_id": session_id_with_variables},
-    )
+    clazz = await client.call_tool("evaluate_expression", {"expression": "Car", "session_id": session_id})
     assert clazz.structured_content == {
         "name": "Car",
         "value": "<class '__main__.Car'>",
@@ -484,9 +462,7 @@ async def test_evaluate_expression__specials(client: Client, session_id_with_var
         "children": [],
     }
 
-    func = await client.call_tool(
-        "evaluate_expression", {"expression": "main", "session_id": session_id_with_variables},
-    )
+    func = await client.call_tool("evaluate_expression", {"expression": "main", "session_id": session_id})
     assert func.structured_content == {
         "name": "main",
         "value": MatchRegex(r"<function main at 0x.+?>"),

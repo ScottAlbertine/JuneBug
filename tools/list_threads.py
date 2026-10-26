@@ -7,7 +7,7 @@ from models import ThreadsResponse
 import session_service
 
 
-def list_threads(
+async def list_threads(
     session_id: SessionID = None,
     limit: Annotated[int, Field(description="Page size. Default: 50, max: 200.", ge=1)] = 50,
     offset: Annotated[int, Field(description="Page offset. Default: 0.", ge=0)] = 0,
@@ -31,5 +31,5 @@ def list_threads(
     - Call this after resuming or pausing to see updated thread states.
     """
     session = session_service.get_session(session_id)
-    threads = session.list_threads()
+    threads = await session.list_threads()
     return ThreadsResponse(threads=threads[offset:offset + limit], total_count=len(threads))

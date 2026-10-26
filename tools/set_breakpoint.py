@@ -6,7 +6,7 @@ import session_service
 from utils import normalize_file_path
 
 
-def set_breakpoint(
+async def set_breakpoint(
     file_path: FilePath,
     line: LineNum,
     session_id: SessionID = None,
@@ -43,4 +43,4 @@ def set_breakpoint(
     """
     session = session_service.get_session(session_id)
     path = normalize_file_path(file_path, session.project_path)
-    return session.set_breakpoint(path, line, temporary, condition)
+    return await session.set_breakpoint(path, line, temporary, condition)

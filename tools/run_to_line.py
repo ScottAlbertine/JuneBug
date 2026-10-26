@@ -6,7 +6,7 @@ import session_service
 from utils import normalize_file_path
 
 
-def run_to_line(
+async def run_to_line(
     file_path: FilePath,
     line: LineNum,
     session_id: SessionID = None,
@@ -41,5 +41,5 @@ def run_to_line(
     """
     session = session_service.get_session(session_id)
     path = normalize_file_path(file_path, session.project_path)
-    session.run_to_line(path, line)
-    return session.get_status()
+    await session.run_to_line(path, line)
+    return await session.get_status()

@@ -12,7 +12,7 @@ DEPTH_DESCRIPTION = """
 """
 
 
-def evaluate_expression(
+async def evaluate_expression(
     expression: Annotated[
         str,
         "Expression to evaluate in the given frame. "
@@ -54,4 +54,4 @@ def evaluate_expression(
       use this tool for computed expressions or when you need a specific value.
     """
     session = session_service.get_session(session_id)
-    return session.evaluate_expression(expression, frame_id, show_hidden, depth)
+    return await session.evaluate_expression(expression, frame_id, show_hidden, depth)

@@ -3,7 +3,7 @@ import session_service
 from utils import normalize_file_path
 
 
-def remove_breakpoint(file_path: FilePath, line: LineNum, session_id: SessionID = None) -> None:
+async def remove_breakpoint(file_path: FilePath, line: LineNum, session_id: SessionID = None) -> None:
     """
     Remove a breakpoint at a specific file and line number.
 
@@ -23,4 +23,4 @@ def remove_breakpoint(file_path: FilePath, line: LineNum, session_id: SessionID 
     """
     session = session_service.get_session(session_id)
     path = normalize_file_path(file_path, session.project_path)
-    session.remove_breakpoint(path, line)
+    await session.remove_breakpoint(path, line)

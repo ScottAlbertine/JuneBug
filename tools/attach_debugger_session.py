@@ -1,3 +1,4 @@
+from asyncio import wait_for
 from typing import Annotated
 import uuid
 
@@ -10,7 +11,7 @@ import session_service
 from utils import normalize_file_path
 
 
-def attach_debugger_session(
+async def attach_debugger_session(
     project_path: ProjectPath,
     port: Annotated[int, Field("Port to attach a new debugger session to.", ge=0)],
     host: Annotated[str, "Host address to attach a new debugger session to."] = "127.0.0.1",
@@ -51,5 +52,7 @@ def attach_debugger_session(
         normal_project_path = normalize_file_path(project_path)
     except ValueError:
         raise AbsolutePathError("project_path")
-    session = session_service.attach_session(session_id, normal_project_path, host, port, timeout / 1000.0)
-    return session.get_status()
+    session = await wait_for(
+        session_service.attach_session(session_id, normal_project_path, host, port), timeout=timeout / 1000.0,
+    )
+    return await session.get_status()

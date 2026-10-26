@@ -1,8 +1,8 @@
+from asyncio import StreamReader, StreamWriter, open_connection, sleep
 from itertools import islice
 from pathlib import Path
 from socket import AF_INET, SOCK_STREAM, socket
 import subprocess
-from time import sleep, time
 
 from exceptions import DebugpyInstallationFailed, FileNotFound, LineNotFound
 
@@ -26,25 +26,17 @@ def find_free_port() -> int:
         return s.getsockname()[1]
 
 
-def connect_socket(host: str, port: int, timeout: float) -> socket:
+async def connect_to_port(host: str, port: int) -> tuple[StreamReader, StreamWriter]:
     """
-    Try to connect a socket to the given port, every 100ms for up to `timeout` seconds total.
+    Repeatedly try to open an asyncio connection to the given port, every 100ms.
+    You must wrap this in your own `asyncio.wait_for()` call.
     Returns the connected socket if successful.
-    Raises TimeoutError if the timeout is reached.
-    Create a socket, connect it to the given port, retrying every 100ms, for up to `timeout` seconds total.
-    No idea why socket.connnect() doesn't do this out of the box, but here we are.
     """
-
-    start_time = time()
-    while time() - start_time < timeout:
+    while True:
         try:
-            sock = socket(AF_INET, SOCK_STREAM)
-            sock.connect((host, port))
-            return sock
-        except ConnectionRefusedError:
-            sleep(0.1)
-
-    raise TimeoutError()
+            return await open_connection(host, port)
+        except OSError:
+            await sleep(0.1)
 
 
 def normalize_file_path(file_path: str | Path, base_path: str | Path | None = None) -> Path:

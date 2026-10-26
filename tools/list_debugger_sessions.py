@@ -7,7 +7,7 @@ import session_service
 from utils import normalize_file_path
 
 # This project path is optional, unlike the ones on attach_debugger_session and launch_debugger_session
-def list_debugger_sessions(
+async def list_debugger_sessions(
     project_path: Annotated[
         str | None,
         """
@@ -48,5 +48,5 @@ def list_debugger_sessions(
         except ValueError:
             raise AbsolutePathError("project_path")
     sessions = session_service.get_sessions(normal_project_path)
-    statuses = [session.get_status() for session in sessions]
+    statuses = [await session.get_status() for session in sessions]
     return SessionStatuses(sessions=statuses)

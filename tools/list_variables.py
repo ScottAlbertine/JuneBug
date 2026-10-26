@@ -14,7 +14,7 @@ DEPTH_DESCRIPTION = """
     Default: 0.
 """
 
-def list_variables(
+async def list_variables(
     session_id: SessionID = None,
     frame_id: FrameID = None,
     show_hidden: ShowHidden = False,
@@ -48,5 +48,5 @@ def list_variables(
       `get_stack` first.
     """
     session = session_service.get_session(session_id)
-    variables = session.list_variables(frame_id, show_hidden, depth)
+    variables = await session.list_variables(frame_id, show_hidden, depth)
     return Variables(variables=variables)

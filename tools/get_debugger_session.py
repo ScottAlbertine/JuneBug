@@ -3,7 +3,7 @@ from models import SessionStatus
 import session_service
 
 
-def get_debugger_session(session_id: SessionID = None) -> SessionStatus:
+async def get_debugger_session(session_id: SessionID = None) -> SessionStatus:
     """
     Get the current status of a single debug session.
 
@@ -28,4 +28,4 @@ def get_debugger_session(session_id: SessionID = None) -> SessionStatus:
     - Use the returned session_id in subsequent tool calls.
     - If the state is "stopped", start a new session instead of retrying.
     """
-    return session_service.get_session(session_id).get_status()
+    return await session_service.get_session(session_id).get_status()

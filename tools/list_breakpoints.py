@@ -6,7 +6,7 @@ import session_service
 from utils import normalize_file_path
 
 
-def list_breakpoints(
+async def list_breakpoints(
     session_id: SessionID = None,
     file_path: Annotated[
         str | None,

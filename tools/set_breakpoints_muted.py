@@ -5,8 +5,8 @@ from models import SessionStatus
 import session_service
 
 
-def set_breakpoints_muted(
-    breakpoints_muted: Annotated[bool, "Session-wide breakpoint mute flag."], session_id: SessionID = None
+async def set_breakpoints_muted(
+    breakpoints_muted: Annotated[bool, "Session-wide breakpoint mute flag."], session_id: SessionID = None,
 ) -> SessionStatus:
     """
     Enable or disable all breakpoints in a debug session without removing them.
@@ -30,5 +30,5 @@ def set_breakpoints_muted(
     - Breakpoints added while muted take effect once unmuted.
     """
     session = session_service.get_session(session_id)
-    session.set_breakpoints_muted(breakpoints_muted)
-    return session.get_status()
+    await session.set_breakpoints_muted(breakpoints_muted)
+    return await session.get_status()

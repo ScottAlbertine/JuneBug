@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
@@ -41,19 +41,19 @@ async def test_automatic_single_session_finding(client: Client, clear_sessions: 
         await client.call_tool("list_threads")
 
 
-@patch("session_service.Session")  # don't make 100 real sessions for this, that is way too slow
-def test_100_session_limit(clear_sessions: None) -> None:
+@patch("session_service.Session.create", new=AsyncMock())  # don't make 100 real sessions for this, that is way too slow
+async def test_100_session_limit(clear_sessions: None) -> None:
     """Test that `session_service.attach_session` enforces a 100 session LRC limit."""
-    first_session = session_service.attach_session("0", Path("/"), "", 0, 0.0)
+    first_session = await session_service.attach_session("0", Path("/"), "", 0)
 
     for i in range(1, 100):
-        session_service.attach_session(str(i), Path("/"), "", 0, 0.0)
+        await session_service.attach_session(str(i), Path("/"), "", 0)
     assert len(session_service.SESSIONS) == 100
 
     first_session.stop.assert_not_called()
 
     # Check that the 101st session kicks out the first session
-    session_service.attach_session("100", Path("/"), "", 0, 0.0)
+    await session_service.attach_session("100", Path("/"), "", 0)
     assert len(session_service.SESSIONS) == 100
     assert set(session_service.SESSIONS.keys()) == {str(i) for i in range(1, 101)}
 

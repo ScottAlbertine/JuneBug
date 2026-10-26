@@ -7,7 +7,7 @@ from models import StackFrames
 import session_service
 
 
-def get_stack(
+async def get_stack(
     session_id: SessionID = None,
     thread_id: Annotated[
         int | None,
@@ -46,4 +46,4 @@ def get_stack(
     - Skip frames marked `library_code: true` unless you need to debug into libs.
     """
     session = session_service.get_session(session_id)
-    return session.get_stack_trace(thread_id, limit, offset)
+    return await session.get_stack_trace(thread_id, limit, offset)

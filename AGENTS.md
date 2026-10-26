@@ -13,13 +13,13 @@ JuneBug is a [FastMCP](https://github.com/PrefectHQ/fastmcp) server that exposes
 The code flows in four layers, top to bottom:
 
 1. **`main.py`** — FastMCP entry point. Creates the server (`FastMCP("JuneBug MCP Server")`), registers all 14 tools via `mcp.tool()`, and runs on HTTP transport at `127.0.0.1:9000`.
-2. **`tools/`** — 14 individual tool modules. Each is a plain function with `Annotated` parameters (from `annotations.py`) and a Pydantic model return type. Tools delegate to `session_service` or `Session`.
-3. **`session.py`** — Central orchestrator. Owns a `DAPClient`, manages session state (`SessionState` enum), handles breakpoints/threads/variables/stepping, and processes DAP messages via `_handle_message()`.
-4. **`dap/`** — Custom DAP client implementation. `dap/client.py` contains `DAPClient` — a TCP socket client that speaks DAP directly. It manages the socket lifecycle, auto-handles the initialize/attach handshake, and provides a send-then-pull pattern (`_send_request()` + `_pull_until()`) for every DAP command. DAP Messages returned from the client are plain `dict[str, Any]` typed as `Message` (defined in `constants.py`).
+2. **`tools/`** — 14 individual tool modules. Each is an `async` function with `Annotated` parameters (from `annotations.py`) and a Pydantic model return type. Tools delegate to `session_service` or `Session`.
+3. **`session.py`** — Central orchestrator. Owns a `DAPClient`, manages session state (`SessionState` enum), handles breakpoints/threads/variables/stepping, and processes DAP messages via `_handle_message()`. All session methods are `async`.
+4. **`dap/`** — Custom DAP client implementation. `dap/client.py` contains `DAPClient` — an async TCP client that speaks DAP directly. It manages the asyncio `StreamReader` and `StreamWriter` lifecycle, and auto-handles the initialize/attach handshake. All methods are `async` and use the send-then-pull pattern (`_send_request()` + `_pull_until()`) for every DAP command. DAP Messages returned from the client are plain `dict[str, Any]` typed as `Message` (defined in `constants.py`).
 
 ### Core Modules
 
-- **`session_service.py`** — Global session registry. Maintains `SESSIONS: dict[str, Session]` (shared in-memory across threads). Functions: `get_session()` (auto-selects if only one exists), `get_sessions()` (by project path), `attach_session()` (connect to existing process), `launch_session()` (spawns debugpy subprocess via `subprocess.Popen`).
+- **`session_service.py`** — Global session registry. Maintains `SESSIONS: dict[str, Session]` (shared in-memory across threads). `session_service` enforces a 100 item limit on `SESSIONS. Functions: `get_session()` (sync, auto-selects if only one exists), `get_sessions()` (sync, by project path), `attach_session()` (async, connect to existing process), `launch_session()` (async, spawns debugpy subprocess via `subprocess.Popen`).
 - **`breakpoints.py`** — `Breakpoints` class mirrors DAP's invisible internal indexes. Two dicts: files-by-path and breakpoints-by-id. DAP only exposes `setBreakpoints` and never lets you query back, so we track everything ourselves. `File` class holds breakpoints per-file, sorted by line. `refresh()` updates IDs from DAP `Message` responses.
 - **`threads.py`** — `Threads` class mirrors DAP's thread state. Tracks threads by ID, manages state via `refresh()` from `threads` requests and `update()` from thread messages (started/paused/exited). Handles `allThreadsStopped`/`allThreadsContinued` broadcasts.
 - **`models.py`** — Pydantic `BaseModel` classes with detailed `Field` descriptions. All use `Annotated` with `Field` for MCP schema generation.
@@ -27,22 +27,24 @@ The code flows in four layers, top to bottom:
 - **`exceptions.py`** — Custom exceptions with descriptive messages: `DebugpyInstallationFailed`, `DAPError` (wraps a `Message` dict from DAP), `FileNotFound`, `FrameNotFound`, `LineNotFound`, `MissingSessionId`, `SessionNotFound`, `SessionStateError`, `SessionStoppedError`, `ThreadNotFound`. These bubble up through FastMCP as `ToolError`.
 - **`annotations.py`** — Shared `Annotated` parameter types reused across tools.
 - **`constants.py`** — `TEMP_DIR = Path(gettempdir())` for stdout/stderr temp files, and `Message = dict[str, Any]` type alias for DAP messages.
-- **`utils.py`** — `install_debugpy()` (checks and pip-installs), `find_free_port()` (socket bind trick), `connect_socket()` (retry loop, 100ms intervals), `normalize_file_path()` (handles relative/absolute/`file://`), `fetch_line_text()` (uses `islice` for single-line read).
+- **`utils.py`** — Various utility functions.
 
 ### Tool Pattern
 
 Every tool in `tools/` follows the same pattern:
 
 1. Import shared types from `annotations.py`, enums from `enums.py`, models from `models.py`, and `session_service`.
-2. Define a function with `Annotated` parameters and a Pydantic model return type.
+2. Define an `async` function with `Annotated` parameters and a Pydantic model return type.
 3. Write a comprehensive docstring with sections: description, preconditions, behavior, next call guidance.
 4. Call `session_service.get_session(session_id)` to resolve the session.
-5. Delegate to `session.some_method()` and return the result.
+5. Wrap their inner async logic with `asyncio.wait_for()` to enforce a timeout.
+6. `await` the session method and return the result.
 
-Tools that don't need a session (e.g., `list_debugger_sessions`) call `session_service` directly. Tools that create sessions (`launch_debugger_session`, `attach_debugger_session`) call the appropriate factory and return `session.get_status()`.
+Tools that don't need a session (e.g., `list_debugger_sessions`) are also `async` and call `session_service` directly. Tools that create sessions (`launch_debugger_session`, `attach_debugger_session`) await the appropriate factory and then `await session.get_status()` to return.
 
 ### Key Design Decisions
 
+- **Async throughout**: The entire codebase is async. `DAPClient` uses `asyncio` streams (`StreamReader`/`StreamWriter`), `Session` methods are all `async`, and all tool functions are `async`. This improves performance, and also allows for easier per-tool timeouts.
 - **DAP Mirroring**: Both `Breakpoints` and `Threads` exist because DAP only gives you `setBreakpoints` and `threads()` — no way to query back. We maintain our own indexes and refresh on every DAP response.
 - **Session State**: `Session` tracks `SessionState` (running/paused/stopped/unknown) and enforces it via `assert_state()` before operations that require a specific state.
 - **Floating Breakpoints**: `Breakpoint.floating()` creates a temporary "you are here" marker used for pause/step operations. It's not a real DAP breakpoint.

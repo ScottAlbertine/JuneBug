@@ -1,3 +1,4 @@
+from asyncio import wait_for
 from typing import Annotated
 
 from annotations import SessionID
@@ -6,7 +7,7 @@ from models import SessionStatus
 import session_service
 
 
-def control_debugger_session(
+async def control_debugger_session(
     action: Annotated[
         Action, "Action to perform: step_into, step_over, step_out, resume, pause, stop, wait_for_pause.",
     ],
@@ -57,19 +58,22 @@ def control_debugger_session(
     """
     session = session_service.get_session(session_id)
 
-    if action == Action.STEP_INTO:
-        session.step(StepDirection.INTO)
-    elif action == Action.STEP_OVER:
-        session.step(StepDirection.OVER)
-    elif action == Action.STEP_OUT:
-        session.step(StepDirection.OUT)
-    elif action == Action.RESUME:
-        session.resume()
-    elif action == Action.PAUSE:
-        session.pause()
-    elif action == Action.STOP:
-        session.stop()
-    elif action == Action.WAIT_FOR_PAUSE:
-        session.wait_for_pause()
+    async def go() -> None:
+        if action == Action.STEP_INTO:
+            await session.step(StepDirection.INTO)
+        elif action == Action.STEP_OVER:
+            await session.step(StepDirection.OVER)
+        elif action == Action.STEP_OUT:
+            await session.step(StepDirection.OUT)
+        elif action == Action.RESUME:
+            await session.resume()
+        elif action == Action.PAUSE:
+            await session.pause()
+        elif action == Action.STOP:
+            await session.stop()
+        elif action == Action.WAIT_FOR_PAUSE:
+            await session.wait_for_pause()
 
-    return session.get_status()
+    await wait_for(go(), timeout=timeout / 1000.0)
+
+    return await session.get_status()
