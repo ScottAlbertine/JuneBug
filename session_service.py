@@ -60,9 +60,9 @@ def get_session(session_id: str | None) -> Session:
     return SESSIONS[session_id]
 
 
-def get_sessions(project_path: Path) -> list[Session]:
+def get_sessions(project_path: Path | None) -> list[Session]:
     """Get all sessions for a given project path."""
-    return [session for session in SESSIONS.values() if session.project_path == project_path]
+    return [session for session in SESSIONS.values() if project_path is None or session.project_path == project_path]
 
 
 def attach_session(

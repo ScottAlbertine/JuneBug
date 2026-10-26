@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import sys
 
 from fastmcp import Client
@@ -7,15 +8,13 @@ import pytest
 
 from constants import TEMP_DIR
 from tests.constants import FAKE_MAIN, PROJECT_ROOT
+from tests.fakes import fake_main
 from tests.utils import MatchAny, create_session, move_to_next_breakpoint
 
 
 async def test_list_debugger_sessions__invalid(client: Client) -> None:
     with pytest.raises(ToolError, match=r"project_path must be an absolute directory path\."):
         await client.call_tool("list_debugger_sessions", {"project_path": "a/b/c"})
-
-    with pytest.raises(ToolError, match=r"project_path\n.+Missing required argument.+"):
-        await client.call_tool("list_debugger_sessions")
 
 
 async def test_list_real_sessions(client: Client, clear_sessions: None) -> None:
@@ -85,6 +84,28 @@ async def test_list_real_sessions(client: Client, clear_sessions: None) -> None:
             },
         ],
     }
+
+
+async def test_list_across_project_paths(client: Client, clear_sessions: None) -> None:
+    """Test that two different sessions under two differnt project paths, both show up when listing sessions with no project path."""
+    fake_main_abs_path = Path(fake_main.__file__).resolve()
+    other_path = str(Path(__file__).parent.resolve())
+    session_1 = await client.call_tool(
+        "launch_debugger_session", {
+            "project_path": other_path, "python_path": sys.executable, "file_path": fake_main_abs_path,
+        },
+    )
+    session_2 = await client.call_tool(
+        "launch_debugger_session", {
+            "project_path": str(PROJECT_ROOT), "python_path": sys.executable, "file_path": fake_main_abs_path,
+        },
+    )
+    all_sessions = await client.call_tool("list_debugger_sessions")
+    assert all_sessions.structured_content == {"sessions": [session_1.structured_content, session_2.structured_content]}
+
+    # While we're in here, test that we aren't doing all-or-nothing filtering
+    some_sessions = await client.call_tool("list_debugger_sessions", {"project_path": other_path})
+    assert some_sessions.structured_content == {"sessions": [session_1.structured_content]}
 
 
 async def test_project_path_dealiasing(client: Client, clear_sessions: None) -> None:
