@@ -144,7 +144,7 @@ class Session:
         self.assert_not_stopped()
         return self.threads.refresh(self._client.threads())
 
-    def pause(self):
+    def pause(self) -> None:
         """Pause this session."""
         self.assert_not_stopped()
         self._client.pause(self.list_threads()[0].id)
@@ -160,7 +160,7 @@ class Session:
         if did_remove and not self.breakpoints_muted:
             self.breakpoints.refresh(self.set_breakpoints(self.breakpoints.get_file(path)))
 
-    def resume(self):
+    def resume(self) -> None:
         """Resume this session. Does not block."""
         self.assert_not_stopped()
         # we're going to need to list threads anyway in most cases
@@ -217,7 +217,7 @@ class Session:
         """
         return self._client.set_breakpoints(str(file.path), [bp.to_dap() for bp in file.list_breakpoints()])
 
-    def set_breakpoints_muted(self, breakpoints_muted: bool):
+    def set_breakpoints_muted(self, breakpoints_muted: bool) -> None:
         """Set all breakpoints to muted."""
         if self.breakpoints_muted == breakpoints_muted:
             return  # already there, nothing to do
