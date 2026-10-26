@@ -51,5 +51,5 @@ def attach_debugger_session(
         normal_project_path = normalize_file_path(project_path)
     except ValueError:
         raise AbsolutePathError("project_path")
-    session = session_service.attach_session(session_id, normal_project_path, host, port, timeout)
+    session = session_service.attach_session(session_id, normal_project_path, host, port, timeout / 1000.0)
     return session.get_status()

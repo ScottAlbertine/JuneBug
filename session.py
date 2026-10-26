@@ -23,11 +23,11 @@ class Session:
         project_path: Path,
         host: str,
         port: int,
-        timeout: int,
+        timeout: float,
         we_own: bool,
         pid: int | None = None,
     ):
-        """Timeout is in milliseconds."""
+        """Timeout is in seconds."""
         self.breakpoints = Breakpoints()
         self.breakpoints_muted: bool = False
         self.current_position: Breakpoint | None = None

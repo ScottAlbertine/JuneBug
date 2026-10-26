@@ -12,14 +12,14 @@ class DAPClient:
     """A client for speaking DAP to a debugee process's DAP port."""
     CHUNK_SIZE = 65536
 
-    def __init__(self, session_id: str, host: str, port: int, timeout: int, handle_message: Callable[[Message], None]):
+    def __init__(self, session_id: str, host: str, port: int, timeout: float, handle_message: Callable[[Message], None]):
         """
-        Timeout is in milliseconds.
+        Timeout is in seconds.
         Every message this client receives from the DAP server, gets passed to `handle_message`, in order.
         """
 
         self._handle_message = handle_message  # save the callback we're going to need
-        self._sock = connect_socket(host, port, timeout / 1000.0)
+        self._sock = connect_socket(host, port, timeout)
         self._socket_closed = False
         self._seq_counter = 0
 

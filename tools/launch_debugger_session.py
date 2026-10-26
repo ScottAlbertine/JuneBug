@@ -74,6 +74,12 @@ def launch_debugger_session(
     # don't normalize python_path, since it might be just "python", which is neither an absolute nor a relative path
 
     session = session_service.launch_session(
-        normal_project_path, python_path, normal_file_path, timeout, program_arguments, normal_working_directory, env,
+        normal_project_path,
+        python_path,
+        normal_file_path,
+        timeout / 1000.0,
+        program_arguments,
+        normal_working_directory,
+        env,
     )
     return session.get_status()

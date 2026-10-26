@@ -70,7 +70,7 @@ def attach_session(
     project_path: Path,
     host: str,
     port: int,
-    timeout: int,
+    timeout: float,
     we_own: bool = False,
     pid: int | None = None,
 ) -> Session:
@@ -84,7 +84,7 @@ def launch_session(
     project_path: Path,
     python_path: str,
     file_path: Path,
-    timeout: int,
+    timeout: float,
     program_arguments: list[str],
     working_directory: Path | None,
     env: dict[str, str],
