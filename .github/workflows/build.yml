@@ -1,0 +1,57 @@
+name: Build MCP Server Binaries
+
+on:
+  push:
+    tags:
+      - "v*" # Triggers automatically when you push a version tag like v1.0.0
+  workflow_dispatch: # Allows manual triggering from the GitHub Actions tab
+
+jobs:
+  build:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target_name: JuneBug.exe
+            asset_name: JuneBug-windows.exe
+          - os: macos-latest
+            target_name: JuneBug
+            asset_name: JuneBug-macos
+          - os: ubuntu-latest
+            target_name: JuneBug
+            asset_name: JuneBug-linux
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build with PyInstaller
+        run: |
+          pyinstaller --onefile --name JuneBug main.py
+
+      # TODO: merge this with the above step, it's a bit silly to do it this way
+      - name: Rename and Prepare Artifact
+        shell: bash
+        run: |
+          cd dist
+          # Rename to platform-specific distinct names
+          mv ${{ matrix.target_name }} ../${{ matrix.asset_name }}
+
+      - name: Upload Release Asset
+        uses: actions/upload-artifact@v4
+        with:
+          name: JuneBug-${{ matrix.os }}
+          path: ${{ matrix.asset_name }}
