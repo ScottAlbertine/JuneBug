@@ -16,16 +16,16 @@ from utils import find_free_port
 
 async def test_launch_debugger_session__invalid(client: Client) -> None:
 
-    with pytest.raises(ToolError, match=r"project_path\n.+Missing required argument.+"):
+    with pytest.raises(ToolError, match=r"project_path\n.+Missing required argument"):
         await client.call_tool("attach_debugger_session", {"port": 27385})
 
     with pytest.raises(ToolError, match=r"project_path must be an absolute directory path\."):
         await client.call_tool("attach_debugger_session", {"project_path": "a/b/c", "port": 27385})
 
-    with pytest.raises(ToolError, match=r"port\n.+Input should be greater than or equal to 0.+"):
+    with pytest.raises(ToolError, match=r"port\n.+Input should be greater than or equal to 0"):
         await client.call_tool("attach_debugger_session", {"project_path": str(PROJECT_ROOT), "port": -1})
 
-    with pytest.raises(ToolError, match=r"timeout\n.+Input should be greater than or equal to 0.+"):
+    with pytest.raises(ToolError, match=r"timeout\n.+Input should be greater than or equal to 0"):
         await client.call_tool(
             "attach_debugger_session", {"project_path": str(PROJECT_ROOT), "port": 27385, "timeout": -1},
         )

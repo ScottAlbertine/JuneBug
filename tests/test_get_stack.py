@@ -21,10 +21,10 @@ async def test_get_stack__invalid(client: Client) -> None:
     with pytest.raises(ToolError, match=r"timeout\n.+Input should be greater than or equal to 0"):
         await client.call_tool("get_stack", {"session_id": session_id, "timeout": -1})
 
-    with pytest.raises(ToolError, match=r"limit\n.+Input should be greater than or equal to 1.+"):
+    with pytest.raises(ToolError, match=r"limit\n.+Input should be greater than or equal to 1"):
         await client.call_tool("get_stack", {"session_id": session_id, "limit": 0})
 
-    with pytest.raises(ToolError, match=r"offset\n.+Input should be greater than or equal to 0.+"):
+    with pytest.raises(ToolError, match=r"offset\n.+Input should be greater than or equal to 0"):
         await client.call_tool("get_stack", {"session_id": session_id, "offset": -1})
 
 

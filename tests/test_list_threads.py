@@ -11,10 +11,10 @@ from tests.utils import MatchAny, MatchRegex, create_session, eventual_assert, m
 async def test_list_threads__invalid(client: Client) -> None:
     session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
 
-    with pytest.raises(ToolError, match=r"limit\n.+Input should be greater than or equal to 1.+"):
+    with pytest.raises(ToolError, match=r"limit\n.+Input should be greater than or equal to 1"):
         await client.call_tool("list_threads", {"session_id": session_id, "limit": 0})
 
-    with pytest.raises(ToolError, match=r"offset\n.+Input should be greater than or equal to 0.+"):
+    with pytest.raises(ToolError, match=r"offset\n.+Input should be greater than or equal to 0"):
         await client.call_tool("list_threads", {"session_id": session_id, "offset": -1})
 
     with pytest.raises(ToolError, match=r"timeout\n.+Input should be greater than or equal to 0"):

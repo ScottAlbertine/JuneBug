@@ -29,14 +29,14 @@ async def test_evaluate_expression__invalid(client: Client) -> None:
         )
 
     with pytest.raises(
-        ToolError, match=r"depth\n.+Input should be greater than or equal to 0.+",
+        ToolError, match=r"depth\n.+Input should be greater than or equal to 0",
     ):
         await client.call_tool(
             "evaluate_expression", {"expression": "some_list", "session_id": session_id, "depth": -1},
         )
 
     with pytest.raises(
-        ToolError, match=r"depth\n.+Input should be less than or equal to 4.+",
+        ToolError, match=r"depth\n.+Input should be less than or equal to 4",
     ):
         await client.call_tool(
             "evaluate_expression", {"expression": "some_list", "session_id": session_id, "depth": 5},

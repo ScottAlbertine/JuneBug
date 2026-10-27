@@ -23,7 +23,7 @@ async def test_control_debugger_session__invalid(client: Client) -> None:
 
     with pytest.raises(
         ToolError,
-        match=r"action\n.+Input should be 'step_into', 'step_over', 'step_out', 'resume', 'pause', 'stop' or 'wait_for_pause' \[type=enum, input_value='definitely_not_valid', input_type=str\]\n.+",
+        match=r"action\n.+Input should be 'step_into', 'step_over', 'step_out', 'resume', 'pause', 'stop' or 'wait_for_pause' \[type=enum, input_value='definitely_not_valid', input_type=str\]\n",
     ):
         await client.call_tool("control_debugger_session", {"session_id": session_id, "action": "definitely_not_valid"})
 

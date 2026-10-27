@@ -14,7 +14,7 @@ from tests.utils import MatchAny, MatchRegex
 
 async def test_launch_debugger_session__invalid(client: Client) -> None:
 
-    with pytest.raises(ToolError, match=r"project_path\n.+Missing required argument.+"):
+    with pytest.raises(ToolError, match=r"project_path\n.+Missing required argument"):
         await client.call_tool("launch_debugger_session", {"python_path": sys.executable, "file_path": FAKE_MAIN})
 
     with pytest.raises(ToolError, match=r"project_path must be an absolute directory path\."):
