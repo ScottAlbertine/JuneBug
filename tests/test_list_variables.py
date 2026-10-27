@@ -496,3 +496,14 @@ async def test_list_variables__hidden(client: Client) -> None:
         "type": "EnumType",
         "children": [{"name": "special variables", "value": "", "type": "", "children": []}],
     }
+
+
+async def test_list_variables__timeout(client: Client) -> None:
+    session_id = await common_setup(client)
+    with pytest.raises(ToolError, match=r"timed out"):
+        await client.call_tool(
+            "list_variables", {"session_id": session_id, "depth": 4, "show_hidden": True, "timeout": 100},
+        )
+    # Check that you can retry the call, and it works
+    actual = await client.call_tool("list_variables", {"session_id": session_id})
+    assert actual.structured_content["variables"][1]["value"] == "{'a': 1, 'b': 2, 'c': 3}"

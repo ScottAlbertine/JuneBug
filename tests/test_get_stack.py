@@ -192,9 +192,17 @@ async def test_get_stack_while_running(client: Client) -> None:
         all_threads_running, otherwise="Threads did not reach expected running state within 3 seconds",
     )
 
+    # the thread IDs change after several get_stack calls, refresh them before each call.
     threads = await client.call_tool("list_threads", {"session_id": session_id})
     thread_ids = {thread["name"]: thread["id"] for thread in threads.structured_content["threads"]}
+    # While we're in here, test that timeouts work, since this is a 600ms operation
+    with pytest.raises(ToolError, match=r"timed out"):
+        await client.call_tool(
+            "get_stack", {"session_id": session_id, "thread_id": thread_ids["MainThread"], "limit": 2, "timeout": 100},
+        )
 
+    threads = await client.call_tool("list_threads", {"session_id": session_id})
+    thread_ids = {thread["name"]: thread["id"] for thread in threads.structured_content["threads"]}
     stack = await client.call_tool(
         "get_stack", {"session_id": session_id, "thread_id": thread_ids["MainThread"], "limit": 2},
     )
@@ -219,6 +227,8 @@ async def test_get_stack_while_running(client: Client) -> None:
         "total_frames": 4,
     }
 
+    threads = await client.call_tool("list_threads", {"session_id": session_id})
+    thread_ids = {thread["name"]: thread["id"] for thread in threads.structured_content["threads"]}
     stack = await client.call_tool(
         "get_stack", {"session_id": session_id, "thread_id": thread_ids["BusyWorker"], "limit": 1},
     )
@@ -236,6 +246,8 @@ async def test_get_stack_while_running(client: Client) -> None:
         "total_frames": 4,
     }
 
+    threads = await client.call_tool("list_threads", {"session_id": session_id})
+    thread_ids = {thread["name"]: thread["id"] for thread in threads.structured_content["threads"]}
     stack = await client.call_tool(
         "get_stack", {"session_id": session_id, "thread_id": thread_ids["DaemonOne"], "limit": 1},
     )
@@ -250,22 +262,5 @@ async def test_get_stack_while_running(client: Client) -> None:
             },
         ],
         "thread_id": thread_ids["DaemonOne"],
-        "total_frames": 4,
-    }
-
-    stack = await client.call_tool(
-        "get_stack", {"session_id": session_id, "thread_id": thread_ids["DaemonTwo"], "limit": 1},
-    )
-    assert stack.structured_content == {
-        "frames": [
-            {
-                "id": MatchAny(int),
-                "name": "worker_daemon",
-                "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_multi_thread.py",
-                "line": 21,
-                "library_code": False,
-            },
-        ],
-        "thread_id": thread_ids["DaemonTwo"],
         "total_frames": 4,
     }

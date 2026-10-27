@@ -475,3 +475,14 @@ async def test_evaluate_expression__specials(client: Client) -> None:
         "evaluate_name": "main",
         "children": [],
     }
+
+
+async def test_evaluate_expression__timeout(client: Client) -> None:
+    session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
+
+    await client.call_tool("run_to_line", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 7})
+
+    with pytest.raises(ToolError, match=r"timed out"):
+        await client.call_tool(
+            "evaluate_expression", {"expression": "sleep(1)", "session_id": session_id, "timeout": 100},
+        )

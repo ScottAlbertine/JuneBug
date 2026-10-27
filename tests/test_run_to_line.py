@@ -12,7 +12,9 @@ async def test_run_to_line__invalid(client: Client) -> None:
     session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
 
     with pytest.raises(ToolError, match=r"timeout\n.+Input should be greater than or equal to 0"):
-        await client.call_tool("run_to_line", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 7, "timeout": -1})
+        await client.call_tool(
+            "run_to_line", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 7, "timeout": -1},
+        )
 
 
 async def test_run_to_line(client: Client) -> None:
@@ -140,6 +142,17 @@ async def test_run_to_line__runs_to_end(client: Client) -> None:
     )
     assert run_to_line.structured_content["state"] == "stopped"
     assert run_to_line.structured_content["current_position"] == None
+
+
+async def test_run_to_line__timeout(client: Client) -> None:
+    """Test that run_to_line times out if you don't reach the line."""
+
+    session_id = (await create_session(client, file_path=FAKE_MAIN, program_arguments=["--loop-forever"]))["id"]
+
+    with pytest.raises(ToolError, match=r"timed out"):
+        await client.call_tool(
+            "run_to_line", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 13, "timeout": 100},
+        )
 
 
 async def test_run_to_line__breakpoints_muted(client: Client) -> None:
