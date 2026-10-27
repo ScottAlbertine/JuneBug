@@ -9,27 +9,31 @@ on:
 jobs:
   build:
     name: Build for ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.builder }}
 
     strategy:
       matrix:
         include:
-          - os: windows-latest
-            target_name: JuneBug.exe
+          - os: windows
+            builder: windows-latest
+            target_name: JuneBug-windows
             asset_name: JuneBug-windows.exe
-          - os: macos-latest
-            target_name: JuneBug
+          - os: macos
+            builder: macos-latest
+            target_name: JuneBug-macos
+            # eventually, asset_name will be JuneBug-macos.app once I get system tray support
             asset_name: JuneBug-macos
-          - os: ubuntu-latest
-            target_name: JuneBug
+          - os: linux
+            builder: ubuntu-latest
+            target_name: JuneBug-linux
             asset_name: JuneBug-linux
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python 3.14
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.14"
 
@@ -40,18 +44,10 @@ jobs:
 
       - name: Build with PyInstaller
         run: |
-          pyinstaller --onefile --name JuneBug main.py
-
-      # TODO: merge this with the above step, it's a bit silly to do it this way
-      - name: Rename and Prepare Artifact
-        shell: bash
-        run: |
-          cd dist
-          # Rename to platform-specific distinct names
-          mv ${{ matrix.target_name }} ../${{ matrix.asset_name }}
+          pyinstaller --onefile --name ${{ matrix.target_name }} main.py
 
       - name: Upload Release Asset
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: JuneBug-${{ matrix.os }}
+          name: ${{ matrix.target_name }}
           path: ${{ matrix.asset_name }}
