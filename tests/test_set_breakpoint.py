@@ -24,6 +24,11 @@ async def test_set_breakpoint__invalid(client: Client) -> None:
     with pytest.raises(ToolError, match=rf"Line 999 was not found in {PROJECT_ROOT}/tests/fakes/fake_main\.py"):
         await client.call_tool("set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 999})
 
+    with pytest.raises(ToolError, match=r"timeout\n.+Input should be greater than or equal to 0"):
+        await client.call_tool(
+            "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 7, "timeout": -1},
+        )
+
 
 async def test_set_breakpoint(client: Client) -> None:
     start_response = await create_session(client, file_path=FAKE_MAIN)
@@ -59,7 +64,8 @@ async def test_set_breakpoint(client: Client) -> None:
 
     # Check that the program has run to completion, based on thread state, stdout, and process status
     with pytest.raises(
-        ToolError, match=r"Session has stopped, no more tool calls can be made to its id\. Start a new session instead\.",
+        ToolError,
+        match=r"Session has stopped, no more tool calls can be made to its id\. Start a new session instead\.",
     ):
         threads = await client.call_tool("list_threads", {"session_id": session_id})
     assert threads.structured_content == {"threads": [MAIN_THREAD], "total_count": 1}

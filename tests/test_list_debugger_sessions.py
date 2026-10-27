@@ -16,6 +16,9 @@ async def test_list_debugger_sessions__invalid(client: Client) -> None:
     with pytest.raises(ToolError, match=r"project_path must be an absolute directory path\."):
         await client.call_tool("list_debugger_sessions", {"project_path": "a/b/c"})
 
+    with pytest.raises(ToolError, match=r"timeout\n.+Input should be greater than or equal to 0"):
+        await client.call_tool("list_debugger_sessions", {"timeout": -1})
+
 
 async def test_list_real_sessions(client: Client, clear_sessions: None) -> None:
     """Create 2 real sessions, check that they show up under the appropriate project path, but not under a different path."""

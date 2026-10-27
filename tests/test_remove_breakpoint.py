@@ -1,7 +1,18 @@
 from fastmcp import Client
+from fastmcp.exceptions import ToolError
+import pytest
 
 from tests.constants import FAKE_MAIN, PROJECT_ROOT
 from tests.utils import create_session
+
+
+async def test_remove_breakpoint__invalid(client: Client) -> None:
+    session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
+
+    with pytest.raises(ToolError, match=r"timeout\n.+Input should be greater than or equal to 0"):
+        await client.call_tool(
+            "remove_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 7, "timeout": -1},
+        )
 
 
 async def test_remove_breakpoint(client: Client) -> None:

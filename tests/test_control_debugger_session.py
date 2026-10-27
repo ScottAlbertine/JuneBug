@@ -27,6 +27,11 @@ async def test_control_debugger_session__invalid(client: Client) -> None:
     ):
         await client.call_tool("control_debugger_session", {"session_id": session_id, "action": "definitely_not_valid"})
 
+    with pytest.raises(ToolError, match=r"timeout\n.+Input should be greater than or equal to 0"):
+        await client.call_tool(
+            "control_debugger_session", {"session_id": session_id, "action": "resume", "timeout": -1},
+        )
+
 
 async def test_resume_and_pause(client: Client) -> None:
     session_id = (await create_session(client, file_path=FAKE_MAIN_MULTI_THREAD))["id"]

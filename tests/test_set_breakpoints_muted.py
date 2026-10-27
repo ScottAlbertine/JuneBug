@@ -1,7 +1,18 @@
 from fastmcp import Client
+from fastmcp.exceptions import ToolError
+import pytest
 
 from tests.constants import FAKE_MAIN, FAKE_MAIN_WITH_VARIABLES, PROJECT_ROOT
 from tests.utils import MatchAny, create_session, move_to_next_breakpoint
+
+
+async def test_set_breakpoints_muted__invalid(client: Client) -> None:
+    session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
+
+    with pytest.raises(ToolError, match=r"timeout\n.+Input should be greater than or equal to 0"):
+        await client.call_tool(
+            "set_breakpoints_muted", {"session_id": session_id, "breakpoints_muted": True, "timeout": -1},
+        )
 
 
 async def test_mute_breakpoints(client: Client) -> None:

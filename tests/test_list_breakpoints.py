@@ -1,7 +1,16 @@
 from fastmcp import Client
+from fastmcp.exceptions import ToolError
+import pytest
 
 from tests.constants import FAKE_LIBRARY, FAKE_MAIN_WITH_IMPORT, PROJECT_ROOT
 from tests.utils import create_session
+
+
+async def test_list_breakpoints__invalid(client: Client) -> None:
+    session_id = (await create_session(client, file_path=FAKE_MAIN_WITH_IMPORT))["id"]
+
+    with pytest.raises(ToolError, match=r"timeout\n.+Input should be greater than or equal to 0"):
+        await client.call_tool("list_breakpoints", {"session_id": session_id, "timeout": -1})
 
 
 async def test_list_breakpoints(client: Client) -> None:

@@ -9,6 +9,13 @@ from tests.constants import FAKE_MAIN
 from tests.utils import MatchAny, create_session
 
 
+async def test_get_debugger_session__invalid(client: Client) -> None:
+    session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
+
+    with pytest.raises(ToolError, match=r"timeout\n.+Input should be greater than or equal to 0"):
+        await client.call_tool("get_debugger_session", {"session_id": session_id, "timeout": -1})
+
+
 async def test_get_real_session(client: Client) -> None:
     session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
 

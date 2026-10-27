@@ -42,6 +42,11 @@ async def test_evaluate_expression__invalid(client: Client) -> None:
             "evaluate_expression", {"expression": "some_list", "session_id": session_id, "depth": 5},
         )
 
+    with pytest.raises(ToolError, match=r"timeout\n.+Input should be greater than or equal to 0"):
+        await client.call_tool(
+            "evaluate_expression", {"expression": "some_list", "session_id": session_id, "timeout": -1},
+        )
+
 
 async def test_evaluate_expression__not_top_frame(client: Client) -> None:
     """Test that we can specify a frame that's not the top of the stack, and evaluate expressions on it."""

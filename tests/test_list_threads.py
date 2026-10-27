@@ -17,6 +17,9 @@ async def test_list_threads__invalid(client: Client) -> None:
     with pytest.raises(ToolError, match=r"offset\n.+Input should be greater than or equal to 0.+"):
         await client.call_tool("list_threads", {"session_id": session_id, "offset": -1})
 
+    with pytest.raises(ToolError, match=r"timeout\n.+Input should be greater than or equal to 0"):
+        await client.call_tool("list_threads", {"session_id": session_id, "timeout": -1})
+
 
 async def test_simple(client: Client) -> None:
     session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]

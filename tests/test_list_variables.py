@@ -24,6 +24,9 @@ async def test_list_variables__invalid(client: Client) -> None:
     with pytest.raises(ToolError, match=r"Stack frame 999999 was not found\."):
         await client.call_tool("list_variables", {"session_id": session_id, "frame_id": 999999})
 
+    with pytest.raises(ToolError, match=r"timeout\n.+Input should be greater than or equal to 0"):
+        await client.call_tool("list_variables", {"session_id": session_id, "timeout": -1})
+
     with pytest.raises(ToolError, match=r"depth\n.+Input should be greater than or equal to 0.+"):
         await client.call_tool("list_variables", {"session_id": session_id, "depth": -1})
 
