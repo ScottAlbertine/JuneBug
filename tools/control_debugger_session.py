@@ -1,5 +1,7 @@
 from typing import Annotated
 
+from pydantic import Field
+
 from annotations import SessionID
 from enums import Action, StepDirection
 from models import SessionStatus
@@ -14,9 +16,12 @@ async def control_debugger_session(
     session_id: SessionID = None,
     timeout: Annotated[
         int,
-        "Timeout in milliseconds to wait for action completion. "
-        "Guidance: step_* / pause usually 5000-15000; wait_for_pause usually 30000-120000 depending on workload and breakpoints. "
-        "Default: 30000.",
+        Field(
+            "Timeout in milliseconds to wait for action completion. "
+            "Guidance: step_* / pause usually 5000-15000; wait_for_pause usually 30000-120000 depending on workload and breakpoints. "
+            "Default: 30000.",
+            ge=0,
+        ),
     ] = 30000,
 ) -> SessionStatus:
     """
