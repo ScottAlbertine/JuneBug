@@ -36,4 +36,4 @@ mcp.tool(set_breakpoint)
 mcp.tool(set_breakpoints_muted)
 
 if __name__ == "__main__":
-    mcp.run(transport="http", host="127.0.0.1", port=9000)
+    mcp.run(transport="http", show_banner=False, host="127.0.0.1", port=9000)
