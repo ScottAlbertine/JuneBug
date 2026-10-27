@@ -2,9 +2,9 @@ name: Build MCP Server Binaries
 
 on:
   push:
-    tags:
-      - "v*" # Triggers automatically when you push a version tag like v1.0.0
-  workflow_dispatch: # Allows manual triggering from the GitHub Actions tab
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   build:
@@ -50,3 +50,4 @@ jobs:
         with:
           name: ${{ matrix.target_name }}
           path: ${{ matrix.asset_path }}
+          archive: false
