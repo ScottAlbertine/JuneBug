@@ -28,3 +28,4 @@ This is not how I want things to go, I want it to happen in the background, with
 
 ## Planned features
 1. Package this up as an extremely simple "double click it and it runs in your system tray" server, for Windows, Mac, and Linux.
+2. Multi-language support, starting with Java.
