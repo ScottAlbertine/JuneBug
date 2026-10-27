@@ -14,19 +14,19 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: windows
+          - os: Windows
             builder: windows-latest
             target_name: JuneBug-windows
-            asset_name: JuneBug-windows.exe
-          - os: macos
+            asset_path: dist/JuneBug-windows.exe
+          - os: MacOS
             builder: macos-latest
             target_name: JuneBug-macos
             # eventually, asset_name will be JuneBug-macos.app once I get system tray support
-            asset_name: JuneBug-macos
-          - os: linux
+            asset_path: dist/JuneBug-macos
+          - os: Linux
             builder: ubuntu-latest
             target_name: JuneBug-linux
-            asset_name: JuneBug-linux
+            asset_path: dist/JuneBug-linux
 
     steps:
       - name: Check out code
@@ -43,11 +43,10 @@ jobs:
           pip install -r requirements.txt
 
       - name: Build with PyInstaller
-        run: |
-          pyinstaller --onefile --name ${{ matrix.target_name }} main.py
+        run: pyinstaller --onefile --name ${{ matrix.target_name }} main.py
 
       - name: Upload Release Asset
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.target_name }}
-          path: ${{ matrix.asset_name }}
+          path: ${{ matrix.asset_path }}
