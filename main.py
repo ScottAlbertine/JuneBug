@@ -17,7 +17,6 @@ from tools import (
     set_breakpoints_muted,
 )
 
-# TODO: update the server description, and any other params that the intellij original specifies on this call
 mcp = FastMCP("JuneBug MCP Server")
 
 mcp.tool(attach_debugger_session)
