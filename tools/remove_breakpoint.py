@@ -1,9 +1,20 @@
+from typing import Annotated
+
+from pydantic import Field
+
 from annotations import FilePath, LineNum, SessionID
 import session_service
-from utils import normalize_file_path
+from utils import normalize_file_path, wait_for_timeout
 
 
-async def remove_breakpoint(file_path: FilePath, line: LineNum, session_id: SessionID = None) -> None:
+async def remove_breakpoint(
+    file_path: FilePath,
+    line: LineNum,
+    session_id: SessionID = None,
+    timeout: Annotated[
+        int, Field(description="Timeout in milliseconds to wait to remove the breakpoint. Default: 5000.", ge=0),
+    ] = 5000,
+) -> None:
     """
     Remove a breakpoint at a specific file and line number.
 
@@ -23,4 +34,4 @@ async def remove_breakpoint(file_path: FilePath, line: LineNum, session_id: Sess
     """
     session = session_service.get_session(session_id)
     path = normalize_file_path(file_path, session.project_path)
-    await session.remove_breakpoint(path, line)
+    await wait_for_timeout(session.remove_breakpoint(path, line), timeout)

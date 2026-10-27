@@ -1,8 +1,9 @@
-from asyncio import StreamReader, StreamWriter, open_connection, sleep
+from asyncio import StreamReader, StreamWriter, open_connection, sleep, wait_for
 from itertools import islice
 from pathlib import Path
 from socket import AF_INET, SOCK_STREAM, socket
 import subprocess
+from typing import Coroutine
 
 from exceptions import DebugpyInstallationFailed, FileNotFound, LineNotFound
 
@@ -72,3 +73,17 @@ def fetch_line_text(path: Path, line_num: int) -> str:
         raise FileNotFound(path)
     except (StopIteration, ValueError):
         raise LineNotFound(path, line_num)
+
+
+async def wait_for_timeout[T](coro: Coroutine[None, None, T], timeout_ms: int) -> T:
+    """Run an async coroutine with a timeout, re-raising TimeoutError with a clean message.
+
+    :param coro: The coroutine to await.
+    :param timeout_ms: Timeout in milliseconds.
+    :returns: The result of the coroutine.
+    :raises TimeoutError: With message "timed out" if the coroutine exceeds the timeout.
+    """
+    try:
+        return await wait_for(coro, timeout=timeout_ms / 1000.0)
+    except TimeoutError:
+        raise TimeoutError("timed out")

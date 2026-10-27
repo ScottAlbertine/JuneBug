@@ -1,12 +1,19 @@
 from typing import Annotated
 
+from pydantic import Field
+
 from annotations import SessionID
 from models import SessionStatus
 import session_service
+from utils import wait_for_timeout
 
 
 async def set_breakpoints_muted(
-    breakpoints_muted: Annotated[bool, "Session-wide breakpoint mute flag."], session_id: SessionID = None,
+    breakpoints_muted: Annotated[bool, "Session-wide breakpoint mute flag."],
+    session_id: SessionID = None,
+    timeout: Annotated[
+        int, Field(description="Timeout in milliseconds to wait to mute all breakpoints. Default: 10000.", ge=0),
+    ] = 10000,
 ) -> SessionStatus:
     """
     Enable or disable all breakpoints in a debug session without removing them.
@@ -30,5 +37,9 @@ async def set_breakpoints_muted(
     - Breakpoints added while muted take effect once unmuted.
     """
     session = session_service.get_session(session_id)
-    await session.set_breakpoints_muted(breakpoints_muted)
-    return await session.get_status()
+
+    async def go() -> SessionStatus:
+        await session.set_breakpoints_muted(breakpoints_muted)
+        return await session.get_status()
+
+    return await wait_for_timeout(go(), timeout)

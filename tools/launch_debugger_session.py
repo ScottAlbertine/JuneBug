@@ -1,4 +1,3 @@
-from asyncio import wait_for
 from pathlib import Path
 from typing import Annotated
 
@@ -8,7 +7,7 @@ from annotations import ProjectPath
 from exceptions import AbsolutePathError
 from models import SessionStatus
 import session_service
-from utils import normalize_file_path
+from utils import normalize_file_path, wait_for_timeout
 
 
 async def launch_debugger_session(
@@ -58,12 +57,6 @@ async def launch_debugger_session(
       then call control_debugger_session with action "resume" to begin execution.
     - To check output, read the std_out_path or std_err_path from the returned status.
     """
-    if program_arguments is None:
-        program_arguments = []
-
-    if env is None:
-        env = {}
-
     try:
         normal_project_path = normalize_file_path(project_path)
     except ValueError:
@@ -74,15 +67,15 @@ async def launch_debugger_session(
         normal_working_directory = normalize_file_path(working_directory, project_path)
     # don't normalize python_path, since it might be just "python", which is neither an absolute nor a relative path
 
-    session = await wait_for(
-        session_service.launch_session(
+    async def go() -> SessionStatus:
+        session = await session_service.launch_session(
             normal_project_path,
             python_path,
             normal_file_path,
-            program_arguments,
+            [] if program_arguments is None else program_arguments,
             normal_working_directory,
-            env,
-        ), timeout=timeout / 1000.0,
-    )
+            {} if env is None else env,
+        )
+        return await session.get_status()
 
-    return await session.get_status()
+    return await wait_for_timeout(go(), timeout)

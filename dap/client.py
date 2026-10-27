@@ -1,5 +1,5 @@
 """A client for speaking DAP to a debugee process's DAP port."""
-from asyncio import StreamReader, StreamWriter
+from asyncio import CancelledError, StreamReader, StreamWriter
 import json
 from typing import Any, AsyncGenerator, Awaitable, Callable, Self
 
@@ -64,7 +64,7 @@ class DAPClient:
         await self._writer.drain()
         self._seq_counter += 1
 
-    async def _pull(self) -> AsyncGenerator[Message, None]:
+    async def _pull(self) -> AsyncGenerator[Message | CancelledError, None]:
         """
         An unbounded iterator that returns every message we receive from the DAP server.
         This should only ever be called once, in `.__init__()`.
@@ -73,7 +73,13 @@ class DAPClient:
         # Used to save data as it comes in from the socket until we have a full message
         buffer = bytearray()
         while True:
-            buffer += await self._reader.read(self.CHUNK_SIZE)
+            try:
+                buffer += await self._reader.read(self.CHUNK_SIZE)
+            except CancelledError as exc:
+                # we can't raise this exception without breaking out of this loop, which permanently breaks this client
+                # so we yield it instead and continue with the loop
+                yield exc
+
             try:
                 for message in parse_messages(buffer):
                     yield message
@@ -85,6 +91,9 @@ class DAPClient:
         """ Pull JSON dicts from the DAP client until the given matcher function returns true on a dict, then return that dict. """
         async for message in self._message_iterator:
             # print(message)  # for easy logging
+
+            if isinstance(message, CancelledError):  # this is how timeouts show up
+                raise message  # now we're in a loop that's ok to exit, we can raise the error
 
             if not message.get("success", True):
                 raise DAPError(message)

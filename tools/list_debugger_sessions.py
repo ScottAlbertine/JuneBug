@@ -1,10 +1,13 @@
 from pathlib import Path
 from typing import Annotated
 
+from pydantic import Field
+
 from exceptions import AbsolutePathError
 from models import SessionStatuses
 import session_service
-from utils import normalize_file_path
+from utils import normalize_file_path, wait_for_timeout
+
 
 # This project path is optional, unlike the ones on attach_debugger_session and launch_debugger_session
 async def list_debugger_sessions(
@@ -16,6 +19,9 @@ async def list_debugger_sessions(
         In the case when it's unobvious which project to use you have to ASK the USER about which project to use.
         """,
     ] = None,
+    timeout: Annotated[
+        int, Field(description="Timeout in milliseconds to wait to get the sessions. Default: 30000.", ge=0),
+    ] = 30000,
 ) -> SessionStatuses:
     """
     List all debug sessions for a given project.
@@ -48,5 +54,7 @@ async def list_debugger_sessions(
         except ValueError:
             raise AbsolutePathError("project_path")
     sessions = session_service.get_sessions(normal_project_path)
-    statuses = [await session.get_status() for session in sessions]
-    return SessionStatuses(sessions=statuses)
+    async def go() -> SessionStatuses:
+        return SessionStatuses(sessions=[await session.get_status() for session in sessions])
+
+    return await wait_for_timeout(go(), timeout)

@@ -1,10 +1,10 @@
-from asyncio import wait_for
 from typing import Annotated
 
 from annotations import SessionID
 from enums import Action, StepDirection
 from models import SessionStatus
 import session_service
+from utils import wait_for_timeout
 
 
 async def control_debugger_session(
@@ -58,7 +58,7 @@ async def control_debugger_session(
     """
     session = session_service.get_session(session_id)
 
-    async def go() -> None:
+    async def go() -> SessionStatus:
         if action == Action.STEP_INTO:
             await session.step(StepDirection.INTO)
         elif action == Action.STEP_OVER:
@@ -74,6 +74,6 @@ async def control_debugger_session(
         elif action == Action.WAIT_FOR_PAUSE:
             await session.wait_for_pause()
 
-    await wait_for(go(), timeout=timeout / 1000.0)
+        return await session.get_status()
 
-    return await session.get_status()
+    return await wait_for_timeout(go(), timeout)

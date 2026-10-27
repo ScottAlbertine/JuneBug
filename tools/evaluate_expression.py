@@ -5,6 +5,7 @@ from pydantic import Field
 from annotations import FrameID, SessionID, ShowHidden
 from models import Variable
 import session_service
+from utils import wait_for_timeout
 
 DEPTH_DESCRIPTION = """
     Maximum depth for expanding children of the evaluated result
@@ -23,6 +24,9 @@ async def evaluate_expression(
     frame_id: FrameID = None,
     show_hidden: ShowHidden = False,
     depth: Annotated[int, Field(description=DEPTH_DESCRIPTION, ge=0, le=4)] = 0,
+    timeout: Annotated[
+        int, Field(description="Timeout in milliseconds to wait for the expression to evaluate. Default: 10000.", ge=0),
+    ] = 10000,
 ) -> Variable:
     """
     Evaluate a Python expression in the context of a stack frame.
@@ -54,4 +58,4 @@ async def evaluate_expression(
       use this tool for computed expressions or when you need a specific value.
     """
     session = session_service.get_session(session_id)
-    return await session.evaluate_expression(expression, frame_id, show_hidden, depth)
+    return await wait_for_timeout(session.evaluate_expression(expression, frame_id, show_hidden, depth), timeout)

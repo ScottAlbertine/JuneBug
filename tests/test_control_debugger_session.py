@@ -150,6 +150,31 @@ async def test_wait_for_pause(client: Client) -> None:
     assert wait_for_pause_2.structured_content == expected_status
 
 
+async def test_wait_for_pause__timeout(client: Client) -> None:
+    """Test the timeout on wait_for_pause works."""
+    session_id = (await create_session(client, file_path=FAKE_MAIN_MULTI_THREAD))["id"]
+    await client.call_tool("control_debugger_session", {"session_id": session_id, "action": "resume"})
+    # incorrectly wait for pause without setting a breakpoint at all, this will always timeout
+    with pytest.raises(ToolError, match=r"Error calling tool 'control_debugger_session': timed out"):
+        await client.call_tool(
+            "control_debugger_session", {"session_id": session_id, "action": "wait_for_pause", "timeout": 100},
+        )
+    # Check that we can still use the session after it times out, to correctly wait_for_pause this time.
+    await client.call_tool(
+        "set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN_MULTI_THREAD, "line": 38},
+    )
+    successful_pause = await client.call_tool(
+        "control_debugger_session", {"session_id": session_id, "action": "wait_for_pause"},
+    )
+    assert successful_pause.structured_content["current_position"] == {
+        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_multi_thread.py",
+        "line": 38,
+        "line_text": "        sleep(1)\n",
+        "temporary": False,
+        "hit_count": 1,
+    }
+
+
 async def test_stop__paused_session(client: Client) -> None:
     session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
 

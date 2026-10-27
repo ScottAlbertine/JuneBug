@@ -1,16 +1,20 @@
 from typing import Annotated
 
+from pydantic import Field
+
 from annotations import FilePath, LineNum, SessionID
 from models import SessionStatus
 import session_service
-from utils import normalize_file_path
+from utils import normalize_file_path, wait_for_timeout
 
 
 async def run_to_line(
     file_path: FilePath,
     line: LineNum,
     session_id: SessionID = None,
-    timeout: Annotated[int, "Timeout in milliseconds waiting for paused/stopped result. Default: 30000."] = 30000,
+    timeout: Annotated[
+        int, Field("Timeout in milliseconds waiting for paused/stopped result. Default: 30000.", ge=0),
+    ] = 30000,
 ) -> SessionStatus:
     """
     Run execution until a specific file and line, then pause.
@@ -41,5 +45,9 @@ async def run_to_line(
     """
     session = session_service.get_session(session_id)
     path = normalize_file_path(file_path, session.project_path)
-    await session.run_to_line(path, line)
-    return await session.get_status()
+
+    async def go() -> SessionStatus:
+        await session.run_to_line(path, line)
+        return await session.get_status()
+
+    return await wait_for_timeout(go(), timeout)

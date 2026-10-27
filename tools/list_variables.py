@@ -5,6 +5,7 @@ from pydantic import Field
 from annotations import FrameID, SessionID, ShowHidden
 from models import Variables
 import session_service
+from utils import wait_for_timeout
 
 DEPTH_DESCRIPTION = """
     Maximum depth for expanding nested objects
@@ -14,11 +15,15 @@ DEPTH_DESCRIPTION = """
     Default: 0.
 """
 
+
 async def list_variables(
     session_id: SessionID = None,
     frame_id: FrameID = None,
     show_hidden: ShowHidden = False,
     depth: Annotated[int, Field(description=DEPTH_DESCRIPTION, ge=0, le=4)] = 0,
+    timeout: Annotated[
+        int, Field(description="Timeout in milliseconds to wait to list variables. Default: 30000.", ge=0),
+    ] = 30000,
 ) -> Variables:
     """
     List variables visible in a stack frame's scope.
@@ -48,5 +53,5 @@ async def list_variables(
       `get_stack` first.
     """
     session = session_service.get_session(session_id)
-    variables = await session.list_variables(frame_id, show_hidden, depth)
+    variables = await wait_for_timeout(session.list_variables(frame_id, show_hidden, depth), timeout)
     return Variables(variables=variables)

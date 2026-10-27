@@ -5,6 +5,7 @@ from pydantic import Field
 from annotations import SessionID
 from models import StackFrames
 import session_service
+from utils import wait_for_timeout
 
 
 async def get_stack(
@@ -16,6 +17,9 @@ async def get_stack(
     ] = None,
     limit: Annotated[int, Field(description="Max frames to return. Default: 200.", ge=1)] = 200,
     offset: Annotated[int, Field(description="Page offset. Default: 0.", ge=0)] = 0,
+    timeout: Annotated[
+        int, Field(description="Timeout in milliseconds to wait for getting the stack. Default: 5000.", ge=0),
+    ] = 5000,
 ) -> StackFrames:
     """
     Get the call stack (stack trace) for a thread in the debug session.
@@ -46,4 +50,4 @@ async def get_stack(
     - Skip frames marked `library_code: true` unless you need to debug into libs.
     """
     session = session_service.get_session(session_id)
-    return await session.get_stack_trace(thread_id, limit, offset)
+    return await wait_for_timeout(session.get_stack_trace(thread_id, limit, offset), timeout)

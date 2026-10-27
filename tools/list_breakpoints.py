@@ -1,5 +1,7 @@
 from typing import Annotated
 
+from pydantic import Field
+
 from annotations import SessionID
 from models import BreakpointsResponse
 import session_service
@@ -13,6 +15,9 @@ async def list_breakpoints(
         "Path to the file. Supports project-relative paths, paths with '..', absolute paths, and URLs such as 'file://'. "
         "If not specified, returns all breakpoints. Default: null.",
     ] = None,
+    timeout: Annotated[
+        int, Field(description="Timeout in milliseconds to wait to list breakpoints. Default: 5000.", ge=0),
+    ] = 5000,
 ) -> BreakpointsResponse:
     """
     List all configured breakpoints in a debug session, optionally filtered by file.
@@ -37,5 +42,7 @@ async def list_breakpoints(
     """
     session = session_service.get_session(session_id)
     path = normalize_file_path(file_path, session.project_path) if file_path else None
+    # Breakpoint retrieval isn't async, since it's fetched from memory rather than from DAP
+    # I've kept the timeout param on this tool for consistency, it can simply never be hit.
     breakpoints = session.list_breakpoints(path)
     return BreakpointsResponse(breakpoints=breakpoints, breakpoints_muted=session.breakpoints_muted)

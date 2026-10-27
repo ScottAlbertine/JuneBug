@@ -1,9 +1,19 @@
+from typing import Annotated
+
+from pydantic import Field
+
 from annotations import SessionID
 from models import SessionStatus
 import session_service
+from utils import wait_for_timeout
 
 
-async def get_debugger_session(session_id: SessionID = None) -> SessionStatus:
+async def get_debugger_session(
+    session_id: SessionID = None,
+    timeout: Annotated[
+        int, Field(description="Timeout in milliseconds to wait to get the status. Default: 5000.", ge=0),
+    ] = 5000,
+) -> SessionStatus:
     """
     Get the current status of a single debug session.
 
@@ -28,4 +38,4 @@ async def get_debugger_session(session_id: SessionID = None) -> SessionStatus:
     - Use the returned session_id in subsequent tool calls.
     - If the state is "stopped", start a new session instead of retrying.
     """
-    return await session_service.get_session(session_id).get_status()
+    return await wait_for_timeout(session_service.get_session(session_id).get_status(), timeout)

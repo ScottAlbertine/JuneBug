@@ -1,9 +1,11 @@
 from typing import Annotated
 
+from pydantic import Field
+
 from annotations import FilePath, LineNum, SessionID
 from models import Breakpoint
 import session_service
-from utils import normalize_file_path
+from utils import normalize_file_path, wait_for_timeout
 
 
 async def set_breakpoint(
@@ -15,6 +17,13 @@ async def set_breakpoint(
         "Optional condition expression - breakpoint will only trigger when this evaluates to true. Default: null.",
     ] = None,
     temporary: Annotated[bool, "Temporary breakpoint (removed after first hit). Default: false."] = False,
+    timeout: Annotated[
+        int,
+        Field(
+            "Timeout in milliseconds waiting to set the breakpoint. This is *not* a timeout for the breakpoint to be hit. Default: 5000.",
+            ge=0,
+        ),
+    ] = 5000,
 ) -> Breakpoint:
     """
     Set a breakpoint at a specific file and line number in a debug session.
@@ -43,4 +52,4 @@ async def set_breakpoint(
     """
     session = session_service.get_session(session_id)
     path = normalize_file_path(file_path, session.project_path)
-    return await session.set_breakpoint(path, line, temporary, condition)
+    return await wait_for_timeout(session.set_breakpoint(path, line, temporary, condition), timeout)

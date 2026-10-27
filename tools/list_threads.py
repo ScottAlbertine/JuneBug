@@ -5,12 +5,16 @@ from pydantic import Field
 from annotations import SessionID
 from models import ThreadsResponse
 import session_service
+from utils import wait_for_timeout
 
 
 async def list_threads(
     session_id: SessionID = None,
     limit: Annotated[int, Field(description="Page size. Default: 50, max: 200.", ge=1)] = 50,
     offset: Annotated[int, Field(description="Page offset. Default: 0.", ge=0)] = 0,
+    timeout: Annotated[
+        int, Field(description="Timeout in milliseconds to wait to list threads. Default: 10000.", ge=0),
+    ] = 10000,
 ) -> ThreadsResponse:
     """
     List all threads in a debug session, with pagination support.
@@ -31,5 +35,5 @@ async def list_threads(
     - Call this after resuming or pausing to see updated thread states.
     """
     session = session_service.get_session(session_id)
-    threads = await session.list_threads()
+    threads = await wait_for_timeout(session.list_threads(), timeout)
     return ThreadsResponse(threads=threads[offset:offset + limit], total_count=len(threads))

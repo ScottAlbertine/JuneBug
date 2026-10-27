@@ -1,4 +1,3 @@
-from asyncio import wait_for
 from typing import Annotated
 import uuid
 
@@ -8,7 +7,7 @@ from annotations import ProjectPath
 from exceptions import AbsolutePathError
 from models import SessionStatus
 import session_service
-from utils import normalize_file_path
+from utils import normalize_file_path, wait_for_timeout
 
 
 async def attach_debugger_session(
@@ -52,7 +51,9 @@ async def attach_debugger_session(
         normal_project_path = normalize_file_path(project_path)
     except ValueError:
         raise AbsolutePathError("project_path")
-    session = await wait_for(
-        session_service.attach_session(session_id, normal_project_path, host, port), timeout=timeout / 1000.0,
-    )
-    return await session.get_status()
+
+    async def go() -> SessionStatus:
+        session = await session_service.attach_session(session_id, normal_project_path, host, port)
+        return await session.get_status()
+
+    return await wait_for_timeout(go(), timeout)
