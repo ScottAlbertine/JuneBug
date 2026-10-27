@@ -1,11 +1,9 @@
 import asyncio
 import re
-import signal
 import sys
 from typing import Any, Callable, Coroutine
 
 from fastmcp import Client
-import psutil
 
 from tests.constants import PROJECT_ROOT
 
@@ -37,18 +35,6 @@ class MatchRegex:
 
     def __repr__(self) -> str:
         return f"r'{self.regex}'"
-
-
-def kill_processes_by_module(module_names: list[str]) -> None:
-    """Kill all processes whose command line contains any of the given module names."""
-    for proc in psutil.process_iter(["pid", "cmdline"]):
-        cmdline = proc.info["cmdline"] or []
-        cmdline_str = " ".join(cmdline)
-        if any(mod in cmdline_str for mod in module_names):
-            try:
-                proc.send_signal(signal.SIGTERM)
-            except psutil.NoSuchProcess:
-                pass
 
 
 async def eventual_assert(

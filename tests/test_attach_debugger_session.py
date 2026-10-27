@@ -1,5 +1,7 @@
-import subprocess
+from signal import SIGKILL
+from subprocess import Popen
 import sys
+from typing import Iterable
 
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
@@ -29,11 +31,19 @@ async def test_launch_debugger_session__invalid(client: Client) -> None:
         )
 
 
-async def test_attach_debugger_session(client: Client) -> None:
-    port = find_free_port()
-    stdout_path = TEMP_DIR / f"{__name__}.test_simple.stdout.txt"
-    stderr_path = TEMP_DIR / f"{__name__}.test_simple.stderr.txt"
-    debugee = subprocess.Popen(
+@pytest.fixture()
+def port() -> int:
+    """We need a consistent port between the fixture (which launches the debugee) and the test (which connects to it."""
+    return find_free_port()
+
+
+@pytest.fixture()
+def debugee(port: int) -> Iterable[Popen[bytes]]:
+    """
+    We need to ensure that no matter what happens during the test, we kill the debugee.
+    Easiest way to do that is to use a yielding fixture.
+    """
+    debugee = Popen(
         args=[
             sys.executable,
             "-Xfrozen_modules=off",
@@ -42,11 +52,15 @@ async def test_attach_debugger_session(client: Client) -> None:
             "--wait-for-client",
             FAKE_MAIN,
         ],
-        stdout=open(stdout_path, "w"),
-        stderr=open(stderr_path, "w"),
+        stdout=open(TEMP_DIR / f"{__name__}.test_simple.stdout.txt", "w"),
+        stderr=open(TEMP_DIR / f"{__name__}.test_simple.stderr.txt", "w"),
         cwd=str(PROJECT_ROOT),
     )
+    yield debugee
+    psutil.Process(debugee.pid).send_signal(SIGKILL)
 
+
+async def test_attach_debugger_session(client: Client, debugee: Popen[bytes], port: int) -> None:
     create_result = await client.call_tool(
         "attach_debugger_session", {"project_path": str(PROJECT_ROOT), "port": port},
     )
@@ -59,5 +73,5 @@ async def test_attach_debugger_session(client: Client) -> None:
     assert proc.is_running()
     # Check that stdout and stderr have been created, but not written to.
     # This proves that the files were opened, and that fake_main hasn't actually started yet.
-    assert stdout_path.read_text() == ""
-    assert stderr_path.read_text() == ""
+    assert (TEMP_DIR / f"{__name__}.test_simple.stdout.txt").read_text() == ""
+    assert (TEMP_DIR / f"{__name__}.test_simple.stderr.txt").read_text() == ""
