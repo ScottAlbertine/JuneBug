@@ -3,6 +3,7 @@ Service module that manages a global index of sessions.
 This is shared in-memory across threads, since it represents a single, universal, external state.
 It can create, find, and eventually delete sessions.
 """
+import os
 from pathlib import Path
 import subprocess
 import uuid
@@ -86,6 +87,9 @@ async def launch_session(
 
     session_id = str(uuid.uuid4())
     port = find_free_port()
+
+    if os.name == "nt":
+        env.update(os.environ)
 
     debugee = subprocess.Popen(
         args=[
