@@ -32,6 +32,10 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v7
 
+      # This is only needed for ubuntu, since pystray tries to connect to an X display on import
+      - name: Setup headless display
+        uses: pyvista/setup-headless-display-action@v5
+
       - name: Set up Python 3.14
         uses: actions/setup-python@v7
         with:
