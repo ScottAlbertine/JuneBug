@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
 import pytest
@@ -40,7 +42,8 @@ async def test_list_variables__not_top_frame(client: Client) -> None:
 
     # Set a breakpoint inside the add() function in fake_library (line 2: return a + b)
     await client.call_tool(
-        "set_breakpoint", {"session_id": session_id, "file_path": "tests/fakes/fake_library.py", "line": 2},
+        "set_breakpoint",
+        {"session_id": session_id, "file_path": str(Path("tests") / "fakes" / "fake_library.py"), "line": 2},
     )
 
     # Resume and wait for pause at the breakpoint

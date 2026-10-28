@@ -56,7 +56,7 @@ async def test_resume_and_pause(client: Client) -> None:
     )
     assert first_pause.structured_content["state"] == "paused"
     assert first_pause.structured_content["current_position"] == {
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_multi_thread.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_multi_thread.py"),
         "line": 38,
         "line_text": "        sleep(1)\n",
         "temporary": True,
@@ -111,7 +111,7 @@ async def test_wait_for_pause(client: Client) -> None:
         "std_err_path": MatchAny(str),
         "std_out_path": MatchAny(str),
         "current_position": {
-            "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
+            "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main.py"),
             "line": 7,
             "line_text": '    print("it started", flush=True)\n',
             "temporary": False,
@@ -133,7 +133,7 @@ async def test_wait_for_pause(client: Client) -> None:
         "std_err_path": MatchAny(str),
         "std_out_path": MatchAny(str),
         "current_position": {
-            "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
+            "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main.py"),
             "line": 13,
             "line_text": '    print("it finished", flush=True)\n',
             "temporary": False,
@@ -172,7 +172,7 @@ async def test_wait_for_pause__timeout(client: Client) -> None:
         "control_debugger_session", {"session_id": session_id, "action": "wait_for_pause"},
     )
     assert successful_pause.structured_content["current_position"] == {
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_multi_thread.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_multi_thread.py"),
         "line": 38,
         "line_text": "        sleep(1)\n",
         "temporary": False,
@@ -278,7 +278,7 @@ async def test_stepping(client: Client) -> None:
     initial_status = await move_to_next_breakpoint(client, session_id)
     assert initial_status["state"] == "paused"
     assert initial_status["current_position"] == {
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_variables.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_with_variables.py"),
         "line": 35,
         "line_text": "    some_object = Car()\n",
         "temporary": False,
@@ -289,7 +289,7 @@ async def test_stepping(client: Client) -> None:
     step_into = await client.call_tool("control_debugger_session", {"session_id": session_id, "action": "step_into"})
     assert step_into.structured_content["state"] == "paused"
     assert step_into.structured_content["current_position"] == {
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_variables.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_with_variables.py"),
         "line": 22,
         "line_text": "        self.color = Color.RED\n",
         "temporary": True,
@@ -302,7 +302,7 @@ async def test_stepping(client: Client) -> None:
     )
     assert step_over.structured_content["state"] == "paused"
     assert step_over.structured_content["current_position"] == {
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_variables.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_with_variables.py"),
         "line": 23,
         "line_text": '        self.name = "Greased Lightning"\n',
         "temporary": True,
@@ -315,7 +315,7 @@ async def test_stepping(client: Client) -> None:
     )
     assert step_out.structured_content["state"] == "paused"
     assert step_out.structured_content["current_position"] == {
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_variables.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_with_variables.py"),
         "line": 35,
         "line_text": "    some_object = Car()\n",
         "temporary": True,

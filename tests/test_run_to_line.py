@@ -38,7 +38,7 @@ async def test_run_to_line(client: Client) -> None:
     # Should be paused at line 33
     assert run_to_line.structured_content["state"] == "paused"
     assert run_to_line.structured_content["current_position"] == {
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_variables.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_with_variables.py"),
         "line": 33,
         "line_text": "    some_tuple = (1, 2, 3)\n",
         "temporary": True,
@@ -49,14 +49,14 @@ async def test_run_to_line(client: Client) -> None:
     expected_breakpoints = {
         "breakpoints": [
             {
-                "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_variables.py",
+                "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_with_variables.py"),
                 "line": 29,
                 "line_text": "    some_int = 123\n",
                 "temporary": False,
                 "hit_count": 0,
             },
             {
-                "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_variables.py",
+                "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_with_variables.py"),
                 "line": 31,
                 "line_text": "    some_bool = True\n",
                 "temporary": True,
@@ -77,7 +77,7 @@ async def test_run_to_line(client: Client) -> None:
     # Should be paused at line 35
     assert run_to_line.structured_content["state"] == "paused"
     assert run_to_line.structured_content["current_position"] == {
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_variables.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_with_variables.py"),
         "line": 35,
         "line_text": "    some_object = Car()\n",
         "temporary": True,
@@ -102,7 +102,7 @@ async def test_run_to_line__already_running(client: Client) -> None:
     )
     assert run_to_line.structured_content["state"] == "paused"
     assert run_to_line.structured_content["current_position"] == {
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_multi_thread.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_multi_thread.py"),
         "line": 14,
         "line_text": "        sleep(1)\n",
         "temporary": True,
@@ -119,7 +119,7 @@ async def test_run_to_line__already_running(client: Client) -> None:
     )
     assert run_to_line.structured_content["state"] == "paused"
     assert run_to_line.structured_content["current_position"] == {
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_multi_thread.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_multi_thread.py"),
         "line": 14,
         "line_text": "        sleep(1)\n",
         "temporary": True,
@@ -166,7 +166,7 @@ async def test_run_to_line__breakpoints_muted(client: Client) -> None:
     )
     assert run_to_line.structured_content["state"] == "paused"
     assert run_to_line.structured_content["current_position"] == {
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main.py"),
         "line": 7,
         "line_text": '    print("it started", flush=True)\n',
         "temporary": True,

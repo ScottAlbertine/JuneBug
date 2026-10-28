@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
 import pytest
@@ -47,14 +49,14 @@ async def test_basic(client: Client) -> None:
             {
                 "id": MatchAny(int),
                 "name": "main",
-                "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
+                "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main.py"),
                 "line": 7,
                 "library_code": False,
             },
             {
                 "id": MatchAny(int),
                 "name": "<module>",
-                "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
+                "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main.py"),
                 "line": 17,
                 "library_code": False,
             },
@@ -86,7 +88,8 @@ async def test_deeper_stack_with_import(client: Client) -> None:
 
     # Set a breakpoint inside the add() function in fake_library (line 2: return a + b)
     await client.call_tool(
-        "set_breakpoint", {"session_id": session_id, "file_path": "tests/fakes/fake_library.py", "line": 2},
+        "set_breakpoint",
+        {"session_id": session_id, "file_path": str(Path("tests") / "fakes" / "fake_library.py"), "line": 2},
     )
 
     # Resume and wait for pause at the breakpoint
@@ -97,21 +100,21 @@ async def test_deeper_stack_with_import(client: Client) -> None:
     expected_frame_1 = {
         "id": MatchAny(int),
         "name": "add",
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_library.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_library.py"),
         "line": 2,
         "library_code": False,
     }
     expected_frame_2 = {
         "id": MatchAny(int),
         "name": "main",
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_import.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_with_import.py"),
         "line": 12,
         "library_code": False,
     }
     expected_frame_3 = {
         "id": MatchAny(int),
         "name": "<module>",
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_import.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_with_import.py"),
         "line": 17,
         "library_code": False,
     }
@@ -157,7 +160,7 @@ async def test_specific_thread_id(client: Client) -> None:
             {
                 "id": MatchAny(int),
                 "name": "worker_busy",
-                "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_multi_thread.py",
+                "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_multi_thread.py"),
                 "line": 14,
                 "library_code": False,
             },
@@ -211,14 +214,14 @@ async def test_get_stack_while_running(client: Client) -> None:
             {
                 "id": MatchAny(int),
                 "name": "main",
-                "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_multi_thread.py",
+                "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_multi_thread.py"),
                 "line": 38,
                 "library_code": False,
             },
             {
                 "id": MatchAny(int),
                 "name": "<module>",
-                "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_multi_thread.py",
+                "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_multi_thread.py"),
                 "line": 43,
                 "library_code": False,
             },
@@ -237,7 +240,7 @@ async def test_get_stack_while_running(client: Client) -> None:
             {
                 "id": MatchAny(int),
                 "name": "worker_busy",
-                "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_multi_thread.py",
+                "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_multi_thread.py"),
                 "line": 14,
                 "library_code": False,
             },
@@ -256,7 +259,7 @@ async def test_get_stack_while_running(client: Client) -> None:
             {
                 "id": MatchAny(int),
                 "name": "worker_daemon",
-                "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_multi_thread.py",
+                "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_multi_thread.py"),
                 "line": 21,
                 "library_code": False,
             },

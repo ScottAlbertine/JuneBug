@@ -104,7 +104,7 @@ async def test_simple(client: Client) -> None:
         "-m", "debugpy",
         "--listen", MatchRegex(r"\d{4,5}"),
         "--wait-for-client",
-        f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
+        str(PROJECT_ROOT / "tests" / "fakes" / "fake_main.py"),
     ]
     assert proc.cwd() == str(PROJECT_ROOT)
 
@@ -134,7 +134,7 @@ async def test_fancy(client: Client) -> None:
         "-m", "debugpy",
         "--listen", MatchRegex(r"\d{4,5}"),
         "--wait-for-client",
-        f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
+        str(PROJECT_ROOT / "tests" / "fakes" / "fake_main.py"),
         "a", "b", "c",
     ]
     assert proc.cwd().endswith(str(TEMP_DIR))  # more symlink weirdness

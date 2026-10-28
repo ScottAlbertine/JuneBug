@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from fastmcp import Client
@@ -18,10 +19,14 @@ async def test_set_breakpoint__invalid(client: Client) -> None:
             "set_breakpoint", {"session_id": session_id, "file_path": "/definitely/not/a/real/file.py", "line": 1},
         )
 
-    with pytest.raises(ToolError, match=rf"Line -1 was not found in {PROJECT_ROOT}/tests/fakes/fake_main\.py"):
+    with pytest.raises(
+        ToolError, match=rf"Line -1 was not found in {PROJECT_ROOT / 'tests' / 'fakes' / 'fake_main.py'}",
+    ):
         await client.call_tool("set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": -1})
 
-    with pytest.raises(ToolError, match=rf"Line 999 was not found in {PROJECT_ROOT}/tests/fakes/fake_main\.py"):
+    with pytest.raises(
+        ToolError, match=rf"Line 999 was not found in {PROJECT_ROOT / 'tests' / 'fakes' / 'fake_main.py'}",
+    ):
         await client.call_tool("set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 999})
 
     with pytest.raises(ToolError, match=r"timeout\n.+Input should be greater than or equal to 0"):
@@ -41,7 +46,7 @@ async def test_set_breakpoint(client: Client) -> None:
     )
 
     assert breakpoint_response.structured_content == {
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main.py"),
         "line": 13,
         "line_text": '    print("it finished", flush=True)\n',
         "temporary": False,
@@ -82,7 +87,7 @@ async def test_set_breakpoint(client: Client) -> None:
     ["file_to_breakpoint"],
     [
         (str(Path(fake_main.__file__).resolve()),),
-        (str(Path(fake_main.__file__).resolve()) + "/../fake_main.py",),
+        (str(Path(fake_main.__file__).resolve()) + os.sep + ".." + os.sep + "fake_main.py",),
         ("file://" + str(Path(fake_main.__file__).resolve()),),
     ],
 )
@@ -94,7 +99,7 @@ async def test_set_breakpoint__odd_file_paths(client: Client, file_to_breakpoint
         "set_breakpoint", {"session_id": session_id, "file_path": file_to_breakpoint, "line": 13},
     )
     assert breakpoint_response.structured_content == {
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main.py"),
         "line": 13,
         "line_text": '    print("it finished", flush=True)\n',
         "temporary": False,
@@ -112,7 +117,7 @@ async def test_set_breakpoint__temporary(client: Client) -> None:
     )
 
     expected_breakpoint = {
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_loop.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_with_loop.py"),
         "line": 5,
         "line_text": '        print(f"loop number {i}", flush=True)\n',
         "temporary": True,
@@ -144,7 +149,7 @@ async def test_set_breakpoint__conditional(client: Client) -> None:
     )
 
     expected_breakpoint = {
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_loop.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_with_loop.py"),
         "line": 5,
         "line_text": '        print(f"loop number {i}", flush=True)\n',
         "condition": "i > 2",
@@ -188,7 +193,7 @@ async def test_set_breakpoint__temporary_conditional(client: Client) -> None:
     )
 
     expected_breakpoint = {
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_loop.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_with_loop.py"),
         "line": 5,
         "line_text": '        print(f"loop number {i}", flush=True)\n',
         "condition": "i > 2",
@@ -229,7 +234,7 @@ async def test_set_breakpoint__update_condition(client: Client) -> None:
     )
 
     expected_breakpoint = {
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main_with_loop.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_with_loop.py"),
         "line": 5,
         "line_text": '        print(f"loop number {i}", flush=True)\n',
         "temporary": False,

@@ -74,7 +74,7 @@ async def test_unmute_breakpoints(client: Client) -> None:
     assert updated_session["id"] == session_id
     assert updated_session["state"] == "paused"
     assert updated_session["current_position"] == {
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main.py"),
         "line": 7,
         "line_text": '    print("it started", flush=True)\n',
         "temporary": False,

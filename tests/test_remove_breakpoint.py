@@ -28,14 +28,14 @@ async def test_remove_breakpoint(client: Client) -> None:
     )
 
     breakpoint_1 = {
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main.py"),
         "line": 7,
         "line_text": '    print("it started", flush=True)\n',
         "temporary": False,
         "hit_count": 0,
     }
     breakpoint_2 = {
-        "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
+        "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main.py"),
         "line": 13,
         "line_text": '    print("it finished", flush=True)\n',
         "temporary": False,

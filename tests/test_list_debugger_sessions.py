@@ -64,7 +64,7 @@ async def test_list_real_sessions(client: Client, clear_sessions: None) -> None:
             {
                 "breakpoints_muted": False,
                 "current_position": {
-                    "file": f"{PROJECT_ROOT}/tests/fakes/fake_main.py",
+                    "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main.py"),
                     "line": 13,
                     "line_text": '    print("it finished", flush=True)\n',
                     "hit_count": 1,
