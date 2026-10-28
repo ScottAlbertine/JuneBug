@@ -1,5 +1,6 @@
 """Shared test configuration and fixtures."""
-from signal import SIGKILL
+import signal
+import sys
 from typing import AsyncGenerator, Generator
 
 from fastmcp import Client
@@ -17,7 +18,9 @@ def _kill_all_debugees() -> None:
         if not isinstance(session.debugee_pid, int):  # we have some mocked sessions
             continue  # skip those, there's nothing to kill for them
         try:
-            Process(session.debugee_pid).send_signal(SIGKILL)
+            # Windows doesn't have SIGKILL, we can't even import it
+            kill_signal = signal.SIGTERM if sys.platform == "win32" else signal.SIGKILL
+            Process(session.debugee_pid).send_signal(kill_signal)
         except NoSuchProcess:
             pass
 

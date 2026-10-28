@@ -1,4 +1,4 @@
-from signal import SIGKILL
+import signal
 from subprocess import Popen
 import sys
 from typing import Iterable
@@ -57,7 +57,9 @@ def debugee(port: int) -> Iterable[Popen[bytes]]:
         cwd=str(PROJECT_ROOT),
     )
     yield debugee
-    psutil.Process(debugee.pid).send_signal(SIGKILL)
+    # Windows doesn't have SIGKILL, we can't even import it
+    kill_signal = signal.SIGTERM if sys.platform == "win32" else signal.SIGKILL
+    psutil.Process(debugee.pid).send_signal(kill_signal)
 
 
 async def test_attach_debugger_session(client: Client, debugee: Popen[bytes], port: int) -> None:
