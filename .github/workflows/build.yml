@@ -2,31 +2,39 @@ name: Build MCP Server Binaries
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   build:
-    name: Build for ${{ matrix.os }}
-    runs-on: ${{ matrix.builder }}
 
     strategy:
       matrix:
         include:
           - os: Windows
             builder: windows-latest
-            target_name: JuneBug-windows
-            asset_path: dist/JuneBug-windows
+            pyinstaller_args: --windowed --onefile
+            pyinstaller_name: JuneBug-windows
+            asset_path: dist/JuneBug-windows.exe
+            archive: false
+
           - os: MacOS
             builder: macos-latest
-            target_name: JuneBug-macos
+            pyinstaller_args: --windowed
+            pyinstaller_name: JuneBug-macos
             asset_path: dist/JuneBug-macos.app
+            archive: true
+
           - os: Linux
             builder: ubuntu-latest
-            target_name: JuneBug-linux
+            pyinstaller_args: --onefile
+            pyinstaller_name: JuneBug-linux
             asset_path: dist/JuneBug-linux
+            archive: false
 
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.builder }}
     steps:
       - name: Check out code
         uses: actions/checkout@v7
@@ -49,10 +57,11 @@ jobs:
         run: pytest
 
       - name: Build with PyInstaller
-        run: pyinstaller --windowed --name ${{ matrix.target_name }} --icon icon.png --add-data icon.png:. main.py
+        run: pyinstaller --windowed --name ${{ matrix.pyinstaller_name }} --icon icon.png --add-data icon.png:. main.py
 
       - name: Upload Release Asset
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ matrix.target_name }}
+          name: ${{ matrix.pyinstaller_name }}
           path: ${{ matrix.asset_path }}
+          archive: ${{ matrix.archive }}
