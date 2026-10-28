@@ -17,12 +17,11 @@ jobs:
           - os: Windows
             builder: windows-latest
             target_name: JuneBug-windows
-            asset_path: dist/JuneBug-windows.exe
+            asset_path: dist/JuneBug-windows
           - os: MacOS
             builder: macos-latest
             target_name: JuneBug-macos
-            # eventually, asset_name will be JuneBug-macos.app once I get system tray support
-            asset_path: dist/JuneBug-macos
+            asset_path: dist/JuneBug-macos.app
           - os: Linux
             builder: ubuntu-latest
             target_name: JuneBug-linux
