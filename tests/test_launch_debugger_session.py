@@ -64,7 +64,7 @@ async def test_launch_debugger_session__invalid(client: Client) -> None:
                 "project_path": str(PROJECT_ROOT),
                 "python_path": sys.executable,
                 "file_path": FAKE_MAIN,
-                "working_directory": "/not/a/real/path",
+                "working_directory": bad_dir,
             },
         )
 
@@ -144,7 +144,7 @@ async def test_fancy(client: Client) -> None:
         str(PROJECT_ROOT / "tests" / "fakes" / "fake_main.py"),
         "a", "b", "c",
     ]
-    assert proc.cwd().endswith(str(TEMP_DIR))  # more symlink weirdness
+    assert os.path.samefile(Path(proc.cwd()), TEMP_DIR)  # more symlink weirdness
     env = proc.environ()
     if os.name == "nt":
         assert env["SOME"] == "body"
