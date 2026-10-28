@@ -57,7 +57,7 @@ jobs:
         run: pytest
 
       - name: Build with PyInstaller
-        run: pyinstaller --windowed --name ${{ matrix.pyinstaller_name }} --icon icon.png --add-data icon.png:. main.py
+        run: pyinstaller ${{ matrix.pyinstaller_args }} --name ${{ matrix.pyinstaller_name }} --icon icon.png --add-data icon.png:. main.py
 
       - name: Upload Release Asset
         uses: actions/upload-artifact@v7
