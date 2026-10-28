@@ -23,7 +23,7 @@ jobs:
             builder: macos-latest
             pyinstaller_args: --windowed
             pyinstaller_name: JuneBug-macos
-            asset_path: dist
+            asset_path: dist/*.app
             archive: true
 
           - os: Linux
