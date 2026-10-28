@@ -25,7 +25,8 @@ This is not how I want things to go, I want it to happen in the background, with
 ## Features
 1. Launch, attach, breakpoint, pause, resume, step, stack trace, thread dump, get variables, eval expressions, everything a debugger should do.
 2. Multi-session support. Different LLMs (or even the same LLM) can have multiple debuggers attached to multiple processes simultaneously, without stepping on each other's toes.
+3. Works on Windows, Mac, and Linux
 
 ## Planned features
-1. Package this up as an extremely simple "double click it and it runs in your system tray" server, for Windows, Mac, and Linux.
+1. Package this up as an extremely simple "double click it and it runs in your system tray" server
 2. Multi-language support, starting with Java.
