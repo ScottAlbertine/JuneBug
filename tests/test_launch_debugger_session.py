@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import re
 import sys
 
 from fastmcp import Client
@@ -22,23 +23,28 @@ async def test_launch_debugger_session__invalid(client: Client) -> None:
             "launch_debugger_session", {"project_path": "a/b/c", "python_path": sys.executable, "file_path": FAKE_MAIN},
         )
 
-    with pytest.raises(ToolError, match=r"Directory /a/b/c was not found\."):
+    bad_dir = "C:\\not\\a\\real\\path" if os.name == "nt" else "/not/a/real/path"
+    with pytest.raises(ToolError, match=re.escape(rf"Directory {bad_dir} was not found.")):
         await client.call_tool(
             "launch_debugger_session",
-            {"project_path": "/a/b/c", "python_path": sys.executable, "file_path": FAKE_MAIN},
+            {"project_path": bad_dir, "python_path": sys.executable, "file_path": FAKE_MAIN},
         )
 
-    with pytest.raises(ToolError, match=r"No such file or directory: '/not/a/real/path'"):
+    if os.name == "nt":
+        expected_err = r"The system cannot find the file specified"
+    else:
+        expected_err = rf"No such file or directory: '{bad_dir}'"
+    with pytest.raises(ToolError, match=expected_err):
         await client.call_tool(
             "launch_debugger_session", {
-                "project_path": str(PROJECT_ROOT), "python_path": "/not/a/real/path", "file_path": FAKE_MAIN,
+                "project_path": str(PROJECT_ROOT), "python_path": bad_dir, "file_path": FAKE_MAIN,
             },
         )
 
-    with pytest.raises(ToolError, match=r"File /not/a/real/path was not found\."):
+    with pytest.raises(ToolError, match=re.escape(rf"File {bad_dir} was not found.")):
         await client.call_tool(
             "launch_debugger_session", {
-                "project_path": str(PROJECT_ROOT), "python_path": sys.executable, "file_path": "/not/a/real/path",
+                "project_path": str(PROJECT_ROOT), "python_path": sys.executable, "file_path": bad_dir,
             },
         )
 
@@ -52,7 +58,7 @@ async def test_launch_debugger_session__invalid(client: Client) -> None:
             },
         )
 
-    with pytest.raises(ToolError, match=r"Directory /not/a/real/path was not found\."):
+    with pytest.raises(ToolError, match=re.escape(rf"Directory {bad_dir} was not found.")):
         await client.call_tool(
             "launch_debugger_session", {
                 "project_path": str(PROJECT_ROOT),
@@ -62,6 +68,7 @@ async def test_launch_debugger_session__invalid(client: Client) -> None:
             },
         )
 
+    fake_python = "python_that_cant_install_debugpy.bat" if os.name == "nt" else "python_that_cant_install_debugpy.sh"
     with pytest.raises(
         ToolError,
         match=r"Failed to install debugpy with .+?\. \n\n Stderr: \n sample stderr \n\n Stdout: \n sample stdout \n",
@@ -69,7 +76,7 @@ async def test_launch_debugger_session__invalid(client: Client) -> None:
         await client.call_tool(
             "launch_debugger_session", {
                 "project_path": str(PROJECT_ROOT),
-                "python_path": str(Path(__file__).parent / "fakes" / "python_that_cant_install_debugpy.sh"),
+                "python_path": str(Path(__file__).parent / "fakes" / fake_python),
                 "file_path": FAKE_MAIN,
             },
         )
@@ -139,5 +146,9 @@ async def test_fancy(client: Client) -> None:
     ]
     assert proc.cwd().endswith(str(TEMP_DIR))  # more symlink weirdness
     env = proc.environ()
-    assert env["some"] == "body"
-    assert env["once"] == "told me"
+    if os.name == "nt":
+        assert env["SOME"] == "body"
+        assert env["ONCE"] == "told me"
+    else:
+        assert env["some"] == "body"
+        assert env["once"] == "told me"

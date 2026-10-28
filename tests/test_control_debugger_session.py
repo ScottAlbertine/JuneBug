@@ -208,7 +208,10 @@ async def test_stop__paused_session(client: Client) -> None:
 
     # Verify the process has exited.
     async def process_exited() -> bool:
-        return psutil.Process(debugee_pid).status() == psutil.STATUS_ZOMBIE
+        try:
+            return psutil.Process(debugee_pid).status() == psutil.STATUS_ZOMBIE
+        except psutil.NoSuchProcess:  # this happens on Windows
+            return True
 
     await eventual_assert(process_exited, otherwise="Process did not exit within 3 seconds.")
 
@@ -230,7 +233,10 @@ async def test_stop__unstarted_session(client: Client) -> None:
     }
 
     async def process_exited() -> bool:
-        return psutil.Process(debugee_pid).status() == psutil.STATUS_ZOMBIE
+        try:
+            return psutil.Process(debugee_pid).status() == psutil.STATUS_ZOMBIE
+        except psutil.NoSuchProcess:  # this happens on Windows
+            return True
 
     await eventual_assert(process_exited, otherwise="Process did not exit within 3 seconds.")
 
@@ -263,7 +269,10 @@ async def test_stop__running_process(client: Client) -> None:
     }
 
     async def process_exited() -> bool:
-        return psutil.Process(debugee_pid).status() == psutil.STATUS_ZOMBIE
+        try:
+            return psutil.Process(debugee_pid).status() == psutil.STATUS_ZOMBIE
+        except psutil.NoSuchProcess:  # this happens on Windows
+            return True
 
     await eventual_assert(process_exited, otherwise="Process did not exit within 3 seconds.")
 

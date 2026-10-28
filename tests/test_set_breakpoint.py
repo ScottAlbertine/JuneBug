@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import re
 
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
@@ -14,18 +15,19 @@ from tests.utils import create_session, eventual_assert, move_to_next_breakpoint
 async def test_set_breakpoint__invalid(client: Client) -> None:
     session_id = (await create_session(client, file_path=FAKE_MAIN))["id"]
 
-    with pytest.raises(ToolError, match=r"File /definitely/not/a/real/file\.py was not found\."):
+    bad_file = "C:\\definitely\\not\\a\\real\\file" if os.name == "nt" else "/definitely/not/a/real/file"
+    with pytest.raises(ToolError, match=re.escape(rf"File {bad_file} was not found.")):
         await client.call_tool(
-            "set_breakpoint", {"session_id": session_id, "file_path": "/definitely/not/a/real/file.py", "line": 1},
+            "set_breakpoint", {"session_id": session_id, "file_path": bad_file, "line": 1},
         )
 
     with pytest.raises(
-        ToolError, match=rf"Line -1 was not found in {PROJECT_ROOT / 'tests' / 'fakes' / 'fake_main.py'}",
+        ToolError, match=re.escape(rf"Line -1 was not found in {PROJECT_ROOT / 'tests' / 'fakes' / 'fake_main.py'}"),
     ):
         await client.call_tool("set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": -1})
 
     with pytest.raises(
-        ToolError, match=rf"Line 999 was not found in {PROJECT_ROOT / 'tests' / 'fakes' / 'fake_main.py'}",
+        ToolError, match=re.escape(rf"Line 999 was not found in {PROJECT_ROOT / 'tests' / 'fakes' / 'fake_main.py'}"),
     ):
         await client.call_tool("set_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 999})
 
@@ -78,7 +80,10 @@ async def test_set_breakpoint(client: Client) -> None:
 
     # the process can take a while to change its status, give it 3 seconds to do so
     async def process_exited() -> bool:
-        return psutil.Process(pid).status() == psutil.STATUS_ZOMBIE
+        try:
+            return psutil.Process(pid).status() == psutil.STATUS_ZOMBIE
+        except psutil.NoSuchProcess:  # this happens on Windows
+            return True
 
     await eventual_assert(process_exited, otherwise="Process did not exit within 3 seconds")
 
