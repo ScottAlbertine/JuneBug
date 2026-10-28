@@ -14,7 +14,7 @@ jobs:
         include:
           - os: Windows
             builder: windows-latest
-            pyinstaller_args: --windowed --onefile
+            pyinstaller_args: --onefile
             pyinstaller_name: JuneBug-windows
             asset_path: dist/JuneBug-windows.exe
             archive: false
@@ -23,7 +23,7 @@ jobs:
             builder: macos-latest
             pyinstaller_args: --windowed
             pyinstaller_name: JuneBug-macos
-            asset_path: dist/JuneBug-macos.app
+            asset_path: dist
             archive: true
 
           - os: Linux
