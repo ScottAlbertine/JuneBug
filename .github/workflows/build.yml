@@ -33,7 +33,7 @@ jobs:
         uses: actions/checkout@v7
 
       # This is only needed for ubuntu, since pystray tries to connect to an X display on import
-      - name: Setup headless display
+      - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v5
 
       - name: Set up Python 3.14
@@ -50,7 +50,7 @@ jobs:
         run: pytest
 
       - name: Build with PyInstaller
-        run: pyinstaller --onefile --name ${{ matrix.target_name }} --add-data icon.png:. main.py
+        run: pyinstaller --windowed --name ${{ matrix.target_name }} --add-data icon.png:. main.py
 
       - name: Upload Release Asset
         uses: actions/upload-artifact@v7
