@@ -48,4 +48,7 @@ app = BUNDLE(
     name='JuneBug-macos.app',
     icon='icon.png',
     bundle_identifier=None,
+    info_plist={
+        'LSUIElement': True,
+    },
 )
