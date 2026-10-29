@@ -14,23 +14,23 @@ jobs:
         include:
           - os: Windows
             builder: windows-latest
-            pyinstaller_args: --onefile
-            pyinstaller_name: JuneBug-windows
-            asset_path: dist/JuneBug-windows.exe
+            spec_path: specs/JuneBug-windows
+            artifact_name: someWindowsThing
+            artifact_path: dist/JuneBug-windows.exe
             archive: false
 
           - os: MacOS
             builder: macos-latest
-            pyinstaller_args: --windowed
-            pyinstaller_name: JuneBug-macos
-            asset_path: dist/*.app
+            spec_path: specs/JuneBug-macos
+            artifact_name: SomeMacThihng
+            artifact_path: dist/*.app
             archive: true
 
           - os: Linux
             builder: ubuntu-latest
-            pyinstaller_args: --onefile
-            pyinstaller_name: JuneBug-linux
-            asset_path: dist/JuneBug-linux
+            spec_path: specs/JuneBug-linux
+            artifact_name: someLinuxthing
+            artifact_path: dist/JuneBug-linux
             archive: false
 
     name: Build for ${{ matrix.os }}
@@ -57,11 +57,11 @@ jobs:
         run: pytest
 
       - name: Build with PyInstaller
-        run: pyinstaller ${{ matrix.pyinstaller_args }} --name ${{ matrix.pyinstaller_name }} --icon icon.png --add-data icon.png:. main.py
+        run: pyinstaller ${{ spec_path }}
 
-      - name: Upload Release Asset
+      - name: Upload Release Artifact
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ matrix.pyinstaller_name }}.spec
-          path: ${{ matrix.pyinstaller_name }}.spec
-          archive: false
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_path }}
+          archive: ${{ matrix.archive }}
