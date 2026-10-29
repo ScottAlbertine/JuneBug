@@ -70,17 +70,12 @@ def run_mcp_server() -> None:
 if __name__ == "__main__":
     Thread(target=run_mcp_server, daemon=True).start()
 
-    icon = Icon(
-        "JuneBug",
-        Image.open(Path(__file__).with_name("icon.png")),
-        "JuneBug",
-        Menu(
-            MenuItem("JuneBug MCP server is running.", lambda: None, enabled=False),
-            MenuItem(f"Available at {URL}", lambda: None, enabled=False),
-            MenuItem("Click here to copy that URL to your clipboard.", lambda: pyperclip.copy(URL)),
-            Menu.SEPARATOR,
-            MenuItem('Quit', lambda i, _: i.stop()),
-        ),
+    menu = Menu(
+        MenuItem("JuneBug MCP server is running.", lambda: None, enabled=False),
+        MenuItem(f"Available at {URL}", lambda: None, enabled=False),
+        MenuItem("Click here to copy that URL to your clipboard.", lambda: pyperclip.copy(URL)), Menu.SEPARATOR,
+        MenuItem('Quit', lambda i, _: i.stop()),
     )
     # Sadly, this is a UI thing, and requires running on (and blocking) the main thread.
-    icon.run()
+    image = Image.open(Path(__file__).with_name("icon.png"))
+    Icon("JuneBug", image, "JuneBug", menu).run()
