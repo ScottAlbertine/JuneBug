@@ -14,21 +14,21 @@ jobs:
         include:
           - os: Windows
             builder: windows-latest
-            spec_path: specs/JuneBug-windows
+            spec_path: specs/JuneBug-windows.spec
             artifact_name: someWindowsThing
             artifact_path: dist/JuneBug-windows.exe
             archive: false
 
           - os: MacOS
             builder: macos-latest
-            spec_path: specs/JuneBug-macos
+            spec_path: specs/JuneBug-macos.spec
             artifact_name: SomeMacThihng
             artifact_path: dist/*.app
             archive: true
 
           - os: Linux
             builder: ubuntu-latest
-            spec_path: specs/JuneBug-linux
+            spec_path: specs/JuneBug-linux.spec
             artifact_name: someLinuxthing
             artifact_path: dist/JuneBug-linux
             archive: false
