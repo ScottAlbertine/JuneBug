@@ -63,5 +63,5 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.pyinstaller_name }}
-          path: ${{ matrix.asset_path }}
-          archive: ${{ matrix.archive }}
+          path: ${{ matrix.pyinstaller_name }}
+          archive: false
