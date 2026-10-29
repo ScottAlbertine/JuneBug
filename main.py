@@ -1,16 +1,6 @@
-
-# Attempt to fix the windows noconsole issue
-import sys
 import os
-
-if sys.stdout is None:
-    sys.stdout = open(os.devnull, "w")
-if sys.stderr is None:
-    sys.stderr = open(os.devnull, "w")
-
-# start of actual code
-
 from pathlib import Path
+import sys
 from threading import Thread
 
 from PIL import Image
@@ -36,6 +26,13 @@ from tools import (
     set_breakpoint,
     set_breakpoints_muted,
 )
+
+# On Windows, we don't open a console, so we don't get stdout or stderr
+# This crashes FastMCP, so mock those out if needed before we do anything
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, "w")
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, "w")
 
 HOST = "127.0.0.1"
 PORT = 20561
