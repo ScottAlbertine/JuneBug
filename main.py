@@ -73,7 +73,8 @@ if __name__ == "__main__":
     menu = Menu(
         MenuItem("JuneBug MCP server is running.", lambda: None, enabled=False),
         MenuItem(f"Available at {URL}", lambda: None, enabled=False),
-        MenuItem("Click here to copy that URL to your clipboard.", lambda: pyperclip.copy(URL)), Menu.SEPARATOR,
+        MenuItem("Click here to copy that URL to your clipboard.", lambda: pyperclip.copy(URL)),
+        Menu.SEPARATOR,
         MenuItem('Quit', lambda i, _: i.stop()),
     )
     # Sadly, this is a UI thing, and requires running on (and blocking) the main thread.
