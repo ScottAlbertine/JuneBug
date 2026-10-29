@@ -59,7 +59,7 @@ def run_mcp_server() -> None:
 
 
 if __name__ == "__main__":
-    Thread(target=run_mcp_server).start()
+    Thread(target=run_mcp_server, daemon=True).start()
 
     icon = Icon(
         "JuneBug",
