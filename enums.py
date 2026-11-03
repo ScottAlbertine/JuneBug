@@ -11,22 +11,6 @@ class Action(Enum):
     WAIT_FOR_PAUSE = "wait_for_pause"
 
 
-class ExceptionBreakpointMode(Enum):
-    RAISED = "raised"
-    UNHANDLED = "unhandled"
-    USER_UNHANDLED = "user_unhandled"
-
-    def to_dap_break_mode(self) -> str:
-        """Convert to a DAP breakMode string."""
-        if self == ExceptionBreakpointMode.RAISED:
-            return "always"
-        if self == ExceptionBreakpointMode.UNHANDLED:
-            return "unhandled"
-        if self == ExceptionBreakpointMode.USER_UNHANDLED:
-            return "userUnhandled"
-        return "never"
-
-
 class SessionState(Enum):
     RUNNING = "running"
     PAUSED = "paused"

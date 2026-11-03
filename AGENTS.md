@@ -6,14 +6,14 @@ This is a `direnv` project (`.envrc` uses `layout python3`). The Python virtual 
 
 ## Main Code
 
-JuneBug is a [FastMCP](https://github.com/PrefectHQ/fastmcp) server that exposes 16 debugger tools over the MCP protocol. It speaks DAP (Debug Adapter Protocol) to provide local and remote debugging capabilities. This allows it to debug Python programs that are run in debug mode via `debugpy`.
+JuneBug is a [FastMCP](https://github.com/PrefectHQ/fastmcp) server that exposes 14 debugger tools over the MCP protocol. It speaks DAP (Debug Adapter Protocol) to provide local and remote debugging capabilities. This allows it to debug Python programs that are run in debug mode via `debugpy`.
 
 ### Architecture Overview
 
 The code flows in four layers, top to bottom:
 
-1. **`main.py`** — FastMCP entry point. Creates the server (`FastMCP("JuneBug MCP Server")`), registers all 16 tools via `mcp.tool()`, and runs on HTTP transport at `127.0.0.1:9000`.
-2. **`tools/`** — 16 individual tool modules. Each is an `async` function with `Annotated` parameters (from `annotations.py`) and a Pydantic model return type. Tools delegate to `session_service` or `Session`.
+1. **`main.py`** — FastMCP entry point. Creates the server (`FastMCP("JuneBug MCP Server")`), registers all 14 tools via `mcp.tool()`, and runs on HTTP transport at `127.0.0.1:9000`.
+2. **`tools/`** — 14 individual tool modules. Each is an `async` function with `Annotated` parameters (from `annotations.py`) and a Pydantic model return type. Tools delegate to `session_service` or `Session`.
 3. **`session.py`** — Central orchestrator. Owns a `DAPClient`, manages session state (`SessionState` enum), handles breakpoints/threads/variables/stepping, and processes DAP messages via `_handle_message()`. All session methods are `async`.
 4. **`dap/`** — Custom DAP client implementation. `dap/client.py` contains `DAPClient` — an async TCP client that speaks DAP directly. It manages the asyncio `StreamReader` and `StreamWriter` lifecycle, and auto-handles the initialize/attach handshake. All methods are `async` and use the send-then-pull pattern (`_send_request()` + `_pull_until()`) for every DAP command. DAP Messages returned from the client are plain `dict[str, Any]` typed as `Message` (defined in `constants.py`).
 

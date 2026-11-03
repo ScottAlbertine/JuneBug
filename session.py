@@ -8,19 +8,9 @@ import psutil
 from breakpoints import Breakpoints, File
 from constants import Message, TEMP_DIR
 from dap import DAPClient
-from enums import ExceptionBreakpointMode, SessionState, StepDirection
-from exception_breakpoints import ExceptionBreakpoints
+from enums import SessionState, StepDirection
 from exceptions import SessionStateError, SessionStoppedError
-from models import (
-    Breakpoint,
-    CurrentException,
-    ExceptionBreakpoint,
-    SessionStatus,
-    StackFrame,
-    StackFrames,
-    Thread,
-    Variable,
-)
+from models import Breakpoint, SessionStatus, StackFrame, StackFrames, Thread, Variable
 from threads import Threads
 from utils import fetch_line_text
 
@@ -53,10 +43,8 @@ class Session:
         """DO NOT CALL THIS, this is for internal use only."""
         self.breakpoints = Breakpoints()
         self.breakpoints_muted: bool = False
-        self.current_exception: CurrentException | None = None
         self.current_position: Breakpoint | None = None
         self.debugee_pid = pid
-        self.exception_breakpoints = ExceptionBreakpoints()
         self.has_configuration_done = False
         self.project_path = project_path
         self.session_id = session_id
@@ -118,7 +106,6 @@ class Session:
             std_out_path=self.std_out_path,
             std_err_path=self.std_err_path,
             breakpoints_muted=self.breakpoints_muted,
-            current_exception=self.current_exception,
             current_position=self.current_position,
         )
 
@@ -136,10 +123,6 @@ class Session:
             return self.breakpoints.list_breakpoints()
         else:
             return self.breakpoints.list_breakpoints_for_file(path)
-
-    def list_exception_breakpoints(self) -> list[ExceptionBreakpoint]:
-        """List all exception breakpoints."""
-        return self.exception_breakpoints.list_all()
 
     async def list_variables(
         self, frame_id: int | None = None, show_hidden: bool = False, depth: int = 0,
@@ -181,13 +164,6 @@ class Session:
         if did_remove and not self.breakpoints_muted:
             self.breakpoints.refresh(await self.set_breakpoints(self.breakpoints.get_file(path)))
 
-    async def remove_exception_breakpoint(self, exception_type: str, mode: ExceptionBreakpointMode) -> None:
-        """Remove an exception breakpoint. Idempotent, no-op on nonexistent exception breakpoint."""
-        self.assert_not_stopped()
-        self.exception_breakpoints.remove_breakpoint(exception_type, mode)
-        if not self.breakpoints_muted:
-            await self.set_exception_breakpoints()
-
     async def resume(self) -> None:
         """Resume this session. Does not block."""
         self.assert_not_stopped()
@@ -202,7 +178,6 @@ class Session:
             self.has_configuration_done = True
         else:
             await self._client.continue_execution(threads[0].id)
-        self.current_exception = None
         self.current_position = None
         self.state = SessionState.RUNNING
 
@@ -252,39 +227,16 @@ class Session:
             return  # already there, nothing to do
 
         self.breakpoints_muted = breakpoints_muted
-
-        if self.breakpoints_muted:
-            # Unset all exception breakpoints with DAP, without touching our internal copy
-            await self._client.set_exception_breakpoints([], [])
-            for file in self.breakpoints.list_files():
+        # for every file we have
+        for file in self.breakpoints.list_files():
+            if self.breakpoints_muted:
                 # clear each file by sending a blank version of it
                 # DO NOT refresh our breakpoints internally
                 await self.set_breakpoints(File(file.path))
-        else:
-            await self.set_exception_breakpoints()
-            for file in self.breakpoints.list_files():
+            else:
                 # re-send the real file to DAP if we're unmuting
                 # do refresh our breakpoints internally, this changes their IDs
                 self.breakpoints.refresh(await self.set_breakpoints(file))
-
-    async def set_exception_breakpoint(self, exception_type: str, mode: ExceptionBreakpointMode) -> ExceptionBreakpoint:
-        """Set an exception breakpoint."""
-        self.assert_not_stopped()
-        bp = self.exception_breakpoints.add_breakpoint(exception_type, mode)
-        if not self.breakpoints_muted:  # don't talk to DAP about breakpoints while muted
-            await self.set_exception_breakpoints()
-        return bp
-
-    async def set_exception_breakpoints(self) -> Message:
-        """
-        Send all exception breakpoints we're currently tracking, to DAP.
-        This wholly replaces all exception breakpoints on the DAP server.
-        Sadly this is the *only* operation you can do with exception breakpoints in DAP, at all.
-        """
-        exception_options = self.exception_breakpoints.to_dap()
-        # When using debugpy, `filters` and `exception_options` are mutually exclusive, only one can work at any given time
-        # We must, therefore, use only the `exception_options`.
-        return await self._client.set_exception_breakpoints([], exception_options)
 
     async def step(self, direction: StepDirection) -> None:
         """Step into, over, or out of the current thread."""
@@ -297,7 +249,6 @@ class Session:
             await self._client.next(thread_id)
         elif direction == StepDirection.OUT:
             await self._client.step_out(thread_id)
-        self.current_exception = None
         self.current_position = await self.fetch_current_position(thread_id)
 
     async def stop(self) -> None:
@@ -362,21 +313,13 @@ class Session:
 
         event = message.get("event")
         if event == "stopped":
-            thread_id = body["threadId"]
-            self.threads.set_current(thread_id)
-
-            # hit a regular breakpoint
+            self.threads.set_current(body["threadId"])
             if hit_breakpoint_ids := body.get("hitBreakpointIds"):
                 bp = self.breakpoints.get_breakpoint_by_id(hit_breakpoint_ids[0])
                 bp.hit_count += 1
                 self.current_position = bp
                 if bp.temporary:
                     await self.remove_breakpoint(bp.file, bp.line)
-
-            # hit an exception breakpoint
-            if body.get("reason") == "exception":
-                self.current_position = await self.fetch_current_position(thread_id)
-                self.current_exception = CurrentException(type=body.get("text"), args=body.get("description"))
 
             self.state = SessionState.PAUSED
 

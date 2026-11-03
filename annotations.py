@@ -42,11 +42,3 @@ ShowHidden = Annotated[
     Default: False.
     """,
 ]
-
-ExceptionType = Annotated[
-    str,
-    """
-    Exception type to break on. Use 'BaseException' for any exception, or specific types like 'pkg.module.MyError'.
-    Non-builtin type names *must* be fully qualified. Default: 'BaseException'.
-    """
-]

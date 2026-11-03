@@ -5,7 +5,6 @@ from tests.fakes import (
     fake_main,
     fake_main_multi_thread,
     fake_main_thread_handoff,
-    fake_main_with_exceptions,
     fake_main_with_import,
     fake_main_with_loop,
     fake_main_with_variables,
@@ -18,7 +17,6 @@ FAKE_LIBRARY = str(Path(fake_library.__file__).relative_to(PROJECT_ROOT))
 FAKE_MAIN = str(Path(fake_main.__file__).relative_to(PROJECT_ROOT))
 FAKE_MAIN_MULTI_THREAD = str(Path(fake_main_multi_thread.__file__).relative_to(PROJECT_ROOT))
 FAKE_MAIN_THREAD_HANDOFF = str(Path(fake_main_thread_handoff.__file__).relative_to(PROJECT_ROOT))
-FAKE_MAIN_WITH_EXCEPTIONS = str(Path(fake_main_with_exceptions.__file__).relative_to(PROJECT_ROOT))
 FAKE_MAIN_WITH_IMPORT = str(Path(fake_main_with_import.__file__).relative_to(PROJECT_ROOT))
 FAKE_MAIN_WITH_LOOP = str(Path(fake_main_with_loop.__file__).relative_to(PROJECT_ROOT))
 FAKE_MAIN_WITH_VARIABLES = str(Path(fake_main_with_variables.__file__).relative_to(PROJECT_ROOT))

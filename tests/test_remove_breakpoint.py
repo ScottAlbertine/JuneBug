@@ -49,9 +49,7 @@ async def test_remove_breakpoint(client: Client) -> None:
 
     # Verify both are present, despite the removal
     list_before = await client.call_tool("list_breakpoints", {"session_id": session_id})
-    assert list_before.structured_content == {
-        "breakpoints_muted": False, "breakpoints": [breakpoint_1, breakpoint_2], "exception_breakpoints": [],
-    }
+    assert list_before.structured_content == {"breakpoints": [breakpoint_1, breakpoint_2], "breakpoints_muted": False}
 
     # Remove one breakpoint
     await client.call_tool(
@@ -60,6 +58,4 @@ async def test_remove_breakpoint(client: Client) -> None:
 
     # Verify only the remaining breakpoint is listed
     list_after = await client.call_tool("list_breakpoints", {"session_id": session_id})
-    assert list_after.structured_content == {
-        "breakpoints_muted": False, "breakpoints": [breakpoint_2], "exception_breakpoints": [],
-    }
+    assert list_after.structured_content == {"breakpoints": [breakpoint_2], "breakpoints_muted": False}

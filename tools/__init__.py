@@ -9,11 +9,9 @@ from .list_debugger_sessions import list_debugger_sessions
 from .list_threads import list_threads
 from .list_variables import list_variables
 from .remove_breakpoint import remove_breakpoint
-from .remove_exception_breakpoint import remove_exception_breakpoint
 from .run_to_line import run_to_line
 from .set_breakpoint import set_breakpoint
 from .set_breakpoints_muted import set_breakpoints_muted
-from .set_exception_breakpoint import set_exception_breakpoint
 
 __all__ = [
     "attach_debugger_session",
@@ -27,9 +25,7 @@ __all__ = [
     "list_threads",
     "list_variables",
     "remove_breakpoint",
-    "remove_exception_breakpoint",
     "run_to_line",
     "set_breakpoint",
     "set_breakpoints_muted",
-    "set_exception_breakpoint",
 ]

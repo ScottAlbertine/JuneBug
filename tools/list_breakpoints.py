@@ -22,16 +22,14 @@ async def list_breakpoints(
     """
     List all configured breakpoints in a debug session, optionally filtered by file.
 
-    Returns regular breakpoints sorted by file path, then by line number. Each breakpoint
+    Returns breakpoints sorted by file path, then by line number. Each breakpoint
     includes its location, source line text, condition, temporary flag, and hit count.
-    Also returns any configured exception breakpoints.
 
     Preconditions:
     - A valid, non-stopped session must exist.
 
     Behavior:
-    - If file_path is provided, returns only regular breakpoints in that file. Exception
-      breakpoints are always returned regardless of file_path.
+    - If file_path is provided, returns only breakpoints in that file.
     - If file_path is omitted, returns all breakpoints across all files.
     - The response includes the session's breakpoint mute status so you know whether
       breakpoints are currently active or dormant.
@@ -47,9 +45,4 @@ async def list_breakpoints(
     # Breakpoint retrieval isn't async, since it's fetched from memory rather than from DAP
     # I've kept the timeout param on this tool for consistency, it can simply never be hit.
     breakpoints = session.list_breakpoints(path)
-    exception_breakpoints = session.list_exception_breakpoints()
-    return BreakpointsResponse(
-        breakpoints=breakpoints,
-        exception_breakpoints=exception_breakpoints,
-        breakpoints_muted=session.breakpoints_muted,
-    )
+    return BreakpointsResponse(breakpoints=breakpoints, breakpoints_muted=session.breakpoints_muted)

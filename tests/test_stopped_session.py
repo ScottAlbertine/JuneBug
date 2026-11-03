@@ -52,9 +52,6 @@ async def test_stopped_session(client: Client) -> None:
         await client.call_tool("remove_breakpoint", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 7})
 
     with pytest.raises(ToolError, match=STOPPED_MESSAGE):
-        await client.call_tool("remove_exception_breakpoint", {"session_id": session_id})
-
-    with pytest.raises(ToolError, match=STOPPED_MESSAGE):
         await client.call_tool("run_to_line", {"session_id": session_id, "file_path": FAKE_MAIN, "line": 7})
 
     with pytest.raises(ToolError, match=STOPPED_MESSAGE):
@@ -62,6 +59,3 @@ async def test_stopped_session(client: Client) -> None:
 
     with pytest.raises(ToolError, match=STOPPED_MESSAGE):
         await client.call_tool("set_breakpoints_muted", {"session_id": session_id, "breakpoints_muted": True})
-
-    with pytest.raises(ToolError, match=STOPPED_MESSAGE):
-        await client.call_tool("set_exception_breakpoint", {"session_id": session_id})

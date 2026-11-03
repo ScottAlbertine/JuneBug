@@ -47,7 +47,6 @@ async def test_run_to_line(client: Client) -> None:
 
     # Both breakpoints should still be present, and unhit
     expected_breakpoints = {
-        "breakpoints_muted": False,
         "breakpoints": [
             {
                 "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_main_with_variables.py"),
@@ -64,7 +63,7 @@ async def test_run_to_line(client: Client) -> None:
                 "hit_count": 0,
             },
         ],
-        "exception_breakpoints": [],
+        "breakpoints_muted": False,
     }
     remaining_breakpoints = await client.call_tool(
         "list_breakpoints", {"session_id": session_id, "file_path": FAKE_MAIN_WITH_VARIABLES},
