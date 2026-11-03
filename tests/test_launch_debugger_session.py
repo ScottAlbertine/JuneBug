@@ -98,8 +98,8 @@ async def test_simple(client: Client) -> None:
         "debugee_pid": MatchAny(int),
         "id": session_id,
         "state": "paused",
-        "std_out_path": f"{TEMP_DIR}{os.sep}{session_id}.stdout.txt",
-        "std_err_path": f"{TEMP_DIR}{os.sep}{session_id}.stderr.txt",
+        "std_out_path": str(TEMP_DIR / f"{session_id}.stdout.txt"),
+        "std_err_path": str(TEMP_DIR / f"{session_id}.stderr.txt"),
     }
 
     assert create_result.structured_content == expected_session

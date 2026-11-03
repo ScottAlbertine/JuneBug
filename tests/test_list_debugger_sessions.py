@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 import sys
 
@@ -34,8 +33,8 @@ async def test_list_real_sessions(client: Client, clear_sessions: None) -> None:
                 "debugee_pid": MatchAny(int),
                 "id": session_id_0,
                 "state": "paused",
-                "std_out_path": f"{TEMP_DIR}{os.sep}{session_id_0}.stdout.txt",
-                "std_err_path": f"{TEMP_DIR}{os.sep}{session_id_0}.stderr.txt",
+                "std_out_path": str(TEMP_DIR / f"{session_id_0}.stdout.txt"),
+                "std_err_path": str(TEMP_DIR / f"{session_id_0}.stderr.txt"),
             },
             {
                 "breakpoints_muted": False,
@@ -43,8 +42,8 @@ async def test_list_real_sessions(client: Client, clear_sessions: None) -> None:
                 "debugee_pid": MatchAny(int),
                 "id": session_id_1,
                 "state": "paused",
-                "std_out_path": f"{TEMP_DIR}{os.sep}{session_id_1}.stdout.txt",
-                "std_err_path": f"{TEMP_DIR}{os.sep}{session_id_1}.stderr.txt",
+                "std_out_path": str(TEMP_DIR / f"{session_id_1}.stdout.txt"),
+                "std_err_path": str(TEMP_DIR / f"{session_id_1}.stderr.txt"),
             },
         ],
     }
@@ -73,8 +72,8 @@ async def test_list_real_sessions(client: Client, clear_sessions: None) -> None:
                 "debugee_pid": MatchAny(int),
                 "id": session_id_0,
                 "state": "paused",
-                "std_out_path": f"{TEMP_DIR}{os.sep}{session_id_0}.stdout.txt",
-                "std_err_path": f"{TEMP_DIR}{os.sep}{session_id_0}.stderr.txt",
+                "std_out_path": str(TEMP_DIR / f"{session_id_0}.stdout.txt"),
+                "std_err_path": str(TEMP_DIR / f"{session_id_0}.stderr.txt"),
             },
             {
                 "breakpoints_muted": False,
@@ -82,8 +81,8 @@ async def test_list_real_sessions(client: Client, clear_sessions: None) -> None:
                 "debugee_pid": MatchAny(int),
                 "id": session_id_1,
                 "state": "paused",
-                "std_out_path": f"{TEMP_DIR}{os.sep}{session_id_1}.stdout.txt",
-                "std_err_path": f"{TEMP_DIR}{os.sep}{session_id_1}.stderr.txt",
+                "std_out_path": str(TEMP_DIR / f"{session_id_1}.stdout.txt"),
+                "std_err_path": str(TEMP_DIR / f"{session_id_1}.stderr.txt"),
             },
         ],
     }

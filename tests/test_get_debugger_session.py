@@ -1,5 +1,3 @@
-import os
-
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
 import pytest
@@ -26,8 +24,8 @@ async def test_get_real_session(client: Client) -> None:
         "debugee_pid": MatchAny(int),
         "id": session_id,
         "state": "paused",
-        "std_out_path": f"{TEMP_DIR}{os.sep}{session_id}.stdout.txt",
-        "std_err_path": f"{TEMP_DIR}{os.sep}{session_id}.stderr.txt",
+        "std_out_path": str(TEMP_DIR / f"{session_id}.stdout.txt"),
+        "std_err_path": str(TEMP_DIR / f"{session_id}.stderr.txt"),
     }
 
     with pytest.raises(
