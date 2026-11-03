@@ -18,7 +18,9 @@ async def test_list_breakpoints(client: Client) -> None:
     session_id = (await create_session(client, file_path=FAKE_MAIN_WITH_IMPORT))["id"]
 
     all_breakpoints = await client.call_tool("list_breakpoints", {"session_id": session_id})
-    assert all_breakpoints.structured_content == {"breakpoints": [], "breakpoints_muted": False}
+    assert all_breakpoints.structured_content == {
+        "breakpoints_muted": False, "breakpoints": [], "exception_breakpoints": [],
+    }
 
     # Set two breakpoints on different lines, in the wrong order on purpose to test sorting
     await client.call_tool(
@@ -32,6 +34,10 @@ async def test_list_breakpoints(client: Client) -> None:
     await client.call_tool(
         "set_breakpoint", {"session_id": session_id, "file_path": FAKE_LIBRARY, "line": 2},
     )
+
+    # set two exception breakpoints, to see they get listed too
+    await client.call_tool("set_exception_breakpoint", {"session_id": session_id, "mode": "raised"})
+    await client.call_tool("set_exception_breakpoint", {"session_id": session_id, "mode": "unhandled"})
 
     breakpoint_1 = {
         "file": str(PROJECT_ROOT / "tests" / "fakes" / "fake_library.py"),
@@ -54,32 +60,47 @@ async def test_list_breakpoints(client: Client) -> None:
         "temporary": False,
         "hit_count": 0,
     }
+    exception_breakpoints = [
+        {"exception_type": "BaseException", "mode": "raised"},
+        {"exception_type": "BaseException", "mode": "unhandled"},
+    ]
+
     all_breakpoints = await client.call_tool("list_breakpoints", {"session_id": session_id})
     assert all_breakpoints.structured_content == {
-        "breakpoints": [breakpoint_1, breakpoint_2, breakpoint_3], "breakpoints_muted": False,
+        "breakpoints_muted": False,
+        "breakpoints": [breakpoint_1, breakpoint_2, breakpoint_3],
+        "exception_breakpoints": exception_breakpoints,
     }
 
     just_main_breakpoints = await client.call_tool(
         "list_breakpoints", {"session_id": session_id, "file_path": FAKE_MAIN_WITH_IMPORT},
     )
     assert just_main_breakpoints.structured_content == {
-        "breakpoints": [breakpoint_2, breakpoint_3], "breakpoints_muted": False,
+        "breakpoints_muted": False,
+        "breakpoints": [breakpoint_2, breakpoint_3],
+        "exception_breakpoints": exception_breakpoints,
     }
 
     just_lib_breakpoints = await client.call_tool(
         "list_breakpoints", {"session_id": session_id, "file_path": FAKE_LIBRARY},
     )
-    assert just_lib_breakpoints.structured_content == {"breakpoints": [breakpoint_1], "breakpoints_muted": False}
+    assert just_lib_breakpoints.structured_content == {
+        "breakpoints_muted": False, "breakpoints": [breakpoint_1], "exception_breakpoints": exception_breakpoints,
+    }
 
     nonexistent_file_breakpoints = await client.call_tool(
         "list_breakpoints", {"session_id": session_id, "file_path": "nonexistent.py"},
     )
-    assert nonexistent_file_breakpoints.structured_content == {"breakpoints": [], "breakpoints_muted": False}
+    assert nonexistent_file_breakpoints.structured_content == {
+        "breakpoints_muted": False, "breakpoints": [], "exception_breakpoints": exception_breakpoints,
+    }
 
     # mute breakpoints, and check that they're still shown, but are shown as muted
-    await client.call_tool("set_breakpoints_muted", {"session_id": session_id, "breakpoints_muted": True})
+    await client.call_tool("set_breakpoints_muted", {"breakpoints_muted": True, "session_id": session_id})
 
     muted_breakpoints = await client.call_tool("list_breakpoints", {"session_id": session_id})
     assert muted_breakpoints.structured_content == {
-        "breakpoints": [breakpoint_1, breakpoint_2, breakpoint_3], "breakpoints_muted": True,
+        "breakpoints_muted": True,
+        "breakpoints": [breakpoint_1, breakpoint_2, breakpoint_3],
+        "exception_breakpoints": exception_breakpoints,
     }

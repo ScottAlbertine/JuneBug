@@ -22,9 +22,11 @@ from tools import (
     list_threads,
     list_variables,
     remove_breakpoint,
+    remove_exception_breakpoint,
     run_to_line,
     set_breakpoint,
     set_breakpoints_muted,
+    set_exception_breakpoint,
 )
 
 # On Windows, we don't open a console, so we don't get stdout or stderr
@@ -51,9 +53,11 @@ mcp.tool(list_debugger_sessions)
 mcp.tool(list_threads)
 mcp.tool(list_variables)
 mcp.tool(remove_breakpoint)
+mcp.tool(remove_exception_breakpoint)
 mcp.tool(run_to_line)
 mcp.tool(set_breakpoint)
 mcp.tool(set_breakpoints_muted)
+mcp.tool(set_exception_breakpoint)
 
 
 def run_mcp_server() -> None:

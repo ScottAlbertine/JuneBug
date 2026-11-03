@@ -16,7 +16,7 @@ async def set_breakpoints_muted(
     ] = 10000,
 ) -> SessionStatus:
     """
-    Enable or disable all breakpoints in a debug session without removing them.
+    Enable or disable all breakpoints (including exception breakpoints) in a debug session without removing them.
 
     Use this to temporarily prevent the debugee from pausing at any breakpoint while
     keeping the breakpoint configuration intact. Useful for running through code quickly

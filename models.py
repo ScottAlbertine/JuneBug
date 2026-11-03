@@ -3,7 +3,7 @@ from typing import Annotated, Any
 
 from pydantic import BaseModel, Field
 
-from enums import SessionState, ThreadState
+from enums import ExceptionBreakpointMode, SessionState, ThreadState
 from utils import fetch_line_text
 
 
@@ -54,14 +54,45 @@ class Breakpoint(BaseModel):
             hit_count=1,
         )
 
+class CurrentException(BaseModel):
+    """The current exception that has paused the debugger at the current location."""
+    type: Annotated[str | None, Field(description="The type of exception being raised.")]
+    args: Annotated[str | None, Field(description="The args of the exception being raised.")]
+
+
+class ExceptionBreakpoint(BaseModel):
+    """A configured exception breakpoint."""
+    exception_type: Annotated[str, Field(description="Exception type this breakpoint triggers on.")]
+    mode: Annotated[ExceptionBreakpointMode, Field(description="Whether to break when raised or when unhandled.")]
+
+    def __eq__(self, other: object) -> bool:
+        """We need to dedupe these in a list, and also find and remove them from that list."""
+        if not isinstance(other, ExceptionBreakpoint):
+            return False
+
+        return (
+            self.exception_type == other.exception_type
+            and self.mode == other.mode
+        )
+
+    def to_dap(self) -> dict[str, Any]:
+        """Turn this exception breakpoint into a dictionary that can be sent to DAP."""
+        # The DAP spec says there's a lot more you can do here
+        # However, when I look at the `debugpy` source, this is the only way that actually works with Python specifically.
+        path = [{"names": ["Python Exceptions"]}, {"names": [self.exception_type]}]
+        return {"path": path, "breakMode": self.mode.to_dap_break_mode()}
+
 
 class BreakpointsResponse(BaseModel):
     """List of configured breakpoints."""
 
-    breakpoints: Annotated[list[Breakpoint], Field(description="List of currently configured breakpoints.")]
     breakpoints_muted: Annotated[
         bool,
         Field(default=False, description="Whether breakpoints are globally muted for the resolved debugger session."),
+    ]
+    breakpoints: Annotated[list[Breakpoint], Field(description="List of currently configured breakpoints.")]
+    exception_breakpoints: Annotated[
+        list[ExceptionBreakpoint], Field(description="List of currently configured exception breakpoints."),
     ]
 
 
@@ -96,6 +127,14 @@ class SessionStatus(BaseModel):
     breakpoints_muted: Annotated[
         bool, Field(default=False, description="Whether breakpoints are globally muted for this debugger session."),
     ]
+    current_exception: Annotated[
+        CurrentException | None,
+        Field(
+            default=None,
+            description="The current exception that has paused the debugger at the current location, if any.",
+            exclude_if=lambda v: v is None,
+        ),
+    ] = None
     current_position: Annotated[
         Breakpoint | None,
         Field(default=None, description="Current source position for paused sessions, if available."),

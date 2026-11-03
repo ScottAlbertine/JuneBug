@@ -210,9 +210,9 @@ class DAPClient:
         await self._send_request("setBreakpoints", {"source": {"path": path}, "breakpoints": breakpoints})
         return await self._pull_until(lambda m: m.get("type") == "response" and m.get("command") == "setBreakpoints")
 
-    async def set_exception_breakpoints(self, filters: list[str]) -> Message:
+    async def set_exception_breakpoints(self, filters: list[str], exception_options: list[dict[str, Any]]) -> Message:
         """Set exception breakpoints."""
-        await self._send_request("setExceptionBreakpoints", {"filters": filters})
+        await self._send_request("setExceptionBreakpoints", {"filters": filters, "exceptionOptions": exception_options})
         return await self._pull_until(
             lambda m: m.get("type") == "response" and m.get("command") == "setExceptionBreakpoints",
         )
