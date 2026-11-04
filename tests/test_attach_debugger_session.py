@@ -80,8 +80,8 @@ async def test_attach_debugger_session(client: Client, paused_debugee: Popen[byt
     assert proc.is_running()
     # Check that stdout and stderr have been created, but not written to.
     # This proves that the files were opened, and that fake_main hasn't actually started yet.
-    assert (TEMP_DIR / f"{__name__}.test_simple.stdout.txt").read_text() == ""
-    assert (TEMP_DIR / f"{__name__}.test_simple.stderr.txt").read_text() == ""
+    assert (TEMP_DIR / f"{port}.test_simple.stdout.txt").read_text() == ""
+    assert (TEMP_DIR / f"{port}.test_simple.stderr.txt").read_text() == ""
 
     # Set a breakpoint
     await client.call_tool(
