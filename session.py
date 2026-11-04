@@ -58,6 +58,15 @@ class Session:
 
     # session commands
 
+    async def configuration_done(self) -> Message:
+        """
+        This has to happen once per session, and only once.
+        It automatically resumes if we were paused by --wait-for-client
+        It does *not* continue past an already-hit breakpoint.
+        """
+        self.has_configuration_done = True
+        return await self._client.configuration_done()
+
     async def evaluate_expression(
         self, expression: str, frame_id: int | None = None, show_hidden: bool = False, depth: int = 0,
     ) -> Variable:
@@ -173,9 +182,7 @@ class Session:
         if self.state == SessionState.RUNNING:
             return  # Don't double run
         if not self.has_configuration_done:
-            # this has to happen once per session, and only once, and it automatically resumes all threads
-            await self._client.configuration_done()
-            self.has_configuration_done = True
+            await self.configuration_done()
         else:
             await self._client.continue_execution(threads[0].id)
         self.current_position = None
@@ -264,6 +271,13 @@ class Session:
         if self.state == SessionState.PAUSED:
             return  # we are already paused, don't just block forever
         self.assert_not_stopped()
+
+        # DAP will not send us "breakpoint has been hit" messages until *after* we have told it "configuration done"
+        # This means we will deadlock if we `wait_for_pause()` before `configuration_done()`
+        # Tested by attaching to a running FastAPI server, setting a breakpoint, hitting it via curl, then waiting for pause
+        if not self.has_configuration_done:
+            await self.configuration_done()
+
         await self._client.wait_for_pause()
 
     # internal state management tools
