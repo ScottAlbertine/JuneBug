@@ -88,15 +88,12 @@ async def test_set_breakpoint(client: Client) -> None:
     await eventual_assert(process_exited, otherwise="Process did not exit within 3 seconds")
 
 
-FAKE_MAIN_PATH = Path(fake_main.__file__).resolve()
-
-
 @pytest.mark.parametrize(
     ["file_to_breakpoint"],
     [
-        (str(FAKE_MAIN_PATH),),
-        (str(FAKE_MAIN_PATH / ".." / "fake_main.py"),),
-        ("file://" + str(FAKE_MAIN_PATH),),
+        (str(Path(fake_main.__file__).resolve()),),
+        (str(Path(fake_main.__file__).resolve()) + os.sep + ".." + os.sep + "fake_main.py",),
+        ("file://" + str(Path(fake_main.__file__).resolve()),),
     ],
 )
 async def test_set_breakpoint__odd_file_paths(client: Client, file_to_breakpoint: str) -> None:
