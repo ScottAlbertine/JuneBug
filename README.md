@@ -16,7 +16,7 @@ Due to some idiocies of the DAP protocol, there's also a significant amount of s
 A locally running, persistent, HTTP based MCP server solves all these problems nicely.
 It can launch Python processes, keep them open, close them if needed, and send correctly formatted DAP requests to them while they're running.
 It can track the state that DAP requires, even when there are multiple simultaneous sessions on a single system.
-It is also self-documenting, ideally requiring no skill or guidelines for any LLM to use.
+It is also self-documenting, requiring no skill or guidelines for any LLM to use.
 
 ## Doesn't that already exist?
 

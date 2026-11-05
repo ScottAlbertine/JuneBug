@@ -18,7 +18,7 @@ class Breakpoint(BaseModel):
         str | None,
         Field(
             default=None,
-            description="Short excerpt of the actual source line where the breakpoint resides, truncated when needed. Present for line breakpoints only.",
+            description="Short excerpt of the actual source line where the breakpoint resides, truncated when needed.",
             exclude_if=lambda v: v is None,
         ),
     ] = None
@@ -48,7 +48,7 @@ class Breakpoint(BaseModel):
             id=None,
             file=path,
             line=line,
-            line_text=fetch_line_text(path, line),
+            line_text=fetch_line_text(path, line)[:120],
             condition=None,
             temporary=True,
             hit_count=1,
@@ -61,7 +61,7 @@ class BreakpointsResponse(BaseModel):
     breakpoints: Annotated[list[Breakpoint], Field(description="List of currently configured breakpoints.")]
     breakpoints_muted: Annotated[
         bool,
-        Field(default=False, description="Whether breakpoints are globally muted for the resolved debugger session."),
+        Field(default=False, description="Whether breakpoints are globally muted for the current debugger session."),
     ]
 
 
@@ -89,7 +89,7 @@ class SessionStatus(BaseModel):
         str | None,
         Field(
             default=None,
-            description="Path to a temp file where the debugee process puts its stdout. The file will continue growing while the process is still running and remains available after session termination.",
+            description="Path to a temp file where the debugee process puts its stderr. The file will continue growing while the process is still running and remains available after session termination.",
             exclude_if=lambda v: v is None,
         ),
     ] = None

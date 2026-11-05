@@ -1,4 +1,4 @@
-import os
+from os import devnull
 from pathlib import Path
 import sys
 from threading import Thread
@@ -30,9 +30,9 @@ from tools import (
 # On Windows, we don't open a console, so we don't get stdout or stderr
 # This crashes FastMCP, so mock those out if needed before we do anything
 if sys.stdout is None:
-    sys.stdout = open(os.devnull, "w")
+    sys.stdout = open(devnull, "w")
 if sys.stderr is None:
-    sys.stderr = open(os.devnull, "w")
+    sys.stderr = open(devnull, "w")
 
 HOST = "127.0.0.1"
 PORT = 20561

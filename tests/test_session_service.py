@@ -11,6 +11,10 @@ from tests.utils import create_session
 
 
 async def test_automatic_single_session_finding(client: Client, clear_sessions: None) -> None:
+    # with no sessions running, see that we get the appropriate error
+    with pytest.raises(ToolError, match=r"There are no active sessions, please start one."):
+        await client.call_tool("list_threads")
+
     # create a session
     first_session = await create_session(client, file_path=FAKE_MAIN)
 
@@ -22,6 +26,10 @@ async def test_automatic_single_session_finding(client: Client, clear_sessions: 
     await client.call_tool(
         "control_debugger_session", {"session_id": first_session["id"], "action": "stop"},
     )
+
+    # with only one stopped session, see that we get the appropriate error
+    with pytest.raises(ToolError, match=r"There are no active sessions, please start one."):
+        await client.call_tool("list_threads")
 
     # create a second session
     await create_session(client, file_path=FAKE_MAIN)

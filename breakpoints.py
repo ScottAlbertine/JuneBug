@@ -71,7 +71,7 @@ class Breakpoints:
         """Gets the breakpointed file for the given path, creating a new one if needed."""
         return self._files.setdefault(path, File(path))
 
-    def list_breakpoints(self):
+    def list_breakpoints(self) -> list[Breakpoint]:
         sorted_breakpoints: list[Breakpoint] = []
         for path in sorted(self._files.keys()):
             sorted_breakpoints.extend(self._files[path].list_breakpoints())

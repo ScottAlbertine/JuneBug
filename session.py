@@ -128,10 +128,8 @@ class Session:
         Lists them only for the given file if one is specified, otherwise lists all of them.
         """
         self.assert_not_stopped()
-        if path is None:
-            return self.breakpoints.list_breakpoints()
-        else:
-            return self.breakpoints.list_breakpoints_for_file(path)
+        bps = self.breakpoints
+        return bps.list_breakpoints() if path is None else bps.list_breakpoints_for_file(path)
 
     async def list_variables(
         self, frame_id: int | None = None, show_hidden: bool = False, depth: int = 0,
@@ -143,11 +141,10 @@ class Session:
         if frame_id is None:
             frame_id = (await self.get_top_stack_frame()).id
 
-        scopes = await self._client.scopes(frame_id)
-        scope_ids: list[int] = [dap_scope["variablesReference"] for dap_scope in scopes["body"]["scopes"]]
-
         variables: list[Variable] = []
-        for scope_id in scope_ids:
+        scopes = await self._client.scopes(frame_id)
+        for scope in scopes["body"]["scopes"]:
+            scope_id: int = scope["variablesReference"]
             await self._fetch_variable_children(scope_id, variables, show_hidden, depth + 1)
 
         return variables

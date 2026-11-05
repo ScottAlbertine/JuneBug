@@ -1,3 +1,4 @@
+"""General utility functions."""
 from asyncio import StreamReader, StreamWriter, open_connection, sleep, wait_for
 from itertools import islice
 from pathlib import Path

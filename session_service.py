@@ -10,10 +10,9 @@ import uuid
 
 from constants import TEMP_DIR
 from enums import SessionState
-from exceptions import DirectoryNotFound, FileNotFound, MissingSessionId, SessionNotFound
+from exceptions import DirectoryNotFound, FileNotFound, MissingSessionId, NoActiveSessions, SessionNotFound
 from session import Session
 from utils import find_free_port, install_debugpy
-
 
 # Indexed by session ID, available across all threads.
 SESSIONS: dict[str, Session] = {}
@@ -26,11 +25,11 @@ def get_session(session_id: str | None) -> Session:
     """
     if not session_id:
         active_sessions = {sid for sid, s in SESSIONS.items() if s.state != SessionState.STOPPED}
-        if len(active_sessions) == 1:
-            session_id = next(iter(active_sessions))
-
-    if not session_id:
-        raise MissingSessionId()
+        if len(active_sessions) == 0:
+            raise NoActiveSessions()
+        if len(active_sessions) > 1:
+            raise MissingSessionId()
+        session_id = next(iter(active_sessions))
 
     if session_id not in SESSIONS:
         raise SessionNotFound(session_id)
@@ -89,7 +88,7 @@ async def launch_session(
     port = find_free_port()
 
     if os.name == "nt":
-        env.update(os.environ)
+        env.update(os.environ)  # windows requires you to copy env vars for Popen to work
 
     debugee = subprocess.Popen(
         args=[

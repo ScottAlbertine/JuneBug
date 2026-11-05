@@ -66,6 +66,11 @@ class MissingSessionId(Exception):
             "There is more than one active session, and you did not specify a session ID. You must specify one.",
         )
 
+class NoActiveSessions(Exception):
+    """Exception indicating that there are no active sessions on the server."""
+
+    def __init__(self):
+        super().__init__("There are no active sessions, please start one.")
 
 class SessionNotFound(Exception):
     """Exception indicating that the client tried to interact with a debug session that was not found."""

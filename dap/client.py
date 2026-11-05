@@ -67,7 +67,7 @@ class DAPClient:
     async def _pull(self) -> AsyncGenerator[Message | CancelledError, None]:
         """
         An unbounded iterator that returns every message we receive from the DAP server.
-        This should only ever be called once, in `.__init__()`.
+        This should only ever be called once, in `__init__()`.
         After that, everyone (even this class) should use `_message_iterator`.
         """
         # Used to save data as it comes in from the socket until we have a full message
@@ -142,7 +142,7 @@ class DAPClient:
         await self._send_request("disconnect")
         return await self._pull_until(lambda m: m.get("type") == "event" and m.get("event") == "terminated")
 
-    async def evaluate(self, expression: str, frame_id: int, **kwargs) -> Message:
+    async def evaluate(self, expression: str, frame_id: int, **kwargs: Any) -> Message:
         """Evaluate an expression."""
         await self._send_request("evaluate", {"expression": expression, "frameId": frame_id, **kwargs})
         try:
@@ -164,13 +164,16 @@ class DAPClient:
                 "linesStartAt1": True,
                 "columnsStartAt1": True,
                 "pathFormat": "path",
-                # "supportsVariableType": supportsVariableType,
-                # "supportsVariablePaging": supportsVariablePaging,
-                # "supportsRunInTerminalRequest": supportsRunInTerminalRequest,
-                # "supportsMemoryReferences": supportsMemoryReferences,
-                # "supportsProgressReporting": supportsProgressReporting,
-                # "supportsInvalidatedEvent": supportsInvalidatedEvent,
-                # "supportsMemoryEvent": supportsMemoryEvent,
+                "supportsVariableType": True,
+                "supportsVariablePaging": False,
+                "supportsRunInTerminalRequest": False,
+                "supportsMemoryReferences": False,
+                "supportsProgressReporting": False,
+                "supportsInvalidatedEvent": False,
+                "supportsMemoryEvent": False,
+                "supportsArgsCanBeInterpretedByShell": False,
+                "supportsStartDebuggingRequest": False,
+                "supportsANSIStyling": False,
             },
         )
         initialize_response = await self._pull_until(
@@ -179,7 +182,7 @@ class DAPClient:
         self._exception_breakpoint_filters = initialize_response.get("body", {}).get("exceptionBreakpointFilters", [])
         return initialize_response
 
-    async def launch(self, program: str, **kwargs) -> Message:
+    async def launch(self, program: str, **kwargs: Any) -> Message:
         """Launch a program in the debugger."""
         await self._send_request("launch", {"program": program, **kwargs})
         return await self._pull_until(lambda m: True)
@@ -269,7 +272,7 @@ class DAPClient:
         await self._send_request("threads")
         return await self._pull_until(lambda m: m.get("type") == "response" and m.get("command") == "threads")
 
-    async def variables(self, variables_reference: int, **kwargs) -> Message:
+    async def variables(self, variables_reference: int, **kwargs: Any) -> Message:
         """Get variables in a scope."""
         await self._send_request("variables", {"variablesReference": variables_reference, **kwargs})
         return await self._pull_until(lambda m: m.get("type") == "response" and m.get("command") == "variables")
