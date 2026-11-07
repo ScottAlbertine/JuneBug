@@ -30,7 +30,7 @@ exe = EXE(
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
-    codesign_identity='175AD5F0B58C67CEA7F0A6BFFABDA37844FD2556',
+    codesign_identity=None,
     entitlements_file='entitlements.plist',
     icon=['icon.png'],
 )
