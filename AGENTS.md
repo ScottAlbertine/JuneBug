@@ -2,7 +2,7 @@
 
 ## Python Toolchain
 
-This is a `direnv` project (`.envrc` uses `layout python3`). The Python virtual environment lives at `.direnv/python-3.14/`.
+This is a `direnv` project (`.envrc` uses `layout python3`). The Python virtual environment lives at `.direnv/python-3.15/`.
 
 ## Main Code
 

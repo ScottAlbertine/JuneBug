@@ -43,10 +43,10 @@ jobs:
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v5
 
-      - name: Set up Python 3.14
+      - name: Set up Python 3.15
         uses: actions/setup-python@v7
         with:
-          python-version: "3.14"
+          python-version: "3.15"
 
       - name: Install dependencies
         run: |
